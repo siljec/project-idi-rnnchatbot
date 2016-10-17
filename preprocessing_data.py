@@ -225,7 +225,7 @@ def read_sentences(data_source, num_files):
 def make_files(data_source, num_files, vocabulary_size, fraction_dev=50, path_for_x_train ='X_train.txt', path_for_y_train ='y_train.txt', path_for_x_dev ='X_dev.txt', path_for_y_dev ='y_dev.txt'):
 	# Generate dictionary for dataset
 	print '------------------------------------------------'
-	print ' Generating dictionary based on ', str(num_files), ' scripts'
+	print ' Generating dictionary based on ', str(num_files), ' files'
 	print '------------------------------------------------'
 
 	tokenized_data = read_data(data_source, num_files)
