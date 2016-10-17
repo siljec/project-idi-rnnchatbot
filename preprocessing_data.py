@@ -67,7 +67,7 @@ def initialize_vocabulary(vocabulary_path):
     raise ValueError("Vocabulary file %s not found.", vocabulary_path)
 
 
-def generate_encoded_files2(x_train_file, y_train_file, x_dev_file, y_dev_file, tokenized_sentences, dictionary):
+def generate_encoded_files_disjoint(x_train_file, y_train_file, x_dev_file, y_dev_file, tokenized_sentences, dictionary):
 	"""Sentence A is in x_train, Sentence B in y_train"""
 	encoded_holder = []
 	unk_id = dictionary['_UNK']
