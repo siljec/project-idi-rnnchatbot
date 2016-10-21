@@ -3,7 +3,11 @@ import collections
 import shutil
 from tensorflow.python.platform import gfile
 
+<<<<<<< c30400161cdbc4338077c935a6b7288a4a2cdfd6
 num_files = 10
+=======
+num_movie_scripts = 10
+>>>>>>> Removed dataset files and added latex
 vocabulary_size = 10000
 fraction_dev = 50
 path_for_x_train = 'X_train.txt'
@@ -67,7 +71,11 @@ def initialize_vocabulary(vocabulary_path):
     raise ValueError("Vocabulary file %s not found.", vocabulary_path)
 
 
+<<<<<<< c30400161cdbc4338077c935a6b7288a4a2cdfd6
 def generate_encoded_files_disjoint(x_train_file, y_train_file, x_dev_file, y_dev_file, tokenized_sentences, dictionary):
+=======
+def generate_encoded_files2(x_train_file, y_train_file, x_dev_file, y_dev_file, tokenized_sentences, dictionary):
+>>>>>>> Removed dataset files and added latex
 	"""Sentence A is in x_train, Sentence B in y_train"""
 	encoded_holder = []
 	unk_id = dictionary['_UNK']
@@ -188,11 +196,19 @@ def sentence_to_token_ids(sentence, vocabulary):
   return [vocabulary.get(w, UNK_ID) for w in words]
 
 
+<<<<<<< c30400161cdbc4338077c935a6b7288a4a2cdfd6
 def read_data(data_source, num_files):
 	data_tokens = []
 	# Append each line in file to the set
 	for i in range(0, num_files):
 		path = data_source+str(i)+'raw.txt'
+=======
+def read_data(num_movie_scripts):
+	data_tokens = []
+	# Append each line in file to the set
+	for i in range(0, num_movie_scripts):
+		path = 'data/'+str(i)+'raw.txt'
+>>>>>>> Removed dataset files and added latex
 		print 'Reading ', path, '...'
 		lines = [line.rstrip('\n') for line in open(path)]
 		data_tokens_temp = []
@@ -206,11 +222,19 @@ def read_data(data_source, num_files):
 
 # Reads data and puts every sentence in a TWO DIMENSIONAL array as tokens
 # data_tokens[0] = ['This', 'is', 'a', 'sentence']
+<<<<<<< c30400161cdbc4338077c935a6b7288a4a2cdfd6
 def read_sentences(data_source, num_files):
 	data_tokens = []
 	# Append each line in file to the set
 	for i in range(0, num_files):
 		path = data_source+str(i)+'raw.txt'
+=======
+def read_sentences(num_movie_scripts):
+	data_tokens = []
+	# Append each line in file to the set
+	for i in range(0, num_movie_scripts):
+		path = 'data/'+str(i)+'raw.txt'
+>>>>>>> Removed dataset files and added latex
 		print 'Reading ', path, '...'
 		lines = [line.rstrip('\n') for line in open(path)]
 		data_tokens_temp = []
@@ -222,6 +246,7 @@ def read_sentences(data_source, num_files):
 
 
 
+<<<<<<< c30400161cdbc4338077c935a6b7288a4a2cdfd6
 def make_files(data_source, num_files, vocabulary_size, fraction_dev=50, path_for_x_train ='X_train.txt', path_for_y_train ='y_train.txt', path_for_x_dev ='X_dev.txt', path_for_y_dev ='y_dev.txt'):
 	# Generate dictionary for dataset
 	print '------------------------------------------------'
@@ -229,6 +254,15 @@ def make_files(data_source, num_files, vocabulary_size, fraction_dev=50, path_fo
 	print '------------------------------------------------'
 
 	tokenized_data = read_data(data_source, num_files)
+=======
+def make_files(num_movie_scripts, vocabulary_size, fraction_dev=50, path_for_x_train = 'X_train.txt', path_for_y_train = 'y_train.txt', path_for_x_dev = 'X_dev.txt', path_for_y_dev = 'y_dev.txt'):
+	# Generate dictionary for dataset
+	print '------------------------------------------------'
+	print ' Generating dictionary based on ', str(num_movie_scripts), ' scripts'
+	print '------------------------------------------------'
+
+	tokenized_data = read_data(num_movie_scripts)
+>>>>>>> Removed dataset files and added latex
 	data, count, dictionary, reverse_dictionary = build_dataset(tokenized_data, vocabulary_size)
 	create_vocabulary(reverse_dictionary, 'vocabulary_for_movies.txt')
 
@@ -238,10 +272,20 @@ def make_files(data_source, num_files, vocabulary_size, fraction_dev=50, path_fo
 	print ' Creating encoded file using created dictionary'
 	print ' (Saved in  ', path_for_x_train, ')'
 	print '------------------------------------------------'
+<<<<<<< c30400161cdbc4338077c935a6b7288a4a2cdfd6
 	tokenized_sentences = read_sentences(data_source_path, num_files)
 	generate_encoded_files(path_for_x_train, path_for_y_train, path_for_x_dev, path_for_y_dev, tokenized_sentences, dictionary)
 
 
+=======
+	tokenized_sentences = read_sentences(num_movie_scripts)
+	generate_encoded_files(path_for_x_train, path_for_y_train, path_for_x_dev, path_for_y_dev, tokenized_sentences, dictionary)
+
+
+
+
+
+>>>>>>> Removed dataset files and added latex
 #-----------------------Printing methods----------------------------
 def print_dic(dic, counter):
 	c = 0
@@ -263,5 +307,8 @@ def print_info(data, count, dictionary, reverse_dictionary):
 	print_dic(reverse_dictionary, 5)
 	print reverse_dictionary
 
+<<<<<<< c30400161cdbc4338077c935a6b7288a4a2cdfd6
 data_source_path = 'data_movie_scripts/'
 make_files(data_source_path, num_files, vocabulary_size)
+=======
+>>>>>>> Removed dataset files and added latex
