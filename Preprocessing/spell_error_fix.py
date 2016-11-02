@@ -34,6 +34,8 @@ def replace_mispelled_words_in_file(path, new_file_path, dictionary):
 			new_word = replace_misspelled_word(last_word, dictionary)
 			new_file.write(new_word)
 
+	new_file.close()
+
 
 dictionary = read_words_from_misspelling_file("./misspellings.txt")
 

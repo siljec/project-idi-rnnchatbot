@@ -15,6 +15,8 @@ def preprocess_training_file(path, x_train_path, y_train_path):
 			current_user = data[1]
 			text = data[3][:-1].lower()
 			text = re.sub('(?<=[a-z])([!?,.])', r' \1', text)
+
+			
 			if first_line:
 				init_user = current_user
 				previous_user = current_user
