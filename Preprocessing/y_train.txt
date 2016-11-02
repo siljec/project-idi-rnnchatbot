@@ -1,0 +1,183 @@
+calm down please _EOS_  what happening is the shell is interpretting your command _EOS_  so if you do this it will work: _EOS_  try my command line _EOS_  great. _EOS_ _EOT_ 
+^^ _EOS_  is it working or are you just complaining abou the errors in the log file? _EOS_ _EOT_ 
+composite and GLX cannot be enabled together _EOS_ _EOT_ 
+should be in PS1 _EOS_ _EOT_ 
+copy the one from /root then uncomment the bottom 3 lines, then run: source ~/.bashrc _EOS_ _EOT_ 
+its told to start in ~/.bashrc   you may find one is there, just needs the lines uncommenting _EOS_ _EOT_ 
+is the file there, you can run:    ls -a    to check _EOS_ _EOT_ 
+mine's: andy:x:1000:1000:andy,,,:/home/andy:/bin/bash _EOS_ _EOT_ 
+ you mean the rescue mode/recovery mode? where you get to a console/menu to do some things? _EOS_ _EOT_ 
+ you get to the login/lightdm screen and what happens exactly? _EOS_ _EOT_ 
+ go to the console, stop lightdm, (sudo service lightdm stop) and try 'startx' and look for error messages.   you could also try making a new user and see if the same issue happens to them. _EOS_ _EOT_ 
+ at the console you cant login? _EOS_   alt-ctrl-f1 = console. :) _EOS_   there is a known issue in 12.04 where users cant login via lightdm, but guest can.. (i just installed gdm and i can login with it) _EOS_ _EOT_ 
+ifconfig _EOS_ _EOT_ 
+static or dhcp _EOS_ _EOT_ 
+look at /etc/interface _EOS_ _EOT_ 
+sorry look at /etc/network/interfaces _EOS_ _EOT_ 
+i think you have to look in /proc _EOS_ _EOT_ 
+not really, do a "sudo swapon -s" what does it show _EOS_ _EOT_ 
+ok, that means you have a swap line in your /etc/fstab that points at /mnt/2048mb.swap, remove it _EOS_ _EOT_ 
+look in the files /etc/fstab and remove that line _EOS_ _EOT_ 
+or ignore my advice.....and do what you want _EOS_ _EOT_ 
+what do are you doing normally when it crashes? _EOS_  uses firebug and web developer or some addon like that _EOS_ _EOT_ 
+I don't know of one that will interface with iTunes _EOS_  there probably won't be one until Apple releases iTunes for Linux (heh. heh. heh.) _EOS_ _EOT_ 
+from what to what? _EOS_ _EOT_ 
+"support file transfer" is too vague, transferring from what device to what device? _EOS_ _EOT_ 
+gtkpod might be able to do that _EOS_ _EOT_ 
+english please. _EOS_  what is the issue _EOS_  perhaps a picture then ? _EOS_  known bug _EOS_ _EOT_ 
+unfortunatly no, not until they fix it _EOS_ _EOT_ 
+auto login to NASA or where? _EOS_ _EOT_ 
+yeah.. so if I want to edit a .conf or something I don't have to go to terminal ... sudo nano blah blah _EOS_ _EOT_ 
+i know... had the same prob on my laptop _EOS_ _EOT_ 
+yeah, adding something to alsa-conf?.. thats what i did, worked on mine _EOS_ _EOT_ 
+i had my sound working in alpha3...lol... just took a little googling _EOS_  not to mention, resorting to an old gutsy gibbon trick _EOS_ _EOT_ 
+nope, was trying to get some info to give some suggestions _EOS_ _EOT_ 
+well.. if the network manager is erroring out, maybe something got borked in the upgrade.. reinstall it... but it sounds like he tried that _EOS_ _EOT_ 
+then check currently running apps, and see if there's two running, and kill one.. _EOS_ _EOT_ 
+usually when you choose to reinstall, i believe it purges the old one _EOS_ _EOT_ 
+samba is pretty easy.. _EOS_ _EOT_ 
+hold on, i'll get you a link that will help a lot _EOS_ _EOT_ 
+are the linux and windows OS's that need access to the shared folders, online at the same time? _EOS_ _EOT_ 
+ok _EOS_  i used the first post in this thread... very simple w/ ubuntu 9.10   http://ubuntuforums.org/showthread.php?t=202605 _EOS_ _EOT_ 
+well, you _can_ edit it, but very few chances of getting it working _EOS_ _EOT_ 
+with any text editor, but if you really want to see something, try with a bin editor _EOS_  what are you trying to do? Do you know what you are really going to do with a bin editor? you know machine code? _EOS_ _EOT_ 
+so use what they told you, hexedit _EOS_  what do you think? _EOS_  just read the manual _EOS_ _EOT_ 
+are you using windows? _EOS_  try in command line _EOS_ _EOT_ 
+open terminal and tehn type the full path to the file _EOS_  there is your problem _EOS_  the .muh is probably a folder _EOS_ _EOT_ 
+you should try the muh channel :P _EOS_ _EOT_ 
+That's my last name :) _EOS_ _EOT_ 
+Nope. Everything about my name points to that kind of nationality.... but I'm of Irish lineage! _EOS_ _EOT_ 
+I thought it ran fine with Wine.... or are you needing native drivers? :) _EOS_  Glad your day has been made :) _EOS_ _EOT_ 
+http://appdb.winehq.org/objectManager.php?sClass=application&iId=17 _EOS_ _EOT_ 
+ http://ubuntuforums.org/showthread.php?t=11478 _EOS_  this should provide you with the information  you are seeking _EOS_ _EOT_ 
+ you are most welcome my friend _EOS_   did you accomplish what you were wanting? _EOS_ _EOT_ 
+guys I am currently operating ubuntu on a Gateway M-275 tablet pc with one gig of ram and an integrated 64 MB GPU,   other than some sound issues  I have to admit this little tablet pc really hums away in  linux _EOS_   glad to hear it _EOS_ _EOT_ 
+which orca _EOS_ _EOT_ 
+bash: which orca _EOS_ _EOT_ 
+Type INTO your BASH: which orca _EOS_ _EOT_ 
+I gues you could disable all automatic updates from Software Sources, but do remember to check them annually yourself. _EOS_ _EOT_ 
+not sure, haven't tested it ever _EOS_ _EOT_ 
+because some driver/app in the stick is not in the final install? _EOS_ _EOT_ 
+the proof that the gpu is/was good enough was it being seen while running off the live/stick, as to what driver you are missing i am clueless, can you do a side by side comparision? or at least get the logs for xorg while on stick and compare to the installed? _EOS_ _EOT_ 
+comparing the two dirs/folders would not hurt either , /etc/X11/xorg.conf.d/ _EOS_ _EOT_ 
+my bad then, i was looking at my setup on opensuse, the equiv must exist _EOS_ _EOT_ 
+correct, not looking for xorg.conf, looking for a dir with some rules that are auto created at boot via udev(i think, not sure about that one) _EOS_ _EOT_ 
+Yeah, lucid feels like alpha-quality. Reinstall jaunty or karmic, or try e.g. Mint 8 _EOS_ _EOT_ 
+Nope _EOS_ _EOT_ 
+I'm gonna install Mint on my laptop, since my current installation seems broken _EOS_  Just 600 MB or so for the CD iso _EOS_ _EOT_ 
+Ah, ok _EOS_  How about xubuntu 9.10, does that come in 64bit? _EOS_ _EOT_ 
+Pidgin _EOS_ _EOT_ 
+i just did... _EOS_ _EOT_ 
+i'm looking, and it seems that you're right on that matter. i don't understand WHY they wouldn't have that functionality, but it seems they don't _EOS_ _EOT_ 
+i'm waiting for the *nix port for Digsby, it's what I use on my M$ box _EOS_ _EOT_ 
+how can two files have some timestamps? _EOS_  I'm assuming that no files are having identical timestamp. _EOS_ _EOT_ 
+I want one command with help of pipe or awk??because i have to give that output to zip to compress those files _EOS_ _EOT_ 
+and what is the problem?  all in ***one line*** _EOS_  does your monitor have speakers? _EOS_  you have to connect a wire that goes from the "headphone" jack in your laptop to the speakers in your monitor _EOS_  to get full screen is always flaky, since the laptop is opened you might need to hit a combination of keys on your laptop so that the screen goes to the monitor, on my laptop is "FN +F8", look at your keyboard and you should see a key labeled "Fn" and should be maybe colored blue, you should see another key labeled something like "CRT/LCD" _EOS_  you must have to reboot your laptop with the monitor hooked up to the laptop _EOS_  sorry i meant to say you ***might*** _EOS_ _EOT_ 
+No, I solved the blue video issue, now It just appears a error-screen, Gnash is removed and Flash I have the recent version _EOS_ _EOT_ 
+It just says Shockwave flash plugin error _EOS_  Can't even display the vid. _EOS_ _EOT_ 
+basically every flash video does it, I've installed basically all versions of Adobe flash Player, and for some times it plays cool, but after a while it starts again to show the error , I'll try to download the flv , 1min _EOS_  Flv with Mplyayer works just fine... _EOS_ _EOT_ 
+Oh, strange it happens with every browser,  thanks D: _EOS_ _EOT_ 
+sudo fdisk -l _EOS_ _EOT_ 
+Lists all the partitions on the hdd's connected to the computer and their fs type. _EOS_  Oh, I'm sure it does I just don't know the options you need to give to it. _EOS_  That command just says "linux" I believe.  Is that right? _EOS_ _EOT_ 
+I don't know how to see it very cli _EOS_  Sorry _EOS_  Sure did!  :) _EOS_ _EOT_ 
+you mean isp will block port 80 on a client machine so it cant act as a webserver on that port? _EOS_ _EOT_ 
+haha lose the attitude bro _EOS_  just clarifying what you meant _EOS_ _EOT_ 
+huh? im just trying to fix a graphics problem mate, i understand ports/servers. peace out. _EOS_ _EOT_ 
+ wayland is a long way off _EOS_   theres several out. yes.. _EOS_ _EOT_ 
+ clamav works.  i imagine the others do also... _EOS_ _EOT_ 
+  theres not really any viruses in the wild for linux that i know of.. and  the job of these av tools.. is mainly to scan files for windows viruses.. _EOS_ _EOT_ 
+But the rest of the networking works OK? _EOS_ _EOT_ 
+Curious! Does it give you errors _EOS_ _EOT_ 
+but it works on lan after a 1st boot? OK, I'm not a samba expert but I'd check /var/log/samba for any of the logs in there for any smoking gun, but I'd submit a bug _EOS_ _EOT_ 
+One for a bug report then _EOS_ _EOT_ 
+Actually linuxrunner hasn't told us what exactly he wants to change in his login behaviour. _EOS_  coz_ Can't something have gone wrong during a distribution upgrade to the LTS? _EOS_ _EOT_ 
+Ya that's a way.. _EOS_  Me too. I also do fresh install nowadays. Especially with my love for PPA's.. :) _EOS_ _EOT_ 
+POSIX = Portable Operating System Interface X (x to make it sound like unix) _EOS_ _EOT_ 
+encoding affects individual files, not a whole server _EOS_ _EOT_ 
+configure your text editor to save your coded pages in utf-8, if you have joomla or similar try in their options _EOS_  if you have total control of the server, you may want to check your fstab file _EOS_ _EOT_ 
+specify that you want to use UTF-8 in your mounting options _EOS_  read http://linux.die.net/man/8/mount add the utf option to your mount options in your fstab file, but I just re-read your original question, it might not be this but you lose nothing in trying _EOS_ _EOT_ 
+read above _EOS_ _EOT_ 
+  please cast your knowledgeable eyes  at this and if u can tell me if there's something seriously wrong with it. http://pastebin.ubuntu.com/415468/   it does work, but im worried it might make something else unstable or break it _EOS_ _EOT_ 
+so far, we're even on that score ... _EOS_ _EOT_ 
+that's great, just cos you have power you are abusing that? _EOS_  interesting. i don't accept your word as gospel, so im different? your initial reaction is making fun of the noob, THAT is surely not different _EOS_ _EOT_ 
+first girl i saw using linux _EOS_ _EOT_ 
+what is the ubuntu offtopic channel name? _EOS_ _EOT_ 
+how do 0i use gtypist? _EOS_ _EOT_ 
+thanks.. can it measure words per minute? _EOS_ _EOT_ 
+what is the off topic channel name? _EOS_ _EOT_ 
+thank you _EOS_ _EOT_ 
+what resolutions? _EOS_ _EOT_ 
+yes, WHAT display resolutions _EOS_ _EOT_ 
+you aren't making any sense. what is your target display resolution? _EOS_ _EOT_ 
+erm.. what exactly is stopping you? _EOS_ _EOT_ 
+how long have you waited? I've seen the installer take 30 minutes to start up on an i7 with 8 gigs ram.. _EOS_ _EOT_ 
+any error-output? _EOS_ _EOT_ 
+try to answer in 1 block if possible _EOS_  what happens after that black-screen phase during boot? _EOS_  and are you sure there is enough space free on the system-disk ubuntu is using? _EOS_  can you boot into recovery mode? _EOS_  http://wiki.ubuntuusers.de/recovery_modus _EOS_ _EOT_ 
+ I am stating reasons why "people" using windows would. _EOS_  webclients for instance _EOS_ _EOT_ 
+nice one Curly_Q :) _EOS_  besides I am a Network admin in a Windows environment ;-) _EOS_ _EOT_ 
+I use gstreamer and add gstreamer-ugly plugins _EOS_ _EOT_ 
+perhaps this red light indicates harddrive-activity... ;-> _EOS_ _EOT_ 
+just guessing... :-) _EOS_  if your drive changes names try mounting it via its uuid _EOS_ _EOT_ 
+if the laptop is fully off, how is the software that supposed to wake it up supposed to get any CPU time to do its job? _EOS_ _EOT_ 
+you want to tell the BIOS to boot, then create a cronjob to fire up your music. _EOS_ _EOT_ 
+no, just like MacOS, you only need to visulaize in your mind what you want, and never have to touch the keyboard. ("manually?" is there any other way?) _EOS_  plug the phone into the speakers _EOS_ _EOT_ 
+ ive noticed it taking a VERY long time also.. i think it may be hanging, OR you selected the clean free area option _EOS_ _EOT_ 
+ its actually overwriting the free space to 'securely delete' things from how i read the tooltops _EOS_   i think that option should proberly be disabled by default. :) its a little over paranoid _EOS_ _EOT_ 
+ it would be nice if bleachbit also let you know the last time a 'fix' has been ran. I dont see the point in doing some of those cleaning tasks more then once a week :) _EOS_   i got a 1TB HD.. so it was going to take it some time. :) _EOS_ _EOT_ 
+ create another panel by right-clicking on the top panel and see if lines appear - if not - kill the top panel and re-add all of your applets to the new one _EOS_ _EOT_ 
+create all of you applets on the new one and delete the old one _EOS_ _EOT_ 
+what's your problem¿¿ _EOS_ _EOT_ 
+why don't you use karmic koala¿¿ _EOS_  have you installed restricted extras¿¿ _EOS_ _EOT_ 
+ubuntu 8, ubuntu 9¿¿ do you even know what are you using¿¿ _EOS_ _EOT_ 
+i have already asked you if you have restricted extras installed; but with that attitude you can get help from here _EOS_ _EOT_ 
+fuser -v 80/tcp _EOS_  with sudo before forgiveness _EOS_ _EOT_ 
+the parent process is always root, the thread's inherited from the UID / GID of the user / group defined in apache, or www-data: www-data _EOS_  That is completely normal cyy _EOS_ _EOT_ 
+are reading me? _EOS_ _EOT_ 
+7zip with .rar or .tar? _EOS_ _EOT_ 
+check which file formats it supports, probably ones allows splitting _EOS_ _EOT_ 
+there are tons of good archive programs for linux, 7zip is nice though for being crossplatform :) _EOS_ _EOT_ 
+neither worked.... _EOS_  I added a resolution to my monitor (it wasn't giving me high enough resolutions) and positioned it. _EOS_ _EOT_ 
+not sure if what im saying is correct but you must reconfigure Grub. _EOS_  point it to the right direction _EOS_ _EOT_ 
+are you running these commands on a live cd? _EOS_ _EOT_ 
+you need to run them on the broken grub install... _EOS_ _EOT_ 
+you need to reboot and fix grub manually. not sure if thats your problem.. you should google your problems .. its impossible to know the solution.. sorry.. not that good. _EOS_ _EOT_ 
+ActionParsnip: thanks, but how do I just find out what it is? _EOS_ _EOT_ 
+thanks i'll try that and be back soon _EOS_  what was it again? My clipboard didn't copy it for some reason _EOS_ _EOT_ 
+thanks, got it this time. be back soon _EOS_ _EOT_ 
+https://ata.wiki.kernel.org/index.php/Libata_error_messages _EOS_ _EOT_ 
+UNC --> Uncorrectable error - often due to bad sectors on the disk _EOS_ _EOT_ 
+well seing more lines of the dmesg would help... maybe you can see what smart says ( system>Admin>disk utility ) _EOS_ _EOT_ 
+ ok I will try Mencoder now. _EOS_ _EOT_ 
+ if I wanted to do this as a batch how would I do it using mencoder? I found a program called AVIDemux which can easily remove or change the default audio track, however it will take me 20 years to do the 300 or so files I need to edit.  Is there a way I can batch edit an entire folder?? _EOS_ _EOT_ 
+so " mencoder -i *.folder  ??? _EOS_  sorry I lost the last command you sent _EOS_ _EOT_ 
+?? _EOS_ _EOT_ 
+don't use @ just use peoples names it will hilight in their client then _EOS_ _EOT_ 
+open hardware drivers in administration and look if there's a newer graphic driver, helped me _EOS_ _EOT_ 
+yes, I did too and it was choppy. not anymore, since I updated to the latest one _EOS_ _EOT_ 
+I don't know, I had 173 and switched to the recommended one _EOS_ _EOT_ 
+yes _EOS_ _EOT_ 
+my thoughts on the subject would be both checking the device itself i.e. catting the device and see if its producing output when you're not touching it, and also checking what kind of weird input devices are configured via your xorg.conf or xorg.log _EOS_ _EOT_ 
+but as you mentioned this is a thinkpad and I know them well, it has a tracknav (two pointing devices) I know as they get old and dirty they tend to have these kinds of issues _EOS_ _EOT_ 
+sounds like as I thought, something is wonky with the device itself.. either the connection is bad or its dirty..etc.. I frequently had problems with my trackpoint doing the moving to the side thing until I cleaned it real good and put a new rubber tip on it. never had the clicking issue though _EOS_ _EOT_ 
+I'd move on to physical troubleshooting.. I'm a certified tech but its not really rocket science even if you aren't. Thinkpads have clearly marked screw holes on the bottom for which ones take off the keyboard to get in there and check the connections and for the most part those keyboards can be washed in the sink.. heh just gotta dry well before reconnecting _EOS_  often the ram sits right below the tracknav and that heat could've done damage as well.. depends on how old it is and how well taken care of _EOS_ _EOT_ 
+sudo dd if=/dev/sr0 of=thedisk.iso  && sudo chowo $USER:$USER thedisk.iso _EOS_  sudo dd if=/dev/sr0 of=thedisk.iso  && sudo chown $USER:$USER thedisk.iso _EOS_  sorry typo _EOS_ _EOT_ 
+also you can use brasero or any other burning program to create an iso _EOS_ _EOT_ 
+no problem _EOS_ _EOT_ 
+trinity-rescue-kit, is a distro designed specifically for your case (recovering/reseting win passwords) _EOS_  right click the .iso file and then click on "burn to CD" _EOS_  alternatively you can create a bootable USB flash memory (pendrive) with it. (system - admin - usb creator) _EOS_  open brasero, it will display 5 big buttons, pick the last one (burn image) _EOS_  brasero should work just fine; burning an iso file is not that hard; I also like gnomebaker more though (it plays a cool sound when it ends!) _EOS_  I personally help people "for fun", is better than just keeping my sit warm while I'm at work :) _EOS_ _EOT_ 
+if you want to be extra-safe at 1-4x but it will take some time _EOS_  use 24.0 x, _EOS_ _EOT_ 
+lmao no kidding unless adobe goes jailbreak i don't think we're ever going to have a flash solution for the iPhone _EOS_ _EOT_ 
+btpd or rtorrent? _EOS_  srry for frontend you may want urtorrent _EOS_  replicates the utorrent interface for rtorrent backend _EOS_   personally i would say rtorrent with rutorrent is the "best" seedbox _EOS_ _EOT_ 
+did u have a confusion about it, a queston or what? _EOS_  because a monitor physically connected works via hardware and some software, using a tv as a monitor is all software (unless its a monitor/tv that attaches via monitor cable) _EOS_  4 real, ure best option is to get out a real monitor, install, then install the tv/monitor _EOS_  maybe, _EOS_ _EOT_ 
+in general with a large channel like #ubuntu you shouldn't split things up on multiple lines unless you're addressing someone _EOS_  no problem _EOS_  what is your question? _EOS_ _EOT_ 
+there's no question :/ _EOS_ _EOT_ 
+no.  I just got here and read one line. _EOS_  copy them somewhere?  Have you seen the backup page on the wiki for more complete backup solutions? _EOS_ _EOT_ 
+nautilus /home/user/Desktop _EOS_  Purging won't erase your user settings. That you will find in .config/gnome-do. If you kill gnome-do and then delete that folder, that will clear gnome-do's settings completely. _EOS_ _EOT_ 
+Deleting the directory is what I would do if I was having problems with Do. Unless you really don't want to kill your history and settings. Also, I was wrong about the directory. Here is a list of gnome-do directories I found in my home folder: http://paste.ubuntu.com/425627/ _EOS_  to see any files that start with ".", you need to press Ctrl + H in the file manager, or use the "-a" option with ls if you are in the terminal _EOS_ _EOT_ 
+Also, rename the directories or leave them in the trash instead of deleting them. You can try one directory at a time and see if it fixes whatever issues you are having. _EOS_ _EOT_ 
+vlc, mplayer, ... _EOS_ _EOT_ 
+yes, there's a totem plugin for browsers. but there are also vlc and mplayer plugins for browsers. for mplayer: gecko-mediaplayer _EOS_  the vlc plugin is mozilla-plugin-vlc _EOS_  totem doesn't use mplayer _EOS_ _EOT_ 
+it's gecko-media-player _EOS_  sorry, it's gecko-mediaplayer. _EOS_  you're welcome :) _EOS_ _EOT_ 
+if you may have 2 be more specific about what the issue is, if someone knows they will help _EOS_  did you try all the obvious trouble shooting fixes like turn off, turn on, reboot, disconnect, reconnect, check all connections etc? _EOS_  how does it connect anyhow, usb or serial? _EOS_  u shouldnt need 2 install any drivers, it should work asoon as u connect it, (as far as i know anyway) _EOS_  oh and if u can, connect it to a diff usb port _EOS_ _EOT_ 
+i dont know much about any of it i got the surfboard one because the wireless ranger was wider _EOS_  i think theres 8 ethernet and its just between 1 desktop connected w ethernet and a lappies thats wireless _EOS_  deskie is upgraded from 9 to 10 and lappie has vista which i dont need/use and 10.10 freash install _EOS_  is it easy to use? _EOS_  how do i set up ssh? _EOS_  ahh ok i think i can fig it out from there....wasnt sure if ssh was a program or what _EOS_  ty _EOS_ _EOT_ 
+yes :) _EOS_ _EOT_ 
+PM me for help, I'm getting lost in all these messages here :D _EOS_ _EOT_ 
