@@ -4642,6 +4642,8 @@ wasn't was not
 aren't are not
 can't cannot
 couldn't could not
+cuz because
+cus because
 don't do not
 doesn't does not
 didn't did not
