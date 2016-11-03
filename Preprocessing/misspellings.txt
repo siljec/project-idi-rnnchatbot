@@ -4639,26 +4639,36 @@ zink zinc
 zookeenee zucchini
 zylophone xylophone
 wasn't was not
+wasnt was not
 aren't are not
+arent are not
 can't cannot
+cant cannot
 couldn't could not
+couldnt could not
 cuz because
 cus because
 don't do not
+dont do not
 doesn't does not
+doesnt does not
 didn't did not
+didnt did not
 he's he is
 he'll he will
 isn't is not
 it's it is
+its it is
 i'd i would
 i'm i am
+im i am
 i've i have
 i'll i will
 it'll it will
 mine's mine is
 she's she is
 she'll she will
+skreen screen
 they're they are
 that's that is
 you're you are

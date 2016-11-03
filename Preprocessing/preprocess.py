@@ -2,16 +2,9 @@ import os, re
 from create_vocabulary import read_vocabulary_from_file, encode_sentence, create_vocabulary, find_dictionary
 from spell_error_fix import replace_mispelled_words_in_file
 
-def end_of_sentence(text, current_user, previous_user):
-	return text.append(' _EOS_')
-
-def end_of_turn():
-	pass
-
 def preprocess_training_file(path, x_train_path, y_train_path):
 	
 	user1_first_line = True
-	user2_first_line = True
 
 	x_train = []
 	y_train = []
@@ -19,21 +12,18 @@ def preprocess_training_file(path, x_train_path, y_train_path):
 	sentence_holder = ""
 
 	with open(path) as fileobject:
-		print(path)
 		for line in fileobject:
 			data = line.split("\t")
 			current_user = data[1]
 			text = data[3][:-1].lower()
-			#text = ' '.join(text.split())
-			text = re.sub(' +', ' ', text) # Should remove multiple spaces
+			text = ' '.join(text.split())
+			#text = re.sub(' +', ' ', text) # Should remove multiple spaces
 			text = re.sub('(?<=[a-z])([!?,.])', r' \1', text) # Add space before special charaacteres [!?,.]
 
 			if user1_first_line:
 				init_user = current_user
 				previous_user = current_user
 				user1_first_line = False
-			elif user2_first_line:
-				user2_first_line = False
 
 			if current_user == previous_user: # The user is still talking
 				sentence_holder += text + " _EOS_ "
@@ -46,43 +36,15 @@ def preprocess_training_file(path, x_train_path, y_train_path):
 					y_train.append(sentence_holder)
 				else:
 					x_train.append(sentence_holder)
-				sentence_holder = text
+				sentence_holder = text + ' _EOS_ '
 
 			previous_user = current_user
 
-
-			#######
-
-			# if user1_first_line:
-			# 	init_user = current_user
-			# 	previous_user = current_user
-			# 	x_train.append(text + ' _EOS_')
-			# 	user1_first_line = False
-
-			# elif current_user != init_user and user2_first_line:
-			# 	y_train.append(text + ' _EOS_')
-			# 	user2_first_line = False
-
-			# elif init_user == current_user:
-			# 	if previous_user == current_user:
-			# 		prev_utterance = x_train.pop()
-			# 		x_train.append(prev_utterance + " " + text + ' _EOS_ ')
-			# 	else:
-			# 		x_train.append(text + ' _EOS_ ')
-			# else:
-			# 	if previous_user == current_user:
-			# 		prev_utterance = y_train.pop()
-			# 		y_train.append(prev_utterance + " " + text + ' _EOS_ ')
-			# 	else:
-			# 		y_train.append(text + ' _EOS_ ')
-
-			# previous_user = current_user
-
 	x_train_file = open(x_train_path, 'a')
 	y_train_file = open(y_train_path, 'a')
-	# print "****"
-	# print x_train
-	# print y_train
+
+	if current_user != init_user:
+		y_train.append(sentence_holder + "_EOT_ \n")
 
 	for i in range(len(y_train)):
 
@@ -107,7 +69,6 @@ def read_every_data_file_and_create_initial_files(initial_x_file_path, initial_y
 		if(number_of_folders < 0):
 			break
 		number_of_folders -= 1
-		print(number_of_folders)
 		if folder != ".DS_Store":
 			folder_path = "../../../ubuntu-ranking-dataset-creator/src/dialogs/" + folder
 			for filename in os.listdir(folder_path):
@@ -136,10 +97,10 @@ def generate_all_files():
 		try:
 			os.remove(filename)
 		except OSError:
-			print("File not found: ", filename)
+			print 'File not found: ', filename
 
 	print 'Reading all the files and create initial files...'
-	read_every_data_file_and_create_initial_files(x_train_initial_path, y_train_initial_path, 1, 10)
+	read_every_data_file_and_create_initial_files(x_train_initial_path, y_train_initial_path, 1, 11)
 
 	print 'Spellchecker for the initial files, create new spell checked files...' 
 	replace_mispelled_words_in_file(x_train_initial_path, x_train_spell_check, misspelled_words_path)
