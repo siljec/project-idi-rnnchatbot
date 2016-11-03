@@ -6,7 +6,7 @@ def find_dictionary(x_train, y_train):
 
 	with open(x_train) as fileobject:
 		for line in fileobject:
-			sentence = line.split(' ')
+			sentence = line.strip().split(' ')
 			for word in sentence:
 				if word in dictionary:
 					dictionary[word] += 1
@@ -15,7 +15,7 @@ def find_dictionary(x_train, y_train):
 
 	with open(y_train) as fileobject:
 		for line in fileobject:
-			sentence = line.split(' ')
+			sentence = line.strip().split(' ')
 			for word in sentence:
 				if word in dictionary:
 					dictionary[word] += 1
@@ -23,7 +23,6 @@ def find_dictionary(x_train, y_train):
 					dictionary[word] = 1
 
 	sorted_dict = sorted(dictionary.items(), key=operator.itemgetter(1), reverse = True)
-
 	return sorted_dict
 
 
