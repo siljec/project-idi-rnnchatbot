@@ -18,17 +18,21 @@ vocab_path = '../Preprocessing/vocabulary.txt'
 x_train_path = '../Preprocessing/x_train.txt'
 y_train_path = '../Preprocessing/y_train.txt'
 
-# from Ola
+# Special tokens
 _PAD = b"_PAD"
 _GO = b"_GO"
 _EOS = b"_EOS"
+_EOT =b"_EOT"
 _UNK = b"_UNK"
-_START_VOCAB = [_PAD, _GO, _EOS, _UNK]
+
+_START_VOCAB = [_PAD, _GO, _EOS, _EOT, _UNK]
 
 PAD_ID = 0
 GO_ID = 1
 EOS_ID = 2
-UNK_ID = 3
+EOT_ID = 3
+UNK_ID = 4
+
 
 _WORD_SPLIT = re.compile(b"([.,!?\":;)(])")
 _DIGIT_RE = re.compile(br"\d")
@@ -54,7 +58,6 @@ num_movie_scripts = 2318
 # We use a number of buckets and pad to the closest one for efficiency.
 # See seq2seq_model.Seq2SeqModel for details of how they work.
 _buckets = [(5, 10), (10, 15), (20, 25), (40, 50)]
-
 
 
 # Will put a training set in a the correct bucket
@@ -101,8 +104,19 @@ def create_model(session, forward_only):
 def train():
     x_train = '../Preprocessing/x_train.txt'
     y_train = '../Preprocessing/y_train.txt'
-    #en_dev = './y_dev.txt'
-    #fr_dev = './X_dev.txt'
+    x_dev = '../Preprocessing/x_dev.txt'
+    y_dev = '../Preprocessing/y_dev.txt'
+
+    all_files = [x_dev, y_dev]
+    for filename in all_files:
+        try:
+            os.remove(filename)
+        except OSError:
+            print('File not found: ', filename)
+
+    x_dev_new = open(x_dev, 'w')
+    y_dev_new = open(y_dev, 'w')
+
 
     with tf.Session() as sess:
         # Create model.
@@ -111,8 +125,13 @@ def train():
 
         # Read data into buckets and compute their sizes.
         print("Reading development and training data")
-        #dev_set = read_data(en_dev, fr_dev)
+
+
+        #dev_set = read_data(x_dev, y_dev)
         train_set = read_data(x_train, y_train)
+        print("*******")
+        print(train_set)
+
         train_bucket_sizes = [len(train_set[b]) for b in xrange(len(_buckets))]
         train_total_size = float(sum(train_bucket_sizes))
 
@@ -153,7 +172,7 @@ def train():
                 checkpoint_path = os.path.join(train_dir, "chatbot.ckpt")
                 model.saver.save(sess, checkpoint_path, global_step=model.global_step)
                 step_time, loss = 0.0, 0.0
-                # Run evals on development set and print their perplexity.
+                #Run evals on development set and print their perplexity.
                 # for bucket_id in xrange(len(_buckets)):
                 #     if len(dev_set[bucket_id]) == 0:
                 #         print("  eval: empty bucket %d" % (bucket_id))
@@ -165,7 +184,7 @@ def train():
                 #     else:
                 #         eval_ppx = float('inf')
                 #     print("  eval: bucket %d perplexity %.2f" % (bucket_id, eval_ppx))
-                sys.stdout.flush()
+                # sys.stdout.flush()
 
 
 def decode():
@@ -194,8 +213,15 @@ def decode():
             outputs = [int(np.argmax(logit, axis=1)) for logit in output_logits]
             # If there is an EOS symbol in outputs, cut them at that point.
 
+
+            # Need to handle both EOS and EOT. If EOS, just \n, if EOT --> done with response from Ola
             if EOS_ID in outputs:
                 outputs = outputs[:outputs.index(EOS_ID)]
+
+            ### NEW
+            if EOT_ID in outputs:
+                outputs = outputs[:outputs.index(EOT_ID)]
+                (outputs.replace(EOS_ID, "\n"))
 
             print("Ola >: " + " ".join([tf.compat.as_str(rev_vocab[output]) for output in outputs]))
             print("Human >: ", end="")
