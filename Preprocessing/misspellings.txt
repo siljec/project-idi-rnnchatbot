@@ -4161,7 +4161,7 @@ throuhg through
 thrusted thrust
 thrsday Thursday
 tihkn think
-time_outs timeouts 
+time_outs timeouts
 timne time
 tiny_speck speck
 tiogether together
@@ -4169,7 +4169,7 @@ tipic typical
 tipical typical
 tipycal typical
 tje the
-teh the 
+teh the
 tkae take
 tkaes takes
 tkaing taking
@@ -4679,4 +4679,5 @@ we'll we will
 we've we have
 we're we are
 packg package
+pasword password
 shouldn't should not

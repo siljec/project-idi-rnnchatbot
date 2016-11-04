@@ -18,31 +18,31 @@ def preprocess_training_file(path, x_train_path, y_train_path):
 			text = data[3].strip().lower()
 			text = re.sub(' +', ' ', text) # Will remove multiple spaces
 			text = re.sub('(?<=[a-z])([!?,.])', r' \1', text) # Add space before special characters [!?,.]
-			print text
 
 			if user1_first_line:
 				init_user = current_user
 				previous_user = current_user
 				user1_first_line = False
+				sentence_holder = "_GO "
 
 			if current_user == previous_user: 		# The user is still talking
-				sentence_holder += text + " _EOS_ "
+				sentence_holder += text + " _EOS "
 			else: 									# A new user responds
-				if ('_EOS_' in sentence_holder):
-					sentence_holder += "_EOT_ \n"
+				if ('_EOS' in sentence_holder):
+					sentence_holder += "_EOT \n"
 				else:
-					sentence_holder += " _EOT_ \n"
+					sentence_holder += " _EOT \n"
 				if current_user == init_user: 		# Init user talks (should add previus sentence to y_train)
 					y_train.append(sentence_holder)
 				else:
 					x_train.append(sentence_holder)
-				sentence_holder = text + ' _EOS_ '
+				sentence_holder = '_GO ' + text + ' _EOS '
 
 			previous_user = current_user
 
 
 	if current_user != init_user:
-		y_train.append(sentence_holder + "_EOT_ \n")
+		y_train.append(sentence_holder + "_EOT \n")
 
 	x_train_file = open(x_train_path, 'a')
 	y_train_file = open(y_train_path, 'a')
