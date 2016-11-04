@@ -54,15 +54,28 @@ def preprocess_training_file(path, x_train_path, y_train_path):
 	x_train_file.close()
 	y_train_file.close()
 
+def file_len(fname):
+    with open(fname) as f:
+        for i, l in enumerate(f):
+            pass
+    return i + 1
 
-def create_final_files(source_path, target_path, vocabulary_path):
+def create_final_files(source_path, train_path, vocabulary_path, dev_path, dev_size_fraction):
 	vocabulary, _ = read_vocabulary_from_file(vocabulary_path)
-	final_file = open(target_path, 'a')
+	train_final = open(train_path, 'w')
+	dev_final = open(dev_path, 'w')
+	num_lines = file_len(source_path)
+	train_size = num_lines*(1-dev_size_fraction)
+	line_counter = 0
 	with open(source_path) as fileobject:
 		for line in fileobject:
-			final_file.write(encode_sentence(line.split(" "), vocabulary) + '\n')
-
-	final_file.close()
+			if line_counter < train_size:
+				train_final.write(encode_sentence(line.split(" "), vocabulary) + '\n')
+			else:
+				dev_final.write(encode_sentence(line.split(" "), vocabulary) + '\n')
+			line_counter += 1.0
+	train_final.close()
+	dev_final.close()
 
 def read_every_data_file_and_create_initial_files(initial_x_file_path, initial_y_file_path, number_of_folders, number_of_files):
 	number_of_files_read = 0 # Can remove, but nice for the report best regards siljus christus
@@ -87,14 +100,16 @@ vocabulary_size = 1000
 vocabulary_path = './vocabulary.txt'
 x_train_initial_path = './x_train_init.txt'
 y_train_initial_path = './y_train_init.txt'
-x_train_spell_check = './x_train_spell_check.txt'
-y_train_spell_check = './y_train_spell_check.txt'
+x_train_spell_check_path = './x_train_spell_check.txt'
+y_train_spell_check_path = './y_train_spell_check.txt'
 x_train_final_path = './x_train.txt'
 y_train_final_path = './y_train.txt'
+x_dev_path = './x_dev.txt'
+y_dev_path = './y_dev.txt'
 
 def generate_all_files():
 	# Remove all files if exists
-	all_files = [x_train_initial_path, y_train_initial_path, x_train_spell_check, y_train_spell_check, x_train_final_path, y_train_final_path, vocabulary_path]
+	all_files = [x_train_initial_path, y_train_initial_path, x_train_spell_check_path, y_train_spell_check_path, x_train_final_path, y_train_final_path, vocabulary_path, x_dev_path, y_dev_path]
 	for filename in all_files:
 		try:
 			os.remove(filename)
@@ -105,16 +120,17 @@ def generate_all_files():
 	read_every_data_file_and_create_initial_files(x_train_initial_path, y_train_initial_path, 1, 11)
 
 	print 'Spellchecker for the initial files, create new spell checked files...' 
-	replace_mispelled_words_in_file(x_train_initial_path, x_train_spell_check, misspelled_words_path)
-	replace_mispelled_words_in_file(y_train_initial_path, y_train_spell_check, misspelled_words_path)
+	replace_mispelled_words_in_file(x_train_initial_path, x_train_spell_check_path, misspelled_words_path)
+	replace_mispelled_words_in_file(y_train_initial_path, y_train_spell_check_path, misspelled_words_path)
 
 	print 'Creating vocabulary...'
-	sorted_dict = find_dictionary(x_train_spell_check, y_train_spell_check)
+	sorted_dict = find_dictionary(x_train_spell_check_path, y_train_spell_check_path)
 	create_vocabulary(sorted_dict, vocabulary_path, vocabulary_size)
 
 	print 'Creating final files...'
-	create_final_files(x_train_spell_check, x_train_final_path, vocabulary_path)
-	create_final_files(y_train_spell_check, y_train_final_path, vocabulary_path)
+	create_final_files(x_train_spell_check_path, x_train_final_path, vocabulary_path, x_dev_path, dev_size_fraction=0.1)
+	create_final_files(y_train_spell_check_path, y_train_final_path, vocabulary_path, y_dev_path, dev_size_fraction=0.1)
+
 
 
 generate_all_files()
