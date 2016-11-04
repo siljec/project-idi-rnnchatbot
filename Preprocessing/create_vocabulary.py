@@ -1,6 +1,7 @@
 import operator, collections
 from tensorflow.python.platform import gfile
 
+
 def find_dictionary(x_train, y_train):
 	dictionary = {}
 
@@ -27,14 +28,21 @@ def find_dictionary(x_train, y_train):
 
 
 def create_vocabulary(sorted_dict, vocab_path, vocab_size):
-	vocabulary = open(vocab_path, 'a')
-	vocabulary.write('_UNK_' + '\n')
+	INIT_TOKENS = ['_PAD', '_GO', '_EOS', '_EOT', '_UNK']
+
+	vocabulary = open(vocab_path, 'w')
+
+	for token in INIT_TOKENS:
+		vocabulary.write(token + '\n')
+
 	counter = 0
 	for key in sorted_dict:
-		vocabulary.write(str(key[0])+ '\n')
-		counter += 1
+		if key[0] not in INIT_TOKENS:
+			vocabulary.write(str(key[0])+ '\n')
+			counter += 1
 		if counter > vocab_size:
 			break
+
 	vocabulary.close()
 
 
@@ -51,7 +59,7 @@ def read_vocabulary_from_file(vocabulary_path):
 		raise ValueError("Vocabulary file %s not found.", vocabulary_path)
 
 
-def encode_sentence(sentence, dictionary, unk_id = 0):
+def encode_sentence(sentence, dictionary, unk_id = 4):
 	# Extract first word (and don't add any space)
 	if not sentence:
 		return ""
