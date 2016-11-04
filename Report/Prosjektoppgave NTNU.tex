@@ -3,6 +3,7 @@
 \usepackage{hyperref}
 \usepackage{url}
 \usepackage{graphicx}
+\usepackage[colorinlistoftodos]{todonotes}
 
 
 \title{Project Task: Chatbot}
@@ -53,17 +54,17 @@ or
 
 Option 2 ) We will study the current state of art of RNN chatbots, focusing on the differences between the generative model and the retrieval model. Further, we will implement one/both the models, in order to have a foundation for which model we will work on for our master thesis. 
 
-We will start with our motivation for this project. Further we will explain the Recurrent Neural Network, and emphasize why it is the best tool for making a chatbot. A lot of research has been done on language modelling, and we will study the current state of art of models used for chatbots and for other similar fields. Write more about the next sections** 
+We will start with our motivation for this project. Further we will explain the Recurrent Neural Network, and emphasize why it is the best tool for making a chatbot. A lot of research has been done on language modelling, and we will study the current state of art of models used for chatbots and for other similar fields. \todo[inline]{Write more about the next sections** }
 
 \section{Motivation}
 Even though conversational agents is a hot topic of research, you do not encounter many intelligent and useful chatbots in your everyday life. We are just not there yet. But imagine all the possibilities a general and intelligent chatbot could give us. We believe that exploring new models used for chatbots and improve the current state of art will make the foundation for new innovative solutions that we, in the future, will take for granted. 
 
-Write more**
+\todo[inline]{Write more**}
 
 \section{RNN}
 A vanilla RNN implementation is a neural network that uses its own calculations as inputs. The network is more complex than a ordinary neural network, but the architecture is really much the same. For training purposes, the most common way is to use Stochastic Gradient Descent (SGD), but since the parameters are shared by all time steps in the network we need to change how we calculate the gradients for SGD. Back-propagation Through Time (BPTT) is one of the popular solutions. By doing this, the network is able to have some conditions between the input, which could be beneficial in the means of conversations. However, a vanilla RNN is unable to learn dependencies between words that are several steps away, not to mention repliques away. With this as a guideline**, Long Short-Term Memory (LSTM) has gained better results as this kind of cells are able to create dependencies between words further away from each other then the original RNN. Vanishing gradients have also been a big problem, and a LSTM architecture is one improvement to this.
 
-(Recurrent neural networks can learn to model language - why is it useful for language processing - Write more**)
+\todo[inline]{(Recurrent neural networks can learn to model language - why is it useful for language processing - Write more**)}
 
 \section{State of the Art}
 Different papers of how we can design a better conversational agent has been proposed during the recent years. The authors have different perspective and thoughts when it comes to modelling the best conversational agent. We differ between two main categories of conversational system models: retrieval based and generative based. The first architecture uses a repository of predefined responses and the latter will generate new sentences, which it may not have encountered before. There are pros and cons with both approaches, and both (Shang et al. 2015) and (Lowe et al.) describes why one model is better than the other with different point of view. 
@@ -74,32 +75,51 @@ It is important to note that compared to the chatbot challenge, the translation 
 
 In 2016 (Kalchbrenner et al. 2016) introduced Grid Long Short-Term Memory which can have $N$ dimensions. This $N$-dimensional network consists of LSTM cells arranged in a multidimensional grid that can be applied to several data structures, including sequences and higher dimensional data such as images. They did several experiments with their proposed model, and observed the advantages of their architecture compared to the regular LSTM network. One of the experiments used a **** two 2-dimensional grid of 3-LSTM blocks, to translate from Chinese to English, with great success. The processing is bidirectional, as one dimension processes the source sentence whereas the other dimension produces the target sentence. Unlike the simple LSTM architecture, the proposed Grid LSTM network will repeatedly scan the source sentence on each generated word. Another feature is that the source words and target words are projected on two different sides of the Grid LSTM, ensuring that the vectors will interact closely without being conflated. We will describe the Grid LSTM in detail in section XX. 
 
-There is an obvious advantage to the generative model, but there are several reasons for why the current proposed generative models are not good enough for conversational agents, and though it has decent results for short text conversations, it is not good enough for longer sentences. The grammar may be wrong, and the structure of the sentence may not make sense at all. These problems are solved with the retrieval based model, as the sentences is picked from a fixed set, without grammar errors. Several papers has looked towards this approach (Lowe et al. 2016 +++). They consider a TF-IDF (term frequency-inverse document frequency) approach, as well as an RNN and a LSTM approach. The RNN version consists of one encoder RNN, used to encode the given context, and another RNN which generates a response by using beam-search. The major difference between (Lowe et al. 2016) and the other mentioned papers is that they are concerned with classification of responses, instead of generation. In addition to the RNN model, they consider the same architecture but changed the hidden units to LSTM units in order to model longer-term dependencies. Their results showes that the LSTM model is significantly better than pure RNN and TF-IDF evaluating with Recall@k.
+There is an obvious advantage to the generative model, but there are several reasons for why the current proposed generative models are not good enough for conversational agents, and though it has decent results for short text conversations, it is not good enough for longer sentences. The grammar may be wrong, and the structure of the sentence may not make sense at all. These problems are solved with the retrieval based model, as the sentences is picked from a fixed set, without grammar errors. Several papers has looked towards this approach (Lowe et al. 2016 +++). They consider a TF-IDF (term frequency-inverse document frequency) approach, as well as an RNN and a LSTM approach. The RNN version consists of one encoder RNN, used to encode the given context, and another RNN which generates a response by using beam-search. The major difference between (Lowe et al. 2016) and the other mentioned papers is that they are concerned with classification of responses, instead of generation. In addition to the RNN model, they consider the same architecture but changed the hidden units to LSTM units in order to model longer-term dependencies. Their results shows that the LSTM model is significantly better than pure RNN and TF-IDF evaluating with Recall@k.
 
 \section{Exploring datasets}
 During the last years, a lot of qualitative, as well as quantitative, datasets have been made available online. However, to find the perfect dataset for a chatbot is still a challenge. Conversations are often private and hence a seldom resource in order to train a chatbot. Opensubtitles[KILDE], reddit comments[KILDE] and twitter comments[KILDE] have all been used, but has the significant drawback of high noise. The conversations are often just replies or short input to a problem. Chatbots would do their best utility if they were able to answer questions from the user, and hence we would need a dataset that could learn the agent to give meaningful responses.
 
-We are aiming for a closed-domain chatbot, that could serve as a customer support employee which means that we should struggle to find old customer support datasets or a FAQ based resource. The Ubuntu Dialogue Corpus, which is a massive set of 1 million multi-turn dialogues \cite{Lowe}, will be a good start for us. The conversations here are of a minimum of 3 turns each, with an average of 8. %(DET ER PAPERET SOM HAR GJORT DETTE NB NB) In addition to the Ubuntu Dialogue Corpus, and even more qualitatively, we might be able to use a private customer support dataset given by Telenor. (MER HER NÅR VI VET HVA SOM SKJER)
+We are aiming for a closed-domain chatbot, that could serve as a customer support employee which means that we should struggle to find old customer support datasets or a FAQ based resource. The Ubuntu Dialogue Corpus, which is a massive set of 1 million multi-turn dialogues \cite{Lowe}, will be a good start for us.  %(DET ER PAPERET SOM HAR GJORT DETTE NB NB) In addition to the Ubuntu Dialogue Corpus, and even more qualitatively, we might be able to use a private customer support dataset given by Telenor. (MER HER NÅR VI VET HVA SOM SKJER)
 
 \section{Preprocessing data}
 All data comes in a greater or lesser extent of noise. Some of this is hard to optimize, but others such as typos and abbreviations is something we can get rid of and hence, improve the quality of the dataset. Normalizer \cite{Normalizer} is a library that normalize, clean and fix text that could help us with this. To tokenize the words, NLTK \cite{NLTK} is another library doing this exactly and as a supplementary service, it can also display a parse tree that can be convenient to us.
 
-After tokenize our words, we need to create a dictionary containing the $n$ most common words, and replacing the others with a $<UNK>$ token. The reason for this is to improve both learning time and the result as knowing more than $n$ words most likely does not make our bot neither more understandable nor useful. In addition we will have to tell our network when a sentence starts and ends by adding the tokens $<GO>$ and $<EOS>$, respectively.
+After tokenizing our words, we need to create a dictionary containing the $n$ most common words, and replacing the others with a $<UNK>$ token. The reason for this is to improve both learning time and the result as knowing more than $n$ words most likely does not make our bot neither more understandable nor useful. In addition we will have to tell our network when a sentence starts and ends by adding the tokens $<GO>$ and $<EOS>$, respectively.
+
+\section{Ubuntu Dialogue Corpus}
+The Ubuntu Dialogue Corpus was used in the paper by (Lowe et al.). The dataset contains almost 1 million multi-turn dialogues, with a total of over 7 million utterances and 100 million words, making it a good fit for a conversational system. It is a closed domain dataset, where the data is extracted from he Ubuntu chat logs, used to receive technical support for various Ubuntu-related problems. \cite{Lowe}
+
+\includegraphics[scale=0.5]{tsv_file_example} \newline
+
+We downloaded the dataset using the script provided from \cite{Ubuntuv2}. The script will download all the .tsv (tab separated values) files, consisting of the exact time for when the message was sent, username of the person who sent the message, username of the receiver and the message itself. The preprocessing script which came with \cite{Ubuntuv2} will preprocess the data to be a good fit for a retrieval based model, where it will structure the data with a context, the true response, several random responses, and labels indicating if a response was correct for the context. We decided to preprocess the .tsv files from scratch, to get the data in our desired format.
+
+We want one x\_train file, and one y\_train file, where the content in line 1 in the y\_train file is the response to line 1 in the x\_train file, and so on. The first step in making these files, is to read all the .tsv files and strip each line to only consist of the actual message. Further we need to keep track of the conversation initiator, as we always want to fill the x\_train file with the his/hers messages. At this point, we will have two separate files where all the problems should be in the x\_train file and all of the helping responses in y\_train. Quite often, the same user sends several messages in a row. In order to satisfy our format, it is important to merge this line into one, so that line $a$ in x\_train corresponds to line $a$ in y\_train. We separate the different sentences with an $\_EOS\_$ (end of sentence) token, and further ends the line with $\_EOT\_$ (end of turn) token.
+
+Now, we preprocess the files further by using a spellchecker. We have a file consisting of more than xxx common misspellings and abbreviations, e.g. $teh - the$, $didn't - did not$, etc. We run through all the words, and replace a misspelled word or an abbreviated word to the correct one. 
+
+The next step is to create the vocabulary based on the files we have generated so far. We enumerate all the words, and create a file consisting of a word on each line, sorted by the decreasing number of occurrences of each word***. Further we will encode the x\_train and y\_train files, so a word will be replaced with the index for that word in the vocabulary file. 
+
+Finally, we use last $10\%$ of the training files as test files. 
+
+
+
+
 
 \section{Architecture}
-We described RNN in section XX. In this section we will take a look at the .. Write more**
+\todo[inline]{We described RNN in section XX. In this section we will take a look at the .. Write more**}
 
 \subsection{Sequence to sequence model}
 \includegraphics[scale=0.5]{seq2seq} \newline
 \textit{Figure x: Sequence to Sequence, from Tensorflow \cite{seq2seq}. Each box in the picture above represents a cell of the RNN } \newline
 
-We mentioned in the section about RNN that a network can learn to model a language**(TODO). In this section we describe the Sequence to Sequence model, which can generate a meaningful based on some given input. The sequence to sequence model is often referred to as an Encoder-Decoder architecture, as it consists of two RNNs: an encoder that processes the input and a decoder that generates the output. Encoder and decoder can share weights or use a different set of parameters
+We mentioned in the section about RNN that a network can learn to model a language \todo{Do this}. In this section we describe the Sequence to Sequence model, which can generate a meaningful based on some given input. The sequence to sequence model is often referred to as an Encoder-Decoder architecture, as it consists of two RNNs: an encoder that processes the input and a decoder that generates the output. Encoder and decoder can share weights or use a different set of parameters
 
 In the following sub sections we will describe the most common cells used for Sequence to Sequence modelling, and further look at extensions of these cell. 
 
 \subsection{LSTM}
 \includegraphics[scale=0.5]{lstm_cells} \newline
-\textit{Figure 1: LSTM cells. TODO: change figure so that it is easy to see the forget gate etc.. } \newline
+\textit{Figure 1: LSTM cells. \todo{Change figure so that it is easy to see the forget gate etc..} } \newline
 
 Long short-term memory (LSTM) is an RNN architecture first proposed in 1997 \cite{LSTM} which has been increasingly popular after its origin. The LSTMs are able to learn long term dependencies in a greater extent than before. The layer in each repeating module in the RNN is replaced with a LSTM cell and this is where the magic happens. The most important in the LSTM cell is the state. This is like a conveyor belt where the history on it may or may not be affected by new data fed into the module. The change of the state is dependent of the three gates the cell is built up of. First, we have the \textit{forget gate} which decides how much of the old history in the state that should be carried on. All of the gates consists of a sigmoid function outputs values between zero and one. If the forget gate outputs a value of one, it indicates that the all of the history should go through, while a value of zero means that nothing should pass. The second gate, the input gate, decides how much of the new stuff, the input, that should be added to the state. Values close to one means that all of the input should be added. Finally the output gate tells how much of the state that we should output.
 
@@ -107,13 +127,13 @@ Long short-term memory (LSTM) is an RNN architecture first proposed in 1997 \cit
 The resent years, Gated Recurrent Units (GRU), have been very popular as an alternative to the LSTM. The cell consists of only two gates, \textit{reset} and \textit{update} gate. By reducing the number of gates, the model becomes easier to train and hence we get a performance gain, as well as it is easier to implement. Since it first use in 2004 \cite{Cho} it has shown good results, though it is performing slightly worse than LSTM, but the reduce in complexity has made it to a popular choice. However, the architecture is still new and not as good researched as LSTMs, which may result in discovering new drawbacks during the next years.
 
 \subsection{Stacked LSTM}
-As the popularity of the LSTMs increased, different setups of the cell and the network were tested out. Stacked LSTM is really similar to the standard LSTM, and the only difference is that there are several layers stacked on top of each other \cite{gridLSTM}. This means that the output from one layer of LSTM cells will go directly into another layer of LSTM cells.
+As the popularity of the LSTMs increased, different setups of the cell and the network were further researched. Stacked LSTM is simply a network consisting of several LSTM layers. \cite{gridLSTM}. This means that the output from one layer of a LSTM cell will go directly into another layer of LSTM cell.
 
 \includegraphics[scale=0.4]{stacked_vs_2dgrid} \newline
-\textit{Figure 2**: Stacked LSTM vs 2D-Grid LSTM. Each block consists of several LSTM cells (Shaded rectangles). The 2D-Grid LSTM has LSTM cells along the depth dimension too, i.e. the layers are also connected. **Confuisng figure, make a new one}
+\textit{Figure 2**: Stacked LSTM vs 2D-Grid LSTM. Each block consists of several LSTM cells (Shaded rectangles). The 2D-Grid LSTM has LSTM cells along the depth dimension too, i.e. the layers are also connected. \todo{**Confusing figure, make a new one}}
 
 \subsection{Grid LSTM}
-The Grid LSTM is an extension of the LSTM cell, and a network (Kalchbrenner et al) \cite{Kalchbrenner} proposed in 2016**(version3)**. It is simply a network of LSTM cells arranged in a multidimensional grid. The network differs from existing deep LSTM architectures in that the depth dimension is treated like the other dimensions. Meaning that the cells are connected between the layers, and not just within the layers. TODO: What is the goal.**
+The Grid LSTM is an extension of the LSTM cell, and a network (Kalchbrenner et al) \cite{Kalchbrenner} proposed in 2016**(version3)**. It is simply a network of LSTM cells arranged in a multidimensional grid. The network differs from existing deep LSTM architectures in that the depth dimension is treated like the other dimensions. Meaning that the cells are connected between the layers, and not just within the layers. \todo{ What is the goal.**}
 
 One dimensional Grid LSTM is analogous to a feed-forward network that uses LSTM cells. Two dimensional Grid LSTM corresponds to the Stacked LSTM (A network with multiple LSTM layers), but it adds cells along the depth dimension too. If we have three or more dimensions, we have a Multidimensional LSTM, but it differs from this model by having the cells along the depth dimension, as well as we have a N-way interaction that is not prone to the instability present in Multi-Dimensional LSTM.**
 
@@ -122,12 +142,12 @@ One dimensional Grid LSTM is analogous to a feed-forward network that uses LSTM 
 \includegraphics[scale=0.4]{gridblocks} \newline
 \textit{Figure 3**: The structure of different blocks}
 
- When we talk about the Grid LSTM, we say that the architecture consists of several blocks. The structure of the blocks for different networks are illustrated in figure XX**. The standard LSTM block has one LSTM cell, i.e. it has a self loop and it can output the hidden state. The 1D Grid LSTM does not have any self loops, as it is only a cell in a feed-forward network and it is not recurrent. The 2D Grid LSTM block consists of two LSTM cells, one operates in the vertical dimension** (as in an ordinary LSTM) and the other cell (operates in the horizontal dimension) or (operates in the depth, connecting the different layers)**. The 3D Grid LSTM operates in one additional dimension.** 
+ When we talk about the Grid LSTM, we say that the architecture consists of several blocks. The structure of the blocks for different networks are illustrated in figure XX\todo{**Create this}. The standard LSTM block has one LSTM cell, i.e. it has a self loop and it can output the hidden state. The 1D Grid LSTM does not have any self loops, as it is only a cell in a feed-forward network and it is not recurrent. The 2D Grid LSTM block consists of two LSTM cells, one operates in the vertical dimension** (as in an ordinary LSTM) and the other cell (operates in the horizontal dimension) or (operates in the depth, connecting the different layers)**. The 3D Grid LSTM operates in one additional dimension.** 
 
 
 \includegraphics[scale=0.5]{3dgridlstm} \newline
 \subsubsection{Grid LSTM Architecture for Sequence}
- Because we study a sequence, the 2D-Grid LSTM is of our interest. The model used for the translation problem in \cite{Kalchbrenner} uses one dimension to process the source sentence whereas the other dimension produces the target sentence. The network will repeatedly scan the source sentence for each generated target word. Two stacked two-dimensional grids, operating in the opposite directions, is used to increase capacity and help with learning longer scale translation patterns by giving us a bidirectional processing. The resulting model is a three-dimensional Grid LSTM where hierarchy grows along the third dimension (the depth of the network). The block in a Grid LSTM receives N hidden vectors $h_1, ..., h_N$ as well as N memory vectors $m'_1, ..., m'_N$ as input, just as for multidimensional LSTM where the the block consists of N dimensions. The block outputs, however, N hidden vectors and N memory vectors that are all very distinct. The block will then compute one transform LSTM for each dimension. **Write more
+ Because we study a sequence, the 2D-Grid LSTM is of our interest. The model used for the translation problem in \cite{Kalchbrenner} uses one dimension to process the source sentence whereas the other dimension produces the target sentence. The network will repeatedly scan the source sentence for each generated target word. Two stacked two-dimensional grids, operating in the opposite directions, is used to increase capacity and help with learning longer scale translation patterns by giving us a bidirectional processing. The resulting model is a three-dimensional Grid LSTM where hierarchy grows along the third dimension (the depth of the network). The block in a Grid LSTM receives N hidden vectors $h_1, ..., h_N$ as well as N memory vectors $m'_1, ..., m'_N$ as input, just as for multidimensional LSTM where the the block consists of N dimensions. The block outputs, however, N hidden vectors and N memory vectors that are all very distinct. The block will then compute one transform LSTM for each dimension. \todo{**Write more}
 
 %-----
 
@@ -148,14 +168,19 @@ One dimensional Grid LSTM is analogous to a feed-forward network that uses LSTM 
 
 \section{Challenges}
 \begin{itemize}
-    \item TBA
+    \item Noisy dataset. Even though the Ubuntu Dialogue Corpus in categorized as a closed domain dataset,
     \item TBA 
 \end{itemize}
 
+\section{Baseline}
+
+We implemented a sequence to sequence model as described in (Sutskever et. al, Vinyals et. al) with some modifications. This was straight forward using Tensorflow's sequence2sequence model. We changed the number of layers (2), and number of neurons (4096) in each layer, and left the rest of the parameters unchanged.
+
+The mode requires a vocabulary, a training set consisting of the an input and the true output, an a test set. The data received from \cite{Ubuntu} was formatted differently, i.e. we needed to preprocess the data further as described in section XX.
+
 \section{Experimental part}
 TBA
-Test 
-\section{Exploring data sets}
+
 
 \begin{itemize}
     \item WMT'14 Translation Data set (Sequence to Sequence Paper). Open source.
@@ -199,6 +224,11 @@ TBA
 [Kalchbrenner et al. v3 2016] https://arxiv.org/pdf/1507.01526.pdf
 \bibitem{seq2seq}
 Sequence to Sequence model by Tensorflow. https://www.tensorflow.org/versions/r0.11/tutorials/seq2seq/index.html\#sequence-to-sequence-models
+\bibitem{Ubuntuv2}
+[Ubuntu Dialogue Corpus v2]https://github.com/rkadlec/ubuntu-ranking-dataset-creator
+\bibitem{Ubuntuv1}
 
+http://cs.mcgill.ca/~jpineau/datasets/ubuntu-corpus-1.0/
 \end{thebibliography} http://arxiv.org/abs/0705.2011
 \end{document}
+
