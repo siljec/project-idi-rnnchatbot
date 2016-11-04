@@ -83,9 +83,9 @@ During the last years, a lot of qualitative, as well as quantitative, datasets h
 We are aiming for a closed-domain chatbot, that could serve as a customer support employee which means that we should struggle to find old customer support datasets or a FAQ based resource. The Ubuntu Dialogue Corpus, which is a massive set of 1 million multi-turn dialogues \cite{Lowe}, will be a good start for us.  %(DET ER PAPERET SOM HAR GJORT DETTE NB NB) In addition to the Ubuntu Dialogue Corpus, and even more qualitatively, we might be able to use a private customer support dataset given by Telenor. (MER HER NÅR VI VET HVA SOM SKJER)
 
 \section{Preprocessing data}
-All data comes in a greater or lesser extent of noise. Some of this is hard to optimize, but others such as typos and abbreviations is something we can get rid of and hence, improve the quality of the dataset. Normalizer \cite{Normalizer} is a library that normalize, clean and fix text that could help us with this. To tokenize the words, NLTK \cite{NLTK} is another library doing this exactly and as a supplementary service, it can also display a parse tree that can be convenient to us.
+All data comes in a greater or lesser extent of noise. Some of this is hard to optimize, but others such as typos and abbreviations is something we can get rid of and hence, improve the quality of the dataset. We used the Normalizer's \cite{Normalizer_spellfix} list of words that is often misspelled to correct typos. In addition we supplemented the file to extend typical abbreviations such as "I'am" to "I am". To tokenize the words, NLTK \cite{NLTK} is another library doing this exactly and as a supplementary service, it can also display a parse tree that can be convenient to us.
 
-After tokenizing our words, we need to create a dictionary containing the $n$ most common words, and replacing the others with a $<UNK>$ token. The reason for this is to improve both learning time and the result as knowing more than $n$ words most likely does not make our bot neither more understandable nor useful. In addition we will have to tell our network when a sentence starts and ends by adding the tokens $<GO>$ and $<EOS>$, respectively.
+After tokenizing our words, we need to create a vocabulary containing the $n$ most common words, and replacing the others with a $<UNK>$ token. The reason for this is to improve both learning time and the result as knowing more than $n$ words most likely does not make our bot neither more understandable nor useful. In addition we will have to tell our network when a sentence starts and ends by adding the tokens $<_GO>$ and $<_EOS>$, respectively.
 
 \section{Ubuntu Dialogue Corpus}
 The Ubuntu Dialogue Corpus was used in the paper by (Lowe et al.). The dataset contains almost 1 million multi-turn dialogues, with a total of over 7 million utterances and 100 million words, making it a good fit for a conversational system. It is a closed domain dataset, where the data is extracted from he Ubuntu chat logs, used to receive technical support for various Ubuntu-related problems. \cite{Lowe}
@@ -214,8 +214,8 @@ TBA
 [Sutskever et al. v3 2014] https://arxiv.org/pdf/1409.3215v3.pdf
 \bibitem{Kalchbrenner}
 [Kalchbrenner et al 2016] https://arxiv.org/pdf/1507.01526.pdf
-\bibitem{Normalizer}
-[Github] https://github.com/superscriptjs/normalizer
+\bibitem{Normalizer_spellfix}
+[Github] https://github.com/superscriptjs/normalizer/blob/master/data/spellfix.txt
 \bibitem{NLTK}
 [Bird, Steven, Edward Loper and Ewan Klein (2009), Natural Language Processing with Python. O’Reilly Media Inc.] http://www.nltk.org/
 \bibitem{LSTM}
