@@ -3,7 +3,12 @@ from create_vocabulary import read_vocabulary_from_file, encode_sentence, create
 from spell_error_fix import replace_mispelled_words_in_file
 
 def preprocess_training_file(path, x_train_path, y_train_path):
-	
+
+	go_token = ""
+	eos_token = " _EOS "
+	eot_token = ""
+
+
 	user1_first_line = True
 
 	x_train = []
@@ -23,33 +28,33 @@ def preprocess_training_file(path, x_train_path, y_train_path):
 				init_user = current_user
 				previous_user = current_user
 				user1_first_line = False
-				sentence_holder = "_GO "
+				sentence_holder = go_token
 
 			if current_user == previous_user: 		# The user is still talking
-				sentence_holder += text + " _EOS "
+				sentence_holder += text + eos_token
 			else: 									# A new user responds
 				if ('_EOS' in sentence_holder):
-					sentence_holder += "_EOT \n"
+					sentence_holder += eot_token + "\n"
 				else:
-					sentence_holder += " _EOT \n"
+					sentence_holder += eot_token + "\n"
 				if current_user == init_user: 		# Init user talks (should add previus sentence to y_train)
 					y_train.append(sentence_holder)
 				else:
 					x_train.append(sentence_holder)
-				sentence_holder = '_GO ' + text + ' _EOS '
+				sentence_holder = go_token + text + eos_token
 
 			previous_user = current_user
 
 
 	if current_user != init_user:
-		y_train.append(sentence_holder + "_EOT \n")
+		y_train.append(sentence_holder + eot_token + "\n")
 
 	x_train_file = open(x_train_path, 'a')
 	y_train_file = open(y_train_path, 'a')
 
 	for i in range(len(y_train)):
-		x_train_file.write(x_train[i])
-		y_train_file.write(y_train[i])
+		x_train_file.write(x_train[i].strip() + "\n")
+		y_train_file.write(y_train[i].strip() + "\n")
 
 	x_train_file.close()
 	y_train_file.close()
@@ -70,9 +75,9 @@ def create_final_files(source_path, train_path, vocabulary_path, dev_path, dev_s
 	with open(source_path) as fileobject:
 		for line in fileobject:
 			if line_counter < train_size:
-				train_final.write(encode_sentence(line.split(" "), vocabulary) + '\n')
+				train_final.write(encode_sentence(line.strip().split(" "), vocabulary) + '\n')
 			else:
-				dev_final.write(encode_sentence(line.split(" "), vocabulary) + '\n')
+				dev_final.write(encode_sentence(line.strip().split(" "), vocabulary) + '\n')
 			line_counter += 1.0
 	train_final.close()
 	dev_final.close()
