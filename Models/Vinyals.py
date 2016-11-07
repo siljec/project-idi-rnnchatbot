@@ -36,16 +36,18 @@ import os
 import random
 import sys
 import time
+import re
 
 sys.path.insert(0, '../Preprocessing') # To access methods from another file from another folder
 from create_vocabulary import read_vocabulary_from_file
 from tokenize import sentence_to_token_ids
-
+from helpers import replace_misspelled_words_in_sentence
 import numpy as np
 from six.moves import xrange  # pylint: disable=redefined-builtin
 import tensorflow as tf
 
 from tensorflow.models.rnn.translate import seq2seq_model
+
 
 
 tf.app.flags.DEFINE_float("learning_rate", 0.5, "Learning rate.")
@@ -248,6 +250,13 @@ def train():
           print("  eval: bucket %d perplexity %.2f" % (bucket_id, eval_ppx))
         sys.stdout.flush()
 
+def preprocess_input(sentence):
+    sentence = sentence.strip().lower()
+    sentence = re.sub(' +', ' ', sentence)  # Will remove multiple spaces
+    sentence = re.sub('(?<=[a-z])([!?,.])', r' \1', sentence)  # Add space before special characters [!?,.]
+    sentence = replace_misspelled_words_in_sentence(sentence, '../Preprocessing/misspellings.txt')
+    return sentence
+
 
 def decode():
   with tf.Session() as sess:
@@ -262,6 +271,7 @@ def decode():
     sys.stdout.write("Human: ")
     sys.stdout.flush()
     sentence = sys.stdin.readline()
+    sentence = preprocess_input(sentence)
     while sentence:
       # Get token-ids for the input sentence.
       token_ids = sentence_to_token_ids(tf.compat.as_bytes(sentence), vocab)
@@ -284,6 +294,7 @@ def decode():
       print("Human: ", end="")
       sys.stdout.flush()
       sentence = sys.stdin.readline()
+      sentence = preprocess_input(sentence)
 
 
 def self_test():
