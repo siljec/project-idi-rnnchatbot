@@ -45,7 +45,6 @@ import numpy as np
 from six.moves import xrange  # pylint: disable=redefined-builtin
 import tensorflow as tf
 
-from tensorflow.models.rnn.translate import data_utils
 from tensorflow.models.rnn.translate import seq2seq_model
 
 
@@ -56,15 +55,15 @@ tf.app.flags.DEFINE_float("max_gradient_norm", 5.0,
                           "Clip gradients to this norm.")
 tf.app.flags.DEFINE_integer("batch_size", 64,
                             "Batch size to use during training.")
-tf.app.flags.DEFINE_integer("size", 1024, "Size of each model layer.")
-tf.app.flags.DEFINE_integer("num_layers", 2, "Number of layers in the model.")
+tf.app.flags.DEFINE_integer("size", 256, "Size of each model layer.")
+tf.app.flags.DEFINE_integer("num_layers", 1, "Number of layers in the model.")
 tf.app.flags.DEFINE_integer("en_vocab_size", 414, "English vocabulary size.")
 tf.app.flags.DEFINE_integer("fr_vocab_size", 414, "French vocabulary size.")
-tf.app.flags.DEFINE_string("data_dir", "/tmp", "Data directory")
-tf.app.flags.DEFINE_string("train_dir", "/tmp", "Training directory.")
+tf.app.flags.DEFINE_string("data_dir", "./", "Data directory")
+tf.app.flags.DEFINE_string("train_dir", "./", "Training directory.")
 tf.app.flags.DEFINE_integer("max_train_data_size", 0,
                             "Limit on the size of training data (0: no limit).")
-tf.app.flags.DEFINE_integer("steps_per_checkpoint", 50,
+tf.app.flags.DEFINE_integer("steps_per_checkpoint", 10,
                             "How many training steps to do per checkpoint.")
 tf.app.flags.DEFINE_boolean("decode", False,
                             "Set to True for interactive decoding.")
@@ -85,6 +84,19 @@ x_train_path = '../Preprocessing/x_train.txt'
 y_train_path = '../Preprocessing/y_train.txt'
 x_dev_path = '../Preprocessing/x_dev.txt'
 y_dev_path = '../Preprocessing/y_dev.txt'
+
+_PAD = b"_PAD"
+_GO = b"_GO"
+_EOS = b"_EOS"
+_EOT = b"_EOT"
+_UNK = b"_UNK"
+
+PAD_ID = 0
+GO_ID = 1
+EOS_ID = 2
+EOT_ID = 3
+UNK_ID = 4
+
 
 
 def read_data(source_path, target_path, max_size=None):
@@ -116,7 +128,7 @@ def read_data(source_path, target_path, max_size=None):
           sys.stdout.flush()
         source_ids = [int(x) for x in source.split()]
         target_ids = [int(x) for x in target.split()]
-        #target_ids.append(data_utils.EOS_ID)
+        #target_ids.append(EOS_ID)
         for bucket_id, (source_size, target_size) in enumerate(_buckets):
           if len(source_ids) < source_size and len(target_ids) < target_size:
             data_set[bucket_id].append([source_ids, target_ids])
@@ -153,7 +165,7 @@ def train():
   """Train a en->fr translation model using WMT data."""
   # Prepare WMT data.
   print("Preparing WMT data in %s" % FLAGS.data_dir)
-  # x_train, y_train, x_dev, y_dev, _, _ = data_utils.prepare_wmt_data(
+  # x_train, y_train, x_dev, y_dev, _, _ = prepare_wmt_data(
   #     FLAGS.data_dir, FLAGS.en_vocab_size, FLAGS.fr_vocab_size)
   x_train = x_train_path
   y_train = y_train_path
@@ -198,10 +210,8 @@ def train():
 
       # Get a batch and make a step.
       start_time = time.time()
-      encoder_inputs, decoder_inputs, target_weights = model.get_batch(
-          train_set, bucket_id)
-      _, step_loss, _ = model.step(sess, encoder_inputs, decoder_inputs,
-                                   target_weights, bucket_id, False)
+      encoder_inputs, decoder_inputs, target_weights = model.get_batch(train_set, bucket_id)
+      _, step_loss, _ = model.step(sess, encoder_inputs, decoder_inputs, target_weights, bucket_id, False)
       step_time += (time.time() - start_time) / FLAGS.steps_per_checkpoint
       loss += step_loss / FLAGS.steps_per_checkpoint
       current_step += 1
@@ -225,6 +235,7 @@ def train():
         step_time, loss = 0.0, 0.0
         # Run evals on development set and print their perplexity.
         for bucket_id in xrange(len(_buckets)):
+          print(dev_set)
           if len(dev_set[bucket_id]) == 0:
             print("  eval: empty bucket %d" % (bucket_id))
             continue
@@ -253,7 +264,7 @@ def decode():
     sentence = sys.stdin.readline()
     while sentence:
       # Get token-ids for the input sentence.
-      token_ids = data_utils.sentence_to_token_ids(tf.compat.as_bytes(sentence), vocab)
+      token_ids = sentence_to_token_ids(tf.compat.as_bytes(sentence), vocab)
       # Which bucket does it belong to?
       bucket_id = min([b for b in xrange(len(_buckets))
                        if _buckets[b][0] > len(token_ids)])
@@ -266,11 +277,11 @@ def decode():
       # This is a greedy decoder - outputs are just argmaxes of output_logits.
       outputs = [int(np.argmax(logit, axis=1)) for logit in output_logits]
       # If there is an EOS symbol in outputs, cut them at that point.
-      if data_utils.EOT_ID in outputs:
-        outputs = outputs[:outputs.index(data_utils.EOT_ID)]
+      if EOT_ID in outputs:
+        outputs = outputs[:outputs.index(EOT_ID)]
       # Print out French sentence corresponding to outputs.
-      print("Human: ".join([tf.compat.as_str(rev_vocab[output]) for output in outputs]))
-      print("Ola: ", end="")
+      print("Ola: " + " ".join([tf.compat.as_str(rev_vocab[output]) for output in outputs]))
+      print("Human: ", end="")
       sys.stdout.flush()
       sentence = sys.stdin.readline()
 
