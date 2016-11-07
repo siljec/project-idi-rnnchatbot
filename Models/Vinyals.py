@@ -258,6 +258,15 @@ def preprocess_input(sentence):
     return sentence
 
 
+def swap_eos(sentence):
+    sentence_holder = []
+    for word in sentence:
+        if word == '_EOS':
+            sentence_holder.append(' \n')
+        else:
+            sentence_holder.append(word + " ")
+    return sentence_holder
+
 def decode():
   with tf.Session() as sess:
     # Create model and load parameters.
@@ -290,7 +299,9 @@ def decode():
       if EOT_ID in outputs:
         outputs = outputs[:outputs.index(EOT_ID)]
       # Print out French sentence corresponding to outputs.
-      print("Ola: " + " ".join([tf.compat.as_str(rev_vocab[output]) for output in outputs]))
+      output = [tf.compat.as_str(rev_vocab[output]) for output in outputs]
+      output = swap_eos(output)
+      print("Ola: " + " ".join(output))
       print("Human: ", end="")
       sys.stdout.flush()
       sentence = sys.stdin.readline()
