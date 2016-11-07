@@ -45,7 +45,7 @@ import numpy as np
 from six.moves import xrange  # pylint: disable=redefined-builtin
 import tensorflow as tf
 
-import seq2seq_model
+import gridLSTM_model
 #from tensorflow.models.rnn.translate import seq2seq_model
 
 
@@ -142,7 +142,7 @@ def read_data(source_path, target_path, max_size=None):
 def create_model(session, forward_only):
   """Create translation model and initialize or load parameters in session."""
   #dtype = tf.float16 if FLAGS.use_fp16 else tf.float32
-  model = seq2seq_model.Seq2SeqModel(
+  model = gridLSTM_model.GridLSTM_model(
       FLAGS.en_vocab_size,
       FLAGS.fr_vocab_size,
       _buckets,
@@ -293,8 +293,8 @@ def self_test():
   with tf.Session() as sess:
     print("Self-test for neural translation model.")
     # Create model with vocabularies of 10, 2 small buckets, 2 layers of 32.
-    model = seq2seq_model.Seq2SeqModel(10, 10, [(3, 3), (6, 6)], 32, 2,
-                                       5.0, 32, 0.3, 0.99, num_samples=8)
+    model = gridLSTM_model.GridLSTM_model(10, 10, [(3, 3), (6, 6)], 32, 2,
+                                          5.0, 32, 0.3, 0.99, num_samples=8)
     sess.run(tf.initialize_all_variables())
 
     # Fake data set for both the (3, 3) and (6, 6) bucket.
