@@ -168,8 +168,15 @@ class GridRNNCell(rnn_cell.RNNCell):
     with vs.variable_scope(scope or type(self).__name__):  # GridRNNCell
 
       # project input
-      if inputs is not None and sum(inputs.get_shape().as_list()) > 0 and len(
-          conf.inputs) > 0:
+      print("INPUT:     S:")
+      print(inputs)
+      print("inputs is not None", inputs is not None)
+      print("inputs.get_shape()", inputs.get_shape())
+      print("inputs.get_shape().as_list()", inputs.get_shape().as_list())
+      print("sum(inputs.get_shape().as_list())", sum(inputs.get_shape().as_list()))
+      print("sum(inputs.get_shape().as_list()) > 0", sum(inputs.get_shape().as_list()) > 0)
+      print("len(conf.inputs) > 0", len(conf.inputs) > 0)
+      if inputs is not None and sum(inputs.get_shape().as_list()) > 0 and len(conf.inputs) > 0:
         input_splits = array_ops.split(1, len(conf.inputs), inputs)
         input_sz = input_splits[0].get_shape().as_list()[1]
 
