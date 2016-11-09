@@ -18,6 +18,7 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
+#from tensorflow.contrib import layers
 from collections import namedtuple
 
 from tensorflow.python.ops import array_ops
@@ -25,7 +26,6 @@ from tensorflow.python.ops import math_ops
 from tensorflow.python.ops import nn
 from tensorflow.python.ops import variable_scope as vs
 from tensorflow.python.ops import rnn_cell
-from tensorflow.contrib import layers
 
 
 class GridRNNCell(rnn_cell.RNNCell):
@@ -168,14 +168,14 @@ class GridRNNCell(rnn_cell.RNNCell):
     with vs.variable_scope(scope or type(self).__name__):  # GridRNNCell
 
       # project input
-      print("INPUT:     S:")
-      print(inputs)
-      print("inputs is not None", inputs is not None)
-      print("inputs.get_shape()", inputs.get_shape())
-      print("inputs.get_shape().as_list()", inputs.get_shape().as_list())
-      print("sum(inputs.get_shape().as_list())", sum(inputs.get_shape().as_list()))
-      print("sum(inputs.get_shape().as_list()) > 0", sum(inputs.get_shape().as_list()) > 0)
-      print("len(conf.inputs) > 0", len(conf.inputs) > 0)
+      # print("INPUT:     S:")
+      # print(inputs)
+      # print("inputs is not None", inputs is not None)
+      # print("inputs.get_shape()", inputs.get_shape())
+      # print("inputs.get_shape().as_list()", inputs.get_shape().as_list())
+      # print("sum(inputs.get_shape().as_list())", sum(inputs.get_shape().as_list()))
+      # print("sum(inputs.get_shape().as_list()) > 0", sum(inputs.get_shape().as_list()) > 0)
+      # print("len(conf.inputs) > 0", len(conf.inputs) > 0)
       if inputs is not None and sum(inputs.get_shape().as_list()) > 0 and len(conf.inputs) > 0:
         input_splits = array_ops.split(1, len(conf.inputs), inputs)
         input_sz = input_splits[0].get_shape().as_list()[1]
@@ -423,6 +423,7 @@ def _propagate(dim_indices, conf, cell, c_prev, m_prev, new_output, new_state,
                first_call):
   """Propagates through all the cells in dim_indices dimensions.
   """
+  #from tensorflow.contrib import layers
   if len(dim_indices) == 0:
     return
 

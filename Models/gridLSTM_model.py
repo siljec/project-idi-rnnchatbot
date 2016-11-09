@@ -93,6 +93,9 @@ class GridLSTM_model(object):
     self.learning_rate_decay_op = self.learning_rate.assign(self.learning_rate * learning_rate_decay_factor)
     self.global_step = tf.Variable(0, trainable=False)
 
+    if forward_only:
+        self.batch_size = 1
+
     # If we use sampled softmax, we need an output projection.
     output_projection = None
     softmax_loss_function = None
@@ -149,17 +152,18 @@ class GridLSTM_model(object):
     self.decoder_inputs = []
     self.target_weights = []
     for i in xrange(buckets[-1][0]):  # Last bucket is the biggest one.
-      self.encoder_inputs.append(tf.placeholder(tf.int32, shape=[None],
-                                                name="encoder{0}".format(i)))
+      self.encoder_inputs.append(tf.placeholder(tf.int32, shape=[self.batch_size],
+                                                name="encoder{0}".format(i))) #Replaced NONE with batch_size
     for i in xrange(buckets[-1][1] + 1):
-      self.decoder_inputs.append(tf.placeholder(tf.int32, shape=[None],
-                                                name="decoder{0}".format(i)))
-      self.target_weights.append(tf.placeholder(dtype, shape=[None],
-                                                name="weight{0}".format(i)))
+      self.decoder_inputs.append(tf.placeholder(tf.int32, shape=[self.batch_size],
+                                                name="decoder{0}".format(i))) #Replaced NONE with self.batch_size
+      self.target_weights.append(tf.placeholder(dtype, shape=[self.batch_size],
+                                                name="weight{0}".format(i))) #Replaced NONE with batch_size
 
     # Our targets are decoder inputs shifted by one.
     targets = [self.decoder_inputs[i + 1]
                for i in xrange(len(self.decoder_inputs) - 1)]
+
 
     # Training outputs and losses.
     if forward_only:

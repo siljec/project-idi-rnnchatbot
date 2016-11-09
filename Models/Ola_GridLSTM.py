@@ -141,7 +141,7 @@ def read_data(source_path, target_path, max_size=None):
 
 def create_model(session, forward_only):
   """Create translation model and initialize or load parameters in session."""
-  #dtype = tf.float16 if FLAGS.use_fp16 else tf.float32
+  dtype = tf.float16 if FLAGS.use_fp16 else tf.float32
   model = gridLSTM_model.GridLSTM_model(
       FLAGS.en_vocab_size,
       FLAGS.fr_vocab_size,
@@ -152,7 +152,8 @@ def create_model(session, forward_only):
       FLAGS.batch_size,
       FLAGS.learning_rate,
       FLAGS.learning_rate_decay_factor,
-      forward_only=forward_only)
+      forward_only=forward_only,
+      dtype=dtype)
   ckpt = tf.train.get_checkpoint_state(FLAGS.train_dir)
   if ckpt and tf.gfile.Exists(ckpt.model_checkpoint_path):
     print("Reading model parameters from %s" % ckpt.model_checkpoint_path)
@@ -183,11 +184,8 @@ def train():
     print ("Reading development and training data (limit: %d)."
            % FLAGS.max_train_data_size)
     dev_set = read_data(x_dev, y_dev)
-    print('done with dev_set')
     train_set = read_data(x_train, y_train, FLAGS.max_train_data_size)
-    print('done with train_set')
     train_bucket_sizes = [len(train_set[b]) for b in xrange(len(_buckets))]
-    print('done with train_bucket_sizes')
     train_total_size = float(sum(train_bucket_sizes))
     print('done with train_total_size')
 
