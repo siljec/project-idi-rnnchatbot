@@ -46,33 +46,24 @@ from six.moves import xrange  # pylint: disable=redefined-builtin
 import tensorflow as tf
 
 import gridLSTM_model
-#from tensorflow.models.rnn.translate import seq2seq_model
-
 
 
 tf.app.flags.DEFINE_float("learning_rate", 0.5, "Learning rate.")
-tf.app.flags.DEFINE_float("learning_rate_decay_factor", 0.99,
-                          "Learning rate decays by this much.")
-tf.app.flags.DEFINE_float("max_gradient_norm", 5.0,
-                          "Clip gradients to this norm.")
-tf.app.flags.DEFINE_integer("batch_size", 64,
-                            "Batch size to use during training.")
+tf.app.flags.DEFINE_float("learning_rate_decay_factor", 0.99, "Learning rate decays by this much.")
+tf.app.flags.DEFINE_float("max_gradient_norm", 5.0, "Clip gradients to this norm.")
+tf.app.flags.DEFINE_integer("batch_size", 64, "Batch size to use during training.")
 tf.app.flags.DEFINE_integer("size", 256, "Size of each model layer.")
 tf.app.flags.DEFINE_integer("num_layers", 1, "Number of layers in the model.")
 tf.app.flags.DEFINE_integer("en_vocab_size", 414, "English vocabulary size.")
 tf.app.flags.DEFINE_integer("fr_vocab_size", 414, "French vocabulary size.")
 tf.app.flags.DEFINE_string("data_dir", "./Ola_data", "Data directory")
 tf.app.flags.DEFINE_string("train_dir", "./Ola_data", "Training directory.")
-tf.app.flags.DEFINE_integer("max_train_data_size", 0,
-                            "Limit on the size of training data (0: no limit).")
-tf.app.flags.DEFINE_integer("steps_per_checkpoint", 10,
-                            "How many training steps to do per checkpoint.")
-tf.app.flags.DEFINE_boolean("decode", False,
-                            "Set to True for interactive decoding.")
-tf.app.flags.DEFINE_boolean("self_test", False,
-                            "Run a self-test if this is set to True.")
-tf.app.flags.DEFINE_boolean("use_fp16", False,
-                            "Train using fp16 instead of fp32.")
+tf.app.flags.DEFINE_string("log_dir", "./Ola_data/log_dir", "Logging directory.")
+tf.app.flags.DEFINE_integer("max_train_data_size", 0, "Limit on the size of training data (0: no limit).")
+tf.app.flags.DEFINE_integer("steps_per_checkpoint", 10, "How many training steps to do per checkpoint.")
+tf.app.flags.DEFINE_boolean("decode", False, "Set to True for interactive decoding.")
+tf.app.flags.DEFINE_boolean("self_test", False, "Run a self-test if this is set to True.")
+tf.app.flags.DEFINE_boolean("use_fp16", False, "Train using fp16 instead of fp32.")
 
 FLAGS = tf.app.flags.FLAGS
 
@@ -175,6 +166,9 @@ def train():
   x_dev = x_dev_path
   y_dev = y_dev_path
 
+  tf.scalar_summary("cost", cross_entropy)
+  tf.scalar_summary("accuracy", accuracy)
+
   with tf.Session() as sess:
     # Create model.
     print("Creating %d layers of %d units." % (FLAGS.num_layers, FLAGS.size))
@@ -199,6 +193,10 @@ def train():
     step_time, loss = 0.0, 0.0
     current_step = 0
     previous_losses = []
+
+    # Create log writer object
+    summary_writer = tf.train.SummaryWriter(FLAGS.log_dir, graph=tf.get_default_graph())
+
     print('before while true')
     while True:
       # Choose a bucket according to data distribution. We pick a random number
@@ -233,6 +231,9 @@ def train():
         checkpoint_path = os.path.join(FLAGS.train_dir, "Ola.ckpt")
         model.saver.save(sess, checkpoint_path, global_step=model.global_step)
         step_time, loss = 0.0, 0.0
+
+        perplexity_summary = tf.Summary()
+
         # Run evals on development set and print their perplexity.
         for bucket_id in xrange(len(_buckets)):
           print(dev_set)
@@ -246,6 +247,11 @@ def train():
           eval_ppx = math.exp(float(eval_loss)) if eval_loss < 300 else float(
               "inf")
           print("  eval: bucket %d perplexity %.2f" % (bucket_id, eval_ppx))
+          bucket_value = perplexity_summary.value.add()
+          bucket_value.tag = "peplexity_bucket)%d" % bucket_id
+          bucket_value.simple_value = eval_ppx
+
+        summary_writer.add_summary(perplexity_summary, model.global_step.eval())
         sys.stdout.flush()
 
 
