@@ -75,8 +75,8 @@ _buckets = [(5, 10), (10, 15), (20, 25), (40, 50)]
 vocab_path = '../Preprocessing/vocabulary.txt'
 x_train_path = '../Preprocessing/x_train.txt'
 y_train_path = '../Preprocessing/y_train.txt'
-x_dev_path = '../Preprocessing/x_val.txt'
-y_dev_path = '../Preprocessing/y_val.txt'
+x_dev_path = '../Preprocessing/x_dev.txt'
+y_dev_path = '../Preprocessing/y_dev.txt'
 
 _PAD = b"_PAD"
 _GO = b"_GO"
