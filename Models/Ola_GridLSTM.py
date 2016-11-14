@@ -54,8 +54,8 @@ tf.app.flags.DEFINE_float("max_gradient_norm", 5.0, "Clip gradients to this norm
 tf.app.flags.DEFINE_integer("batch_size", 64, "Batch size to use during training.")
 tf.app.flags.DEFINE_integer("size", 256, "Size of each model layer.")
 tf.app.flags.DEFINE_integer("num_layers", 1, "Number of layers in the model.")
-tf.app.flags.DEFINE_integer("en_vocab_size", 414, "English vocabulary size.")
-tf.app.flags.DEFINE_integer("fr_vocab_size", 414, "French vocabulary size.")
+tf.app.flags.DEFINE_integer("en_vocab_size", 100000, "English vocabulary size.")
+tf.app.flags.DEFINE_integer("fr_vocab_size", 100000, "French vocabulary size.")
 tf.app.flags.DEFINE_string("data_dir", "./Ola_data", "Data directory")
 tf.app.flags.DEFINE_string("train_dir", "./Ola_data", "Training directory.")
 tf.app.flags.DEFINE_string("log_dir", "./Ola_data/log_dir", "Logging directory.")
@@ -75,8 +75,8 @@ _buckets = [(5, 10), (10, 15), (20, 25), (40, 50)]
 vocab_path = '../Preprocessing/vocabulary.txt'
 x_train_path = '../Preprocessing/x_train.txt'
 y_train_path = '../Preprocessing/y_train.txt'
-x_dev_path = '../Preprocessing/x_dev.txt'
-y_dev_path = '../Preprocessing/y_dev.txt'
+x_dev_path = '../Preprocessing/x_val.txt'
+y_dev_path = '../Preprocessing/y_val.txt'
 
 _PAD = b"_PAD"
 _GO = b"_GO"
@@ -233,7 +233,7 @@ def train():
                     	  "inf")
                     print("  eval: bucket %d perplexity %.2f" % (bucket_id, eval_ppx))
                     bucket_value = perplexity_summary.value.add()
-                    bucket_value.tag = "peplexity_bucket)%d" % bucket_id
+                    bucket_value.tag = "perplexity_bucket %d" % bucket_id
                     bucket_value.simple_value = eval_ppx
                 summary_writer.add_summary(perplexity_summary, model.global_step.eval())
                 sys.stdout.flush()
