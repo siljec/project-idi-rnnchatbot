@@ -166,9 +166,6 @@ def train():
   x_dev = x_dev_path
   y_dev = y_dev_path
 
-  tf.scalar_summary("cost", cross_entropy)
-  tf.scalar_summary("accuracy", accuracy)
-
   with tf.Session() as sess:
     # Create model.
     print("Creating %d layers of %d units." % (FLAGS.num_layers, FLAGS.size))
