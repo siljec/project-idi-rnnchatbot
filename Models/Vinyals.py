@@ -40,6 +40,7 @@ import re
 
 sys.path.insert(0, '../Preprocessing') # To access methods from another file from another folder
 from create_vocabulary import read_vocabulary_from_file
+from preprocess import generate_all_files
 from tokenize import sentence_to_token_ids
 from helpers import replace_misspelled_words_in_sentence
 import numpy as np
@@ -49,18 +50,17 @@ import tensorflow as tf
 from tensorflow.models.rnn.translate import seq2seq_model
 
 
-
 tf.app.flags.DEFINE_float("learning_rate", 0.5, "Learning rate.")
 tf.app.flags.DEFINE_float("learning_rate_decay_factor", 0.99,
                           "Learning rate decays by this much.")
 tf.app.flags.DEFINE_float("max_gradient_norm", 5.0,
                           "Clip gradients to this norm.")
-tf.app.flags.DEFINE_integer("batch_size", 64,
+tf.app.flags.DEFINE_integer("batch_size", 32,
                             "Batch size to use during training.")
-tf.app.flags.DEFINE_integer("size", 256, "Size of each model layer.")
+tf.app.flags.DEFINE_integer("size", 128, "Size of each model layer.")
 tf.app.flags.DEFINE_integer("num_layers", 1, "Number of layers in the model.")
-tf.app.flags.DEFINE_integer("en_vocab_size", 414, "English vocabulary size.")
-tf.app.flags.DEFINE_integer("fr_vocab_size", 414, "French vocabulary size.")
+tf.app.flags.DEFINE_integer("en_vocab_size", 100000, "English vocabulary size.")
+tf.app.flags.DEFINE_integer("fr_vocab_size", 100000, "French vocabulary size.")
 tf.app.flags.DEFINE_string("data_dir", "./Vinyals_Data", "Data directory")
 tf.app.flags.DEFINE_string("train_dir", "./Vinyals_Data", "Training directory.")
 tf.app.flags.DEFINE_string("log_dir", "./Vinyals_data/log_dir", "Logging directory.")
@@ -101,7 +101,31 @@ EOS_ID = 2
 EOT_ID = 3
 UNK_ID = 4
 
-
+def check_for_needed_files_and_create():
+    if not os.path.isdir("./../../ubuntu-ranking-dataset-creator"):
+        print("Ubuntu Dialogue Corpus not found or is not on the right path. ")
+        print('1')
+        print('cd out from project-idi-rnnchatbot')
+        print('2')
+        print('\t git clone https://github.com/rkadlec/ubuntu-ranking-dataset-creator.git')
+        print('3')
+        print('\t cd ubuntu-ranking-dataset-creator/src')
+        print('4')
+        print('\t ./generate.sh')
+    if not os.path.isfile("./../Preprocessing/x_train.txt"):
+        generate_all_files(FLAGS.en_vocab_size)
+    if not os.path.isfile("./../Preprocessing/y_train.txt"):
+        generate_all_files(FLAGS.en_vocab_size)
+    if not os.path.isfile("./../Preprocessing/x_val.txt"):
+        generate_all_files(FLAGS.en_vocab_size)
+    if not os.path.isfile("./../Preprocessing/y_val.txt"):
+        generate_all_files(FLAGS.en_vocab_size)
+    if not os.path.isfile("./../Preprocessing/x_test.txt"):
+        generate_all_files(FLAGS.en_vocab_size)
+    if not os.path.isfile("./../Preprocessing/y_test.txt"):
+        generate_all_files(FLAGS.en_vocab_size)
+    if not os.path.isfile("./../Preprocessing/vocabulary.txt"):
+        generate_all_files(FLAGS.en_vocab_size)
 
 def read_data(source_path, target_path, max_size=None):
   """Read data from source and target files and put into buckets.
@@ -167,6 +191,8 @@ def create_model(session, forward_only):
 
 def train():
   """Train a en->fr translation model using WMT data."""
+  print("Checking for needed files")
+  check_for_needed_files_and_create()
   # Prepare WMT data.
   print("Preparing WMT data in %s" % FLAGS.data_dir)
   # x_train, y_train, x_dev, y_dev, _, _ = prepare_wmt_data(
@@ -244,7 +270,6 @@ def train():
         perplexity_summary = tf.Summary()
         # Run evals on development set and print their perplexity.
         for bucket_id in xrange(len(_buckets)):
-          print(dev_set)
           if len(dev_set[bucket_id]) == 0:
             print("  eval: empty bucket %d" % (bucket_id))
             continue

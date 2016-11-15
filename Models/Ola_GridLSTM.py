@@ -39,6 +39,7 @@ import time
 
 sys.path.insert(0, '../Preprocessing') # To access methods from another file from another folder
 from create_vocabulary import read_vocabulary_from_file
+from preprocess import generate_all_files
 from tokenize import sentence_to_token_ids
 
 import numpy as np
@@ -91,6 +92,33 @@ EOT_ID = 3
 UNK_ID = 4
 
 
+def check_for_needed_files_and_create():
+    if not os.path.isdir("./../../ubuntu-ranking-dataset-creator"):
+        print("Ubuntu Dialogue Corpus not found or is not on the right path. ")
+        print('1')
+        print('cd out from project-idi-rnnchatbot')
+        print('2')
+        print('\t git clone https://github.com/rkadlec/ubuntu-ranking-dataset-creator.git')
+        print('3')
+        print('\t cd ubuntu-ranking-dataset-creator/src')
+        print('4')
+        print('\t ./generate.sh')
+    if not os.path.isfile("./../Preprocessing/x_train.txt"):
+        generate_all_files(FLAGS.en_vocab_size)
+    if not os.path.isfile("./../Preprocessing/y_train.txt"):
+        generate_all_files(FLAGS.en_vocab_size)
+    if not os.path.isfile("./../Preprocessing/x_val.txt"):
+        generate_all_files(FLAGS.en_vocab_size)
+    if not os.path.isfile("./../Preprocessing/y_val.txt"):
+        generate_all_files(FLAGS.en_vocab_size)
+    if not os.path.isfile("./../Preprocessing/x_test.txt"):
+        generate_all_files(FLAGS.en_vocab_size)
+    if not os.path.isfile("./../Preprocessing/y_test.txt"):
+        generate_all_files(FLAGS.en_vocab_size)
+    if not os.path.isfile("./../Preprocessing/vocabulary.txt"):
+        generate_all_files(FLAGS.en_vocab_size)
+
+
 def read_data(source_path, target_path, max_size=None):
     """Read data from source and target files and put into buckets.
 
@@ -108,6 +136,7 @@ def read_data(source_path, target_path, max_size=None):
       into the n-th bucket, i.e., such that len(source) < _buckets[n][0] and
       len(target) < _buckets[n][1]; source and target are lists of token-ids.
     """
+
     data_set = [[] for _ in _buckets]
     with tf.gfile.GFile(source_path, mode="r") as source_file:
         with tf.gfile.GFile(target_path, mode="r") as target_file:
@@ -156,6 +185,10 @@ def create_model(session, forward_only):
 
 def train():
     """Train a en->fr translation model using WMT data."""
+
+    print("Checking for needed files")
+    check_for_needed_files_and_create()
+
     # Prepare WMT data.
     print("Preparing WMT data in %s" % FLAGS.data_dir)
     # x_train, y_train, x_dev, y_dev, _, _ = prepare_wmt_data(
