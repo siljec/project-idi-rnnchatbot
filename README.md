@@ -3,28 +3,32 @@
 We want to improve the intelligence of a chatbot by using Grid-LSTM cells instead of ordinary LSTM cells. The paper by Kalchbrenner[1] describes how Grid-LSTM cells imporves the performance of a translation model. The translation model has an encoder-decoder architecture which we can use for a chatbot as well. 
 
 Clone the repository and follow the instructions. 
-
-### Download the Ubuntu Dialogue Corpus
-If you want to train the modesl with the whole dataset, download the Ubuntu Dialogue Corpus from [here](https://github.com/rkadlec/ubuntu-ranking-dataset-creator). 
-NB! This is VERY time consuming.
-
-Navigate to the src folder, and run:
-```sh
-./generate.sh
-```
-This command will start to download a tgz file, and further unpack the content into a dialogs folder. 
 Our folder structure is:
 ```sh
 Parent folder
     |
-    |-- project-idi-rnn
+    |-- project-idi-rnn (Our repository)
     |       |
     |       |-- Models
     |       |
     |       |-- Preprocessing
     |
-    |-- ubuntu-ranking-dataset-creator
+    |-- ubuntu-ranking-dataset-creator (Where we get our data from)
 ```
+
+### Download the Ubuntu Dialogue Corpus
+If you want to train the model with the whole dataset, clone the repository you find [here](https://github.com/rkadlec/ubuntu-ranking-dataset-creator) from the Ubuntu Dialogue Corpus.
+```sh
+git clone https://github.com/rkadlec/ubuntu-ranking-dataset-creator.git
+```
+
+
+Navigate to the src folder, and run:
+```sh
+./generate.sh
+```
+NB! This is VERY time consuming. This command will start to download a tgz file, and further unpack the content into a dialogs folder. 
+
 
 
 ### Create files
@@ -32,6 +36,7 @@ Make sure you the folder structure as described above. In the Preprocessing fold
 ```sh
 python preprocess.py
 ```
+This will maybe take around 20-30 minutes if you do not change the parameters, i.e. it will read all the files. 
 
 ### Start training a model
 In the Models folder, run:
