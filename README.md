@@ -5,22 +5,43 @@ We want to improve the intelligence of a chatbot by using Grid-LSTM cells instea
 Clone the repository and follow the instructions. 
 
 ### Download the Ubuntu Dialogue Corpus
-Download the Ubuntu Dialogue Corpus from [here](https://github.com/rkadlec/ubuntu-ranking-dataset-creator).
-The downloaded files should be in the same folder as the project folder, not in the project folder, unless you want to change the path to Ubuntu Dialogue Corpus in the read_every_data_file_and_create_initial_files method in preprocess.py.
+If you want to train the modesl with the whole dataset, download the Ubuntu Dialogue Corpus from [here](https://github.com/rkadlec/ubuntu-ranking-dataset-creator). 
+NB! This is VERY time consuming.
+
+Navigate to the src folder, and run:
+```sh
+./generate.sh
+```
+This command will start to download a tgz file, and further unpack the content into a dialogs folder. 
+Our folder structure is:
+```sh
+Parent folder
+    |
+    |-- project-idi-rnn
+    |       |
+    |       |-- Models
+    |       |
+    |       |-- Preprocessing
+    |
+    |-- ubuntu-ranking-dataset-creator
+```
+
 
 ### Create files
-In the Preprocessing folder, run:
-$ python preprocess.py
+Make sure you the folder structure as described above. In the Preprocessing folder, run:
+```sh
+python preprocess.py
+```
 
 ### Start training a model
 In the Models folder, run:
 ```sh
-$ python Ola_GridLSTM.py
+python Ola_GridLSTM.py
 ```
 
 ### Chat with Ola:
 ```sh
-$ python Ola_GridLSTM.py --decode
+python Ola_GridLSTM.py --decode
 
 ```
 
@@ -33,7 +54,8 @@ TBA
 
 ### TODOs
  - If someone runs a model, and the files are not there, the model should preprocess the files. If the ubuntu raw files are not there, it should download the .tsv files.
- - 
+ - Generate a small vocabulary and the necessary train, validate and test sets, with a size that github can handle
+ - Change folder structure as described above.. 
 
 
 ### References
