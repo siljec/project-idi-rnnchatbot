@@ -63,6 +63,8 @@ tf.app.flags.DEFINE_integer("en_vocab_size", 414, "English vocabulary size.")
 tf.app.flags.DEFINE_integer("fr_vocab_size", 414, "French vocabulary size.")
 tf.app.flags.DEFINE_string("data_dir", "./Vinyals_Data", "Data directory")
 tf.app.flags.DEFINE_string("train_dir", "./Vinyals_Data", "Training directory.")
+tf.app.flags.DEFINE_string("log_dir", "./Vinyals_data/log_dir", "Logging directory.")
+
 tf.app.flags.DEFINE_integer("max_train_data_size", 0,
                             "Limit on the size of training data (0: no limit).")
 tf.app.flags.DEFINE_integer("steps_per_checkpoint", 10,
@@ -84,8 +86,8 @@ _buckets = [(5, 10), (10, 15), (20, 25), (40, 50)]
 vocab_path = '../Preprocessing/vocabulary.txt'
 x_train_path = '../Preprocessing/x_train.txt'
 y_train_path = '../Preprocessing/y_train.txt'
-x_dev_path = '../Preprocessing/x_val.txt'
-y_dev_path = '../Preprocessing/y_val.txt'
+x_val_path = '../Preprocessing/x_val.txt'
+y_val_path = '../Preprocessing/y_val.txt'
 
 _PAD = b"_PAD"
 _GO = b"_GO"
@@ -171,8 +173,8 @@ def train():
   #     FLAGS.data_dir, FLAGS.en_vocab_size, FLAGS.fr_vocab_size)
   x_train = x_train_path
   y_train = y_train_path
-  x_dev = x_dev_path
-  y_dev = y_dev_path
+  x_val = x_val_path
+  y_val = y_val_path
 
   with tf.Session() as sess:
     # Create model.
@@ -182,7 +184,7 @@ def train():
     # Read data into buckets and compute their sizes.
     print ("Reading development and training data (limit: %d)."
            % FLAGS.max_train_data_size)
-    dev_set = read_data(x_dev, y_dev)
+    dev_set = read_data(x_val, y_val)
     print('done with dev_set')
     train_set = read_data(x_train, y_train, FLAGS.max_train_data_size)
     print('done with train_set')
@@ -201,6 +203,10 @@ def train():
     step_time, loss = 0.0, 0.0
     current_step = 0
     previous_losses = []
+
+    # Create log writer object
+    summary_writer = tf.train.SummaryWriter(FLAGS.log_dir, graph=tf.get_default_graph())
+
     print('before while true')
     while True:
       # Choose a bucket according to data distribution. We pick a random number
@@ -235,6 +241,7 @@ def train():
         checkpoint_path = os.path.join(FLAGS.train_dir, "Vinyals.ckpt")
         model.saver.save(sess, checkpoint_path, global_step=model.global_step)
         step_time, loss = 0.0, 0.0
+        perplexity_summary = tf.Summary()
         # Run evals on development set and print their perplexity.
         for bucket_id in xrange(len(_buckets)):
           print(dev_set)
@@ -248,6 +255,10 @@ def train():
           eval_ppx = math.exp(float(eval_loss)) if eval_loss < 300 else float(
               "inf")
           print("  eval: bucket %d perplexity %.2f" % (bucket_id, eval_ppx))
+          bucket_value = perplexity_summary.value.add()
+          bucket_value.tag = "peplexity_bucket %d" % bucket_id
+          bucket_value.simple_value = eval_ppx
+        summary_writer.add_summary(perplexity_summary, model.global_step.eval())
         sys.stdout.flush()
 
 def preprocess_input(sentence):
