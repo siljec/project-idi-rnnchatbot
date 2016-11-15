@@ -167,6 +167,3 @@ def generate_all_files(vocab_size=100000, val_size_fraction=0.1, test_size_fract
 	seconds = duration % 60
 	print("Time ", minutes, " minutes ", seconds, " seconds to generate all files")
 
-
-
-
