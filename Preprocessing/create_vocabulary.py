@@ -40,7 +40,7 @@ def create_vocabulary(sorted_dict, vocab_path, vocab_size):
 		if key[0] not in INIT_TOKENS:
 			vocabulary.write(str(key[0])+ '\n')
 			counter += 1
-		if counter > vocab_size:
+		if counter >= vocab_size:
 			break
 
 	vocabulary.close()
