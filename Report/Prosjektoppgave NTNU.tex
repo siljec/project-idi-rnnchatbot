@@ -46,25 +46,26 @@ Second version.
 \end{abstract}
 
 \section{Introduction}
-Conversational agents have been a hot topic of research area the past years. With the increasing amount of large conversational data available, we can feed a chatbot with more knowledge and get smarter systems. Several papers has explored how the best versions of certain models can be implemented, yet, we are still not there.
+Conversational agents have been a hot topic of research the past years. With the increasing amount of large conversational data available, we can feed a chatbot with more knowledge and get smarter systems. Several papers has explored how the best versions of certain models can be implemented, yet we are still not there.
 
-Option 1) We will study the current state of art of RNN chatbots. Further, we will compare a Sequence to Sequence architecture using the LSTM cells with the N-Grid LSTM architecture, proposed by (Kalchbrenner et al. 2016), using the data set XX. 
+Our goal is to make the foundation to make a useful chatbot. We will study the current state of art of RNN chatbots. Further, we will compare a Sequence to Sequence architecture using the LSTM cells with the same architecture using Grid-LSTM cells, proposed by (Kalchbrenner et al. 2016), using the Ubuntu Dialogue Corpus \cite{Ubuntuv2}. 
 
-or
+We will start with our motivation for this project. Then we will explain the Recurrent Neural Network, and emphasize why we think it is the best tool for making a chatbot. A lot of research has been done on language modelling, and we will study the current state of art of models used for chatbots and for other similar fields. Then we will take a look at the different sequence modelling approaches, starting at the basic explanation of how it works, to newer architectures presented in \cite{Kalchbrenner}. We investigate different datasets which could be a potential fit for a chatbot, and further study the Ubuntu Dialogue Corpus \cite{Ubuntuv2} and explain why we chose it** and how we preprocess the data. In section 8 we will explain the difficulties around the evaluation of a chatbot, and how we chose to evaluate our models. Further, in section XX we describe our baseline model. before we go in detail about our Grid-LSTM model in the following section. We will describe how we want to work during next semester in "The Road Ahead" section, and finally we sum up what we have explored. 
 
-Option 2 ) We will study the current state of art of RNN chatbots, focusing on the differences between the generative model and the retrieval model. Further, we will implement one/both the models, in order to have a foundation for which model we will work on for our master thesis. 
+\todo[inline]{Write more about the next sections** }
 
-We will start with our motivation for this project. Further we will explain the Recurrent Neural Network, and emphasize why it is the best tool for making a chatbot. A lot of research has been done on language modelling, and we will study the current state of art of models used for chatbots and for other similar fields. \todo[inline]{Write more about the next sections** }
 
 \section{Motivation}
 Even though conversational agents is a hot topic of research, you do not encounter many intelligent and useful chatbots in your everyday life. We are just not there yet. But imagine all the possibilities a general and intelligent chatbot could give us. We believe that exploring new models used for chatbots and improve the current state of art will make the foundation for new innovative solutions that we, in the future, will take for granted. 
 
+SIMEN skriver her
+
 \todo[inline]{Write more**}
 
 \section{RNN}
-A vanilla RNN implementation is a neural network that uses its own calculations as inputs. The network is more complex than a ordinary neural network, but the architecture is really much the same. For training purposes, the most common way is to use Stochastic Gradient Descent (SGD), but since the parameters are shared by all time steps in the network we need to change how we calculate the gradients for SGD. Back-propagation Through Time (BPTT) is one of the popular solutions. By doing this, the network is able to have some conditions between the input, which could be beneficial in the means of conversations. However, a vanilla RNN is unable to learn dependencies between words that are several steps away, not to mention repliques away. With this as a guideline**, Long Short-Term Memory (LSTM) has gained better results as this kind of cells are able to create dependencies between words further away from each other then the original RNN. Vanishing gradients have also been a big problem, and a LSTM architecture is one improvement to this.
+Language modelling is a challenging task, and is a hot topic of research. Research has taught us that a RNN can learn to model a language, which we give several examples of in section 4 about the current state of art. 
 
-\todo[inline]{(Recurrent neural networks can learn to model language - why is it useful for language processing - Write more**)}
+A vanilla RNN implementation is a neural network that uses its own calculations as inputs. The network is more complex than an ordinary neural network, but the architecture is pretty much the same. For training purposes, the most common way is to use Stochastic Gradient Descent (SGD), but since the parameters are shared by all time steps in the network we need to change how we calculate the gradients for SGD. Back-propagation Through Time (BPTT) is one of the popular solutions. By doing this, the network is able to have some conditions between the input, which could be beneficial in the means of conversations. However, a vanilla RNN is unable to learn dependencies between words that are several steps away, not to mention repliques away. With this as a guideline, Long Short-Term Memory (LSTM) has gained better results as this kind of cells are able to create dependencies between words further away from each other then the original RNN. Vanishing gradients have also been a big problem, and a LSTM architecture is one improvement to this.
 
 \section{State of the Art}
 Different papers of how we can design a better conversational agent has been proposed during the recent years. The authors have different perspective and thoughts when it comes to modelling the best conversational agent. We differ between two main categories of conversational system models: retrieval based and generative based. The first architecture uses a repository of predefined responses and the latter will generate new sentences, which it may not have encountered before. There are pros and cons with both approaches, and both (Shang et al. 2015) and (Lowe et al.) describes why one model is better than the other with different point of view. 
@@ -77,43 +78,17 @@ In 2016 (Kalchbrenner et al. 2016) introduced Grid Long Short-Term Memory which 
 
 There is an obvious advantage to the generative model, but there are several reasons for why the current proposed generative models are not good enough for conversational agents, and though it has decent results for short text conversations, it is not good enough for longer sentences. The grammar may be wrong, and the structure of the sentence may not make sense at all. These problems are solved with the retrieval based model, as the sentences is picked from a fixed set, without grammar errors. Several papers has looked towards this approach (Lowe et al. 2016 +++). They consider a TF-IDF (term frequency-inverse document frequency) approach, as well as an RNN and a LSTM approach. The RNN version consists of one encoder RNN, used to encode the given context, and another RNN which generates a response by using beam-search. The major difference between (Lowe et al. 2016) and the other mentioned papers is that they are concerned with classification of responses, instead of generation. In addition to the RNN model, they consider the same architecture but changed the hidden units to LSTM units in order to model longer-term dependencies. Their results shows that the LSTM model is significantly better than pure RNN and TF-IDF evaluating with Recall@k.
 
-\section{Exploring datasets}
-During the last years, a lot of qualitative, as well as quantitative, datasets have been made available online. However, to find the perfect dataset for a chatbot is still a challenge. Conversations are often private and hence a seldom resource in order to train a chatbot. Opensubtitles[KILDE], reddit comments[KILDE] and twitter comments[KILDE] have all been used, but has the significant drawback of high noise. The conversations are often just replies or short input to a problem. Chatbots would do their best utility if they were able to answer questions from the user, and hence we would need a dataset that could learn the agent to give meaningful responses.
 
-We are aiming for a closed-domain chatbot, that could serve as a customer support employee which means that we should struggle to find old customer support datasets or a FAQ based resource. The Ubuntu Dialogue Corpus, which is a massive set of 1 million multi-turn dialogues \cite{Lowe}, will be a good start for us.  %(DET ER PAPERET SOM HAR GJORT DETTE NB NB) In addition to the Ubuntu Dialogue Corpus, and even more qualitatively, we might be able to use a private customer support dataset given by Telenor. (MER HER NÅR VI VET HVA SOM SKJER)
-
-\section{Preprocessing data}
-All data comes in a greater or lesser extent of noise. Some of this is hard to optimize, but others such as typos and abbreviations is something we can get rid of and hence, improve the quality of the dataset. We used the Normalizer's \cite{Normalizer_spellfix} list of words that is often misspelled to correct typos. In addition we supplemented the file to extend typical abbreviations such as "I'am" to "I am". To tokenize the words, NLTK \cite{NLTK} is another library doing this exactly and as a supplementary service, it can also display a parse tree that can be convenient to us.
-
-After tokenizing our words, we need to create a vocabulary containing the $n$ most common words, and replacing the others with a $<UNK>$ token. The reason for this is to improve both learning time and the result as knowing more than $n$ words most likely does not make our bot neither more understandable nor useful. In addition we will have to tell our network when a sentence starts and ends by adding the tokens $<_GO>$ and $<_EOS>$, respectively.
-
-\section{Ubuntu Dialogue Corpus}
-The Ubuntu Dialogue Corpus was used in the paper by (Lowe et al.). The dataset contains almost 1 million multi-turn dialogues, with a total of over 7 million utterances and 100 million words, making it a good fit for a conversational system. It is a closed domain dataset, where the data is extracted from he Ubuntu chat logs, used to receive technical support for various Ubuntu-related problems. \cite{Lowe}
-
-\includegraphics[scale=0.5]{tsv_file_example} \newline
-
-We downloaded the dataset using the script provided from \cite{Ubuntuv2}. The script will download all the .tsv (tab separated values) files, consisting of the exact time for when the message was sent, username of the person who sent the message, username of the receiver and the message itself. The preprocessing script which came with \cite{Ubuntuv2} will preprocess the data to be a good fit for a retrieval based model, where it will structure the data with a context, the true response, several random responses, and labels indicating if a response was correct for the context. We decided to preprocess the .tsv files from scratch, to get the data in our desired format.
-
-We want one x\_train file, and one y\_train file, where the content in line 1 in the y\_train file is the response to line 1 in the x\_train file, and so on. The first step in making these files, is to read all the .tsv files and strip each line to only consist of the actual message. Further we need to keep track of the conversation initiator, as we always want to fill the x\_train file with the his/hers messages. At this point, we will have two separate files where all the problems should be in the x\_train file and all of the helping responses in y\_train. Quite often, the same user sends several messages in a row. In order to satisfy our format, it is important to merge this line into one, so that line $a$ in x\_train corresponds to line $a$ in y\_train. We separate the different sentences with an $\_EOS\_$ (end of sentence) token, and further ends the line with $\_EOT\_$ (end of turn) token.
-
-Now, we preprocess the files further by using a spellchecker. We have a file consisting of more than xxx common misspellings and abbreviations, e.g. $teh - the$, $didn't - did not$, etc. We run through all the words, and replace a misspelled word or an abbreviated word to the correct one. 
-
-The next step is to create the vocabulary based on the files we have generated so far. We enumerate all the words, and create a file consisting of a word on each line, sorted by the decreasing number of occurrences of each word***. Further we will encode the x\_train and y\_train files, so a word will be replaced with the index for that word in the vocabulary file. 
-
-Finally, we use last $10\%$ of the training files as test files. 
-
-
-
-
-
-\section{Architecture}
+\section{Background for Grid-LSTM/Arhcitecture}
 \todo[inline]{We described RNN in section XX. In this section we will take a look at the .. Write more**}
+
+We described a basic Recurrent Neural Network in section 3, now we want to take a closer look at the RNN architecture and different cells we can use. 
 
 \subsection{Sequence to sequence model}
 \includegraphics[scale=0.5]{seq2seq} \newline
 \textit{Figure x: Sequence to Sequence, from Tensorflow \cite{seq2seq}. Each box in the picture above represents a cell of the RNN } \newline
 
-We mentioned in the section about RNN that a network can learn to model a language \todo{Do this}. In this section we describe the Sequence to Sequence model, which can generate a meaningful based on some given input. The sequence to sequence model is often referred to as an Encoder-Decoder architecture, as it consists of two RNNs: an encoder that processes the input and a decoder that generates the output. Encoder and decoder can share weights or use a different set of parameters
+We mentioned in the section about RNN that a network can learn to model a language. In this section we describe the Sequence to Sequence model, which can generate a meaningful based on some given input. The sequence to sequence model is often referred to as an Encoder-Decoder architecture, as it consists of two RNNs: an encoder that processes the input and a decoder that generates the output. Encoder and decoder can share weights or use a different set of parameters
 
 In the following sub sections we will describe the most common cells used for Sequence to Sequence modelling, and further look at extensions of these cell. 
 
@@ -127,7 +102,7 @@ Long short-term memory (LSTM) is an RNN architecture first proposed in 1997 \cit
 The resent years, Gated Recurrent Units (GRU), have been very popular as an alternative to the LSTM. The cell consists of only two gates, \textit{reset} and \textit{update} gate. By reducing the number of gates, the model becomes easier to train and hence we get a performance gain, as well as it is easier to implement. Since it first use in 2004 \cite{Cho} it has shown good results, though it is performing slightly worse than LSTM, but the reduce in complexity has made it to a popular choice. However, the architecture is still new and not as good researched as LSTMs, which may result in discovering new drawbacks during the next years.
 
 \subsection{Stacked LSTM}
-As the popularity of the LSTMs increased, different setups of the cell and the network were further researched. Stacked LSTM is simply a network consisting of several LSTM layers. \cite{gridLSTM}. This means that the output from one layer of a LSTM cell will go directly into another layer of LSTM cell.
+As the popularity of the LSTMs increased, different setups of the cell and the network were further researched. Stacked LSTM is simply a network consisting of several LSTM layers. \cite{Kalchbrenner}. This means that the output from one layer of a LSTM cell will go directly into another layer of LSTM cell.
 
 \includegraphics[scale=0.4]{stacked_vs_2dgrid} \newline
 \textit{Figure 2**: Stacked LSTM vs 2D-Grid LSTM. Each block consists of several LSTM cells (Shaded rectangles). The 2D-Grid LSTM has LSTM cells along the depth dimension too, i.e. the layers are also connected. \todo{**Confusing figure, make a new one}}
@@ -151,9 +126,9 @@ One dimensional Grid LSTM is analogous to a feed-forward network that uses LSTM 
 
 %-----
 
-%Grid LSTM is a network of LSTM cells arranged in a grid of one or more dimensions \cite{gridLSTM}. This is analogues to the stacked LSTM, just with the possibility to add cells along the depth dimension too. A grid LSTM with three or more dimensions, on the other hand, equals a multidimensional LSTM, but with the possibility of having cells not just along the depth dimension.
+%Grid LSTM is a network of LSTM cells arranged in a grid of one or more dimensions \cite{Kalchbrenner}. This is analogues to the stacked LSTM, just with the possibility to add cells along the depth dimension too. A grid LSTM with three or more dimensions, on the other hand, equals a multidimensional LSTM, but with the possibility of having cells not just along the depth dimension.
 
-%The grid LSTM have proven better results than ordinary LSTMs in the context of translation of languages \cite{gridLSTM}. Keeping this in mind, there is a reason to believe that grid LSTM will do good in the use of a chatbot.
+%The grid LSTM have proven better results than ordinary LSTMs in the context of translation of languages \cite{Kalchbrenner}. Keeping this in mind, there is a reason to believe that grid LSTM will do good in the use of a chatbot.
 
 %Skal mest sannsynlig fjernes
 %\section{How to combine retrieval and generative models}
@@ -166,26 +141,78 @@ One dimensional Grid LSTM is analogous to a feed-forward network that uses LSTM 
 %--------------------
 
 
-\section{Challenges}
-\begin{itemize}
-    \item Noisy dataset. Even though the Ubuntu Dialogue Corpus in categorized as a closed domain dataset,
-    \item TBA 
-\end{itemize}
+\section{Exploring datasets}
+During the last years, a lot of qualitative, as well as quantitative, datasets have been made available online. However, to find the perfect dataset for a chatbot is still a challenge. Conversations are often private and hence a seldom resource in order to train a chatbot. Opensubtitles[KILDE], reddit comments[KILDE] and twitter comments[KILDE] have all been used, but has the significant drawback of high noise. The conversations are often just replies or short input to a problem. Chatbots would do their best utility if they were able to answer questions from the user, and hence we would need a dataset that could learn the agent to give meaningful responses.
+
+We are aiming for a closed-domain chatbot, that could serve as a customer support employee which means that we should struggle to find old customer support datasets or a FAQ based resource. The Ubuntu Dialogue Corpus, which is a massive set of 1 million multi-turn dialogues \cite{Lowe}, will be a good start for us.  %(DET ER PAPERET SOM HAR GJORT DETTE NB NB) In addition to the Ubuntu Dialogue Corpus, and even more qualitatively, we might be able to use a private customer support dataset given by Telenor. (MER HER NÅR VI VET HVA SOM SKJER)
+
+\section{Ubuntu Dialogue Corpus}
+The Ubuntu Dialogue Corpus was used in the paper by (Lowe et al.). The dataset contains almost 1 million multi-turn dialogues, with a total of over 7 million utterances and 100 million words, making it a good fit for a conversational system. It is a closed domain dataset, where the data is extracted from he Ubuntu chat logs, used to receive technical support for various Ubuntu-related problems. \cite{Lowe}
+
+\includegraphics[scale=0.5]{tsv_file_example} \newline
+
+We downloaded the dataset using the script provided from \cite{Ubuntuv2}. The script will download all the .tsv (tab separated values) files, consisting of the exact time for when the message was sent, username of the person who sent the message, username of the receiver and the message itself. The preprocessing script which came with \cite{Ubuntuv2} will preprocess the data to be a good fit for a retrieval based model, where it will structure the data with a context, the true response, several random responses, and labels indicating if a response was correct for the context. We decided to preprocess the .tsv files from scratch, to get the data in our desired format.
+
+We want one x\_ file, and one y\_ file, where the content in line 1 in the y\_ file is the response to line 1 in the x\_ file, and so on. The data we get from \cite{Ubuntuv2} consists of several folders consisting of .tsv files. Before we start the preprocessing, we read all the folder names, and then shuffles them. We do this because the downloaded files are sorted chronological and we want the training, validation and test sets to be randomly distributed. 
+
+The first step in making these files, is to read all the .tsv files and strip each line to only consist of the actual message. Further we need to keep track of the conversation initiator, as we always want to fill the x\_ file with the his/hers messages. At this point, we will have two separate files where all the problems should be in the x\_ file and all of the helping responses in y\_ file. Quite often, the same user sends several messages in a row. In order to satisfy our format, it is important to merge this line into one, so that line $a$ in x\_ corresponds to line $a$ in y\_. We separate the different sentences with an $\_EOS\_$ (end of sentence) token.
+
+All data comes with noise, in a greater or lesser extent. Some of the noise is hard to remove, but others such as typos and abbreviations is something we can get rid of and hence, improve the quality of the dataset. We used the Normalizer's \cite{Normalizer_spellfix} list of words that is often misspelled to correct typos. In addition we supplemented the file to contain typical abbreviations such as $I'am$-$I am$, and other typos such as $pasword$-$password$ that we observed in the dataset we chose. We ran through all the words, and replaced a misspelled word or an abbreviated word to the correct one.
+
+After tokenizing our words and replacing misspelled words, we need to create a vocabulary containing the $n$ most common words based on the files we have generated so far. We enumerate all the words, and create a file consisting of the $n$ most common words, with one word at each line, sorted by the decreasing number of occurrences of each word. Further we will encode the x\_train and y\_train files, so that a word will be replaced with the index for that word in the vocabulary file. If we encounter a word that is not in the vocabulary, we use the id for the $UNK$ token. The reason for this is to improve both learning time and the result as knowing more than $n$ words most likely does not make our bot neither more understandable nor useful.
+
+Finally, we use $10\%$ of the training files as validation set, and  $10\%$ as the test set . 
+
+\subsection{Preprocessed data}
+We have a large dataset, it took ~19 minutes to just read all the .tsv files and extract the messages on a 2,6 GHz Intel Core i5 processor. It took in total ~27 minutes to preprocess the data, and to make the training, validation and test sets. 
+
+We read $1852868$ files, and when we are done preprocessing, we have a X\_train and Y\_train file with $4305920$**** turns, a X\_val and Y\_val with $XX$ turns, and a test set with $XX$ turns.
+
+We have in total XXXX** sentences, from XX unique users.
+
+\section{Evaluation}
+Perplexity
+Humans (us typing same sentneces to the different models - må finne passende setninger fra testdata (?) )
 
 \section{Baseline}
+For the baseline, we implemented a sequence to sequence model as described in (Sutskever et. al, Vinyals et. al) with some modifications. This was straight forward using Tensorflow's translation model, described in detail in section 10.1**. The model described in Sutskever and Vinyals is the same, but they use different number of layers and neurons, as well as they use different datasets(dobbeltsjekk). We will justify our network details in section 10.2.
 
-We implemented a sequence to sequence model as described in (Sutskever et. al, Vinyals et. al) with some modifications. This was straight forward using Tensorflow's sequence2sequence model. We changed the number of layers (2), and number of neurons (4096) in each layer, and left the rest of the parameters unchanged.
+\subsection{Tensorflow's Translation Model}
 
-The mode requires a vocabulary, a training set consisting of the an input and the true output, an a test set. The data received from \cite{Ubuntu} was formatted differently, i.e. we needed to preprocess the data further as described in section XX.
-
-\section{Experimental part}
-TBA
+A basic sequence-to-sequence model, as introduced in (Cho et al. 2014), consists of two RNNs: an encoder that processes the input and a decoder that generates the output. Both the encoder and the decoder will consist of RNN cells, most commonly LSTM or GRU cells. To train the model it requires a set of inputs and a set of outputs as integer tensors, where each value is an integer indicating a word, as we described in section [UBUNTU].
 
 
+\subsection{Deciding network details}
+We studied the paper by Vinyals and Sutskever. Vinyals used the same model for different domains, and they also had different network details. For the closed domain "IT helpdesk" they used a single layer LSTM with 1024 memory cells using stochastic gradient descent with gradient clipping. Their vocabulary consisted of the most common 20K words, which included special tokens indicating turn taking and actor. In their other experiment, they had a two-layered LSTM with 4096 memory cells for the OpenSubtitles dataset \cite{OpenSubtitles} having the most frequent 100k words as vocabulary. \cite{Vinyals}. (Sutskever et al) made an English-French translation model, using 4 layers, with 1000 cells at each layer, with an input vocabulary of 160,000 and an output vocabulary of 80,000 \cite{Sutskever}
+
+We decided to use two layers with 4096 memory cells, because we think that the OpenSubtitles dataset has more in common with the Ubuntu Dialogue Corpus. 
+
+\subsection{Results}
+TBA when we have trained it
+
+\section{Experiment: Using Grid LSTM}
+
+\subsection{Approach}
+We build upon the baseline model, and will try to change the cells to GridLSTM cells. 
+
+\subsection{Edit the seq2seq model}
+GridLSTM needs a multidimensional input, and the sequence2sequence used in Vinyals was based on one dimensional LSTM-cells. The error we got when we ran the code was that the input had shape (?, number\_of\_neurons). We needed an integer, and tried with batch\_size, and it worked. When decoding we need to read sentence by sentence, hence the batch\_size is 1. We therefore passed an extra argument to the model class, as we need to know whether we are training the model or need the model for decoding. 
+
+\subsection{Final model}
+
+\subsection{Results}
+
+Time for reading data: 20 min, 5sek.
+
+Time for deleting files, reading data, spell checking, creating vocabulary (everything): 25min, 30sek
+
+
+\section{Challenges}
 \begin{itemize}
-    \item WMT'14 Translation Data set (Sequence to Sequence Paper). Open source.
-   % \item Telenor customer chat. Private (KANSKJE TIL MASTER, MEN IKKE TIL PROSJEKTOPPGAVE)
-    \item Ubuntu Dialogue Corpus. Open source
+    \item \textbf{Noisy dataset}. Even though the Ubuntu Dialogue Corpus in categorized as a closed domain dataset,
+    \item \textbf{Time constraints}. So little time, so much to dooo
+    \item \textbf{Waiting for the right training environment}. It is too time consuming to train on our Macs, where we cannot run Tensorflow on our Mac's GPU. We did not have access to GPU machines with enough disk space until mid November.
+    \item ++
 \end{itemize}
 
 \section{The road ahead}
@@ -197,38 +224,40 @@ TBA
 TBA
 \begin{thebibliography}{1}
 \bibitem{Graves}
-[Graves et al. v1 2007] Multi-Dimensional Recurrent Neural Networks
+Graves A., Fernandez S., Schmidhuber J. Multi-Dimensional Recurrent Neural Networks, https://arxiv.org/abs/0705.2011, v1 2007
 \bibitem{Bahdanau}
-[Bahdanau et al. v7 2016] http://arxiv.org/abs/1409.0473v3
+Bahdanau D, Cho K, Bengio Y, Neural Machine Translation by Jointly Learning to Align and Translate,  https://arxiv.org/abs/1409.0473, v7 2016
 \bibitem{Dodge}
-[Dodge et al. v6 2016] http://arxiv.org/pdf/1511.06931v6.pdf
+Dodge J, Gane A, Zhang X, Bordes A, Chopra S, H.Miller A, Szlam A, Weston J.
+Evaluating Prerequisite Qualities for Learning End-to-End Dialog Systems. http://arxiv.org/pdf/1511.06931v6.pdf, v6 2016
 \bibitem{Lowe}
-[Lowe et al. v3 2016] https://arxiv.org/pdf/1506.08909.pdf
+Lowe R, Pow N, V. Serban I, Pineau J. The Ubuntu Dialogue Corpus: A Large Dataset for Research in Unstructured Multi-Turn Dialogue Systems. https://arxiv.org/abs/1511.06931, v3 2016
 \bibitem{Shang}
-[Shang et al. v2 2015] https://arxiv.org/pdf/1503.02364.pdf
+Shang L, Lu Z, Li H. Neural RespondingMachine for Short-Text Conversation. https://arxiv.org/abs/1503.02364, v2 2015
 \bibitem{Vinyals}
-[Vinyals et al. v3 2015] http://arxiv.org/pdf/1506.05869v3.pdf
+Vinyals O, V. Le Q. A Neural Conversational Model. http://arxiv.org/abs/1506.05869, v3 2015
 \bibitem{Cho}
-[Cho et al. v3 2014] https://arxiv.org/pdf/1406.1078v3.pdf
+Cho K, Merrienboer B, Gulcehre C, Bahdanau D, Bougares F, Schwenk H, Bengio Y. Learning Phrase Representations using RNN Encoder-Decoder for Statistical Machine Translation https://arxiv.org/abs/1406.1078, v3 2014
 \bibitem{Sutskever}
-[Sutskever et al. v3 2014] https://arxiv.org/pdf/1409.3215v3.pdf
-\bibitem{Kalchbrenner}
-[Kalchbrenner et al 2016] https://arxiv.org/pdf/1507.01526.pdf
-\bibitem{Normalizer_spellfix}
-[Github] https://github.com/superscriptjs/normalizer/blob/master/data/spellfix.txt
-\bibitem{NLTK}
-[Bird, Steven, Edward Loper and Ewan Klein (2009), Natural Language Processing with Python. O’Reilly Media Inc.] http://www.nltk.org/
+Sutskever I, Vinyals O, Le Q, Sequence to Sequence Learning with Neural Networks. https://arxiv.org/abs/1409.3215, v3 2014
 \bibitem{LSTM}
-[Hockreiter \& Schimhuber 1997] http://deeplearning.cs.cmu.edu/pdfs/Hochreiter97\_lstm.pdf
-\bibitem{gridLSTM}
-[Kalchbrenner et al. v3 2016] https://arxiv.org/pdf/1507.01526.pdf
-\bibitem{seq2seq}
-Sequence to Sequence model by Tensorflow. https://www.tensorflow.org/versions/r0.11/tutorials/seq2seq/index.html\#sequence-to-sequence-models
-\bibitem{Ubuntuv2}
-[Ubuntu Dialogue Corpus v2]https://github.com/rkadlec/ubuntu-ranking-dataset-creator
-\bibitem{Ubuntuv1}
+Hockreiter S, Schimhuber J, Long Short-Term Memory. http://deeplearning.cs.cmu.edu/pdfs/Hochreiter97\_lstm.pdf, 1997
+\bibitem{Kalchbrenner}
+Kalchbrenner N, Danihelka I, Graves A, Grid Long Term Memory.   https://arxiv.org/abs/1507.01526, v3 2016
 
-http://cs.mcgill.ca/~jpineau/datasets/ubuntu-corpus-1.0/
-\end{thebibliography} http://arxiv.org/abs/0705.2011
+\bibitem{seq2seq}
+Sequence to Sequence model by Tensorflow.   https://www.tensorflow.org/versions/r0.11/tutorials/seq2seq/index.html\#sequence-to-sequence-models
+\bibitem{translationModel}
+Translation model by Tensorflow. https://www.tensorflow.org/versions/r0.11/tutorials/seq2seq/index.html#neural-translation-model
+
+\bibitem{Ubuntuv2}
+Dataset: Ubuntu Dialogue Corpus v2, https://github.com/rkadlec/ubuntu-ranking-dataset-creator
+\bibitem{Ubuntuv1}
+Dataset: Ubuntu Dialogue Corpus v1, http://cs.mcgill.ca/~jpineau/datasets/ubuntu-corpus-1.0/
+\bibitem{OpenSubtitles}
+Dataset: OpenSubtitles, http://opus.lingfil.uu.se/OpenSubtitles.php
+\bibitem{Normalizer_spellfix}
+Preprocessing with the list of common misspellings. https://github.com/superscriptjs/normalizer/blob/master/data/spellfix.txt
+\end{thebibliography}
 \end{document}
 
