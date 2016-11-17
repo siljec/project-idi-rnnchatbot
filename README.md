@@ -66,6 +66,7 @@ TBA
  - If someone runs a model, and the files are not there, the model should preprocess the files. If the ubuntu raw files are not there, it should download the .tsv files.
  - Generate a small vocabulary and the necessary train, validate and test sets, with a size that github can handle
  - Compare Baseline and GridLSTM
+ - Save the best checkpoints based on perplexity
 
 
 ### References
