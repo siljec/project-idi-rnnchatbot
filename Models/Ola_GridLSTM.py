@@ -183,28 +183,35 @@ def create_model(session, forward_only):
     return model
 
 
+def get_session_configs():
+    config = tf.ConfigProto()
+    config.gpu_options.allow_growth = True
+    return config
+
+
 def train():
     """Train a en->fr translation model using WMT data."""
 
     print("Checking for needed files")
     check_for_needed_files_and_create()
 
-    # Prepare WMT data.
-    print("Preparing WMT data in %s" % FLAGS.data_dir)
-    # x_train, y_train, x_dev, y_dev, _, _ = prepare_wmt_data(
-    #     FLAGS.data_dir, FLAGS.en_vocab_size, FLAGS.fr_vocab_size)
+    # Prepare Ubuntu Dialogue Corpus data.
+    print("Preparing Ubuntu Dialogue Corpus data in %s" % FLAGS.data_dir)
+
     x_train = x_train_path
     y_train = y_train_path
     x_dev = x_dev_path
     y_dev = y_dev_path
 
-    with tf.Session() as sess:
+    # Avoid allocation all of the GPU memory
+    config = get_session_configs()
+
+    with tf.Session(config=config) as sess:
         # Create model.
         print("Creating %d layers of %d units." % (FLAGS.num_layers, FLAGS.size))
         model = create_model(sess, False)
         # Read data into buckets and compute their sizes.
-        print ("Reading development and training data (limit: %d)."
-        	   % FLAGS.max_train_data_size)
+        print ("Reading development and training data (limit: %d)." % FLAGS.max_train_data_size)
         dev_set = read_data(x_dev, y_dev)
         train_set = read_data(x_train, y_train, FLAGS.max_train_data_size)
         train_bucket_sizes = [len(train_set[b]) for b in xrange(len(_buckets))]
@@ -214,7 +221,7 @@ def train():
         # to select a bucket. Length of [scale[i], scale[i+1]] is proportional to
         # the size if i-th training bucket, as used later.
         train_buckets_scale = [sum(train_bucket_sizes[:i + 1]) / train_total_size
-        					   for i in xrange(len(train_bucket_sizes))]
+                               for i in xrange(len(train_bucket_sizes))]
         # This is the training loop.
         step_time, loss = 0.0, 0.0
         current_step = 0
@@ -226,8 +233,7 @@ def train():
             # Choose a bucket according to data distribution. We pick a random number
             # in [0, 1] and use the corresponding interval in train_buckets_scale.
             random_number_01 = np.random.random_sample()
-            bucket_id = min([i for i in xrange(len(train_buckets_scale))
-            				   if train_buckets_scale[i] > random_number_01])
+            bucket_id = min([i for i in xrange(len(train_buckets_scale)) if train_buckets_scale[i] > random_number_01])
             print('Chose a bucket')
             # Get a batch and make a step.
             start_time = time.time()
@@ -242,8 +248,7 @@ def train():
                 # Print statistics for the previous epoch.
                 perplexity = math.exp(float(loss)) if loss < 300 else float("inf")
                 print ("global step %d learning rate %.4f step-time %.2f perplexity "
-                	   "%.2f" % (model.global_step.eval(), model.learning_rate.eval(),
-                				 step_time, perplexity))
+                       "%.2f" % (model.global_step.eval(), model.learning_rate.eval(), step_time, perplexity))
                 # Decrease learning rate if no improvement was seen over last 3 times.
                 if len(previous_losses) > 2 and loss > max(previous_losses[-3:]):
                     sess.run(model.learning_rate_decay_op)
@@ -256,14 +261,11 @@ def train():
                 # Run evals on development set and print their perplexity.
                 for bucket_id in xrange(len(_buckets)):
                     if len(dev_set[bucket_id]) == 0:
-                        print("  eval: empty bucket %d" % (bucket_id))
+                        print("  eval: empty bucket %d" % bucket_id)
                         continue
-                    encoder_inputs, decoder_inputs, target_weights = model.get_batch(
-                    	  dev_set, bucket_id)
-                    _, eval_loss, _ = model.step(sess, encoder_inputs, decoder_inputs,
-                    							   target_weights, bucket_id, True)
-                    eval_ppx = math.exp(float(eval_loss)) if eval_loss < 300 else float(
-                    	  "inf")
+                    encoder_inputs, decoder_inputs, target_weights = model.get_batch(dev_set, bucket_id)
+                    _, eval_loss, _ = model.step(sess, encoder_inputs, decoder_inputs, target_weights, bucket_id, True)
+                    eval_ppx = math.exp(float(eval_loss)) if eval_loss < 300 else float("inf")
                     print("  eval: bucket %d perplexity %.2f" % (bucket_id, eval_ppx))
                     bucket_value = perplexity_summary.value.add()
                     bucket_value.tag = "perplexity_bucket %d" % bucket_id
@@ -309,12 +311,11 @@ def self_test():
     with tf.Session() as sess:
         print("Self-test for neural translation model.")
         # Create model with vocabularies of 10, 2 small buckets, 2 layers of 32.
-        model = gridLSTM_model.GridLSTM_model(10, 10, [(3, 3), (6, 6)], 32, 2,
-        									  5.0, 32, 0.3, 0.99, num_samples=8)
+        model = gridLSTM_model.GridLSTM_model(10, 10, [(3, 3), (6, 6)], 32, 2, 5.0, 32, 0.3, 0.99, num_samples=8)
         sess.run(tf.initialize_all_variables())
         # Fake data set for both the (3, 3) and (6, 6) bucket.
         data_set = ([([1, 1], [2, 2]), ([3, 3], [4]), ([5], [6])],
-        			[([1, 1, 1, 1, 1], [2, 2, 2, 2, 2]), ([3, 3, 3], [5, 6])])
+                    [([1, 1, 1, 1, 1], [2, 2, 2, 2, 2]), ([3, 3, 3], [5, 6])])
         for _ in xrange(5):  # Train the fake model for 5 steps.
             bucket_id = random.choice([0, 1])
             encoder_inputs, decoder_inputs, target_weights = model.get_batch(data_set, bucket_id)
@@ -325,7 +326,7 @@ def main(_):
     if FLAGS.self_test:
         self_test()
     elif FLAGS.decode:
-	    decode()
+        decode()
     else:
         train()
 
