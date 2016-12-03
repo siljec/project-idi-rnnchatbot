@@ -128,9 +128,7 @@ class GridLSTM_model(object):
     #   cell = tf.nn.rnn_cell.MultiRNNCell([single_cell] * num_layers)
     additional_cell_args = {}
     additional_cell_args.update({'use_peepholes': True, 'forget_bias': 1.0})
-    print("before creating cell")
     cell = Grid2LSTMCell(size, **additional_cell_args)
-    print("after creating cell")
 
     cell = tf.nn.rnn_cell.MultiRNNCell([cell] * num_layers)
 
@@ -164,26 +162,25 @@ class GridLSTM_model(object):
     targets = [self.decoder_inputs[i + 1]
                for i in xrange(len(self.decoder_inputs) - 1)]
 
-
     # Training outputs and losses.
     if forward_only:
-      self.outputs, self.losses = tf.nn.seq2seq.model_with_buckets(
-          self.encoder_inputs, self.decoder_inputs, targets,
-          self.target_weights, buckets, lambda x, y: seq2seq_f(x, y, True),
-          softmax_loss_function=softmax_loss_function)
-      # If we use output projection, we need to project outputs for decoding.
-      if output_projection is not None:
-        for b in xrange(len(buckets)):
-          self.outputs[b] = [
-              tf.matmul(output, output_projection[0]) + output_projection[1]
-              for output in self.outputs[b]
-          ]
+        self.outputs, self.losses = tf.nn.seq2seq.model_with_buckets(
+            self.encoder_inputs, self.decoder_inputs, targets,
+            self.target_weights, buckets, lambda x, y: seq2seq_f(x, y, True),
+            softmax_loss_function=softmax_loss_function)
+        # If we use output projection, we need to project outputs for decoding.
+        if output_projection is not None:
+            for b in xrange(len(buckets)):
+                self.outputs[b] = [
+                    tf.matmul(output, output_projection[0]) + output_projection[1]
+                    for output in self.outputs[b]
+                    ]
     else:
-      self.outputs, self.losses = tf.nn.seq2seq.model_with_buckets(
-          self.encoder_inputs, self.decoder_inputs, targets,
-          self.target_weights, buckets,
-          lambda x, y: seq2seq_f(x, y, False),
-          softmax_loss_function=softmax_loss_function)
+        self.outputs, self.losses = tf.nn.seq2seq.model_with_buckets(
+            self.encoder_inputs, self.decoder_inputs, targets,
+            self.target_weights, buckets,
+            lambda x, y: seq2seq_f(x, y, False),
+            softmax_loss_function=softmax_loss_function)
 
     # Gradients and SGD update operation for training the model.
     params = tf.trainable_variables()

@@ -92,6 +92,47 @@ EOT_ID = 3
 UNK_ID = 4
 
 
+def read_from_csv_files(filename_queue):
+    # TextLineReader strips lines
+    reader = tf.TextLineReader()
+    _, csv_row = reader.read(filename_queue)
+
+    record_defaults = [[EOT_ID], [EOT_ID]]
+
+    x_data, y_data = tf.decode_csv(csv_row, record_defaults=record_defaults)
+    x_train = tf.pack([x_data])
+    y_train = tf.pack([y_data])
+    return x_train, y_train
+
+
+def input_pipeline(root='../Preprocessing/', start_name='csvfile'):
+    filenames = [filename for filename in os.listdir(root) if filename.startswith(start_name)]
+    print(filenames)
+    filename_queue = tf.train.string_input_producer(filenames)  # num_epocs, shuffle
+    x_train, y_train = read_from_csv_files(filename_queue)
+    return x_train, y_train
+
+
+# def create_file_name_queue():
+#
+#     configs = get_session_configs()
+#
+#     with tf.Session(config=configs) as sess:
+#         # Start populating the filename queue.
+#         print("Start populating the filename queue")
+#         coord = tf.train.Coordinator()
+#         threads = tf.train.start_queue_runners(coord=coord)
+#
+#         for i in range(5):
+#             # Retrieve a single instance:
+#             print("Retrieve a single instance")
+#             # example, label = sess.run([features, y_data])
+#             # print(example, label)
+#
+#         coord.request_stop()
+#         coord.join(threads)
+
+
 def check_for_needed_files_and_create():
     if not os.path.isdir("./../../ubuntu-ranking-dataset-creator"):
         print("Ubuntu Dialogue Corpus not found or is not on the right path. ")
@@ -203,38 +244,49 @@ def train():
     x_dev = x_dev_path
     y_dev = y_dev_path
 
-    # Avoid allocation all of the GPU memory
+    # Avoid allocating all of the GPU memory
     config = get_session_configs()
 
     with tf.Session(config=config) as sess:
         # Create model.
         print("Creating %d layers of %d units." % (FLAGS.num_layers, FLAGS.size))
         model = create_model(sess, False)
+
+        # Stream data
+        print("Setting up coordinator")
+        coord = tf.train.Coordinator()
+        threads = tf.train.start_queue_runners(coord=coord)
+
         # Read data into buckets and compute their sizes.
-        print ("Reading development and training data (limit: %d)." % FLAGS.max_train_data_size)
+        print("Reading development and training data (limit: %d)." % FLAGS.max_train_data_size)
         dev_set = read_data(x_dev, y_dev)
         train_set = read_data(x_train, y_train, FLAGS.max_train_data_size)
         train_bucket_sizes = [len(train_set[b]) for b in xrange(len(_buckets))]
         train_total_size = float(sum(train_bucket_sizes))
-        print('done with train_total_size')
+
         # A bucket scale is a list of increasing numbers from 0 to 1 that we'll use
         # to select a bucket. Length of [scale[i], scale[i+1]] is proportional to
         # the size if i-th training bucket, as used later.
+        print("Creating scaled bucket probability")
         train_buckets_scale = [sum(train_bucket_sizes[:i + 1]) / train_total_size
                                for i in xrange(len(train_bucket_sizes))]
-        # This is the training loop.
+
+        # This is for the training loop.
         step_time, loss = 0.0, 0.0
         current_step = 0
         previous_losses = []
+
         # Create log writer object
         summary_writer = tf.train.SummaryWriter(FLAGS.log_dir, graph=tf.get_default_graph())
-        print('before while true')
+
+        print("Starts training loop")
         while True:
+
             # Choose a bucket according to data distribution. We pick a random number
             # in [0, 1] and use the corresponding interval in train_buckets_scale.
             random_number_01 = np.random.random_sample()
             bucket_id = min([i for i in xrange(len(train_buckets_scale)) if train_buckets_scale[i] > random_number_01])
-            print('Chose a bucket')
+
             # Get a batch and make a step.
             start_time = time.time()
             encoder_inputs, decoder_inputs, target_weights = model.get_batch(train_set, bucket_id)
@@ -242,22 +294,25 @@ def train():
             step_time += (time.time() - start_time) / FLAGS.steps_per_checkpoint
             loss += step_loss / FLAGS.steps_per_checkpoint
             current_step += 1
-            print('made a step')
+
             # Once in a while, we save checkpoint, print statistics, and run evals.
             if current_step % FLAGS.steps_per_checkpoint == 0:
                 # Print statistics for the previous epoch.
                 perplexity = math.exp(float(loss)) if loss < 300 else float("inf")
                 print ("global step %d learning rate %.4f step-time %.2f perplexity "
                        "%.2f" % (model.global_step.eval(), model.learning_rate.eval(), step_time, perplexity))
+
                 # Decrease learning rate if no improvement was seen over last 3 times.
                 if len(previous_losses) > 2 and loss > max(previous_losses[-3:]):
                     sess.run(model.learning_rate_decay_op)
                 previous_losses.append(loss)
+
                 # Save checkpoint and zero timer and loss.
                 checkpoint_path = os.path.join(FLAGS.train_dir, "Ola.ckpt")
                 model.saver.save(sess, checkpoint_path, global_step=model.global_step)
                 step_time, loss = 0.0, 0.0
                 perplexity_summary = tf.Summary()
+
                 # Run evals on development set and print their perplexity.
                 for bucket_id in xrange(len(_buckets)):
                     if len(dev_set[bucket_id]) == 0:
