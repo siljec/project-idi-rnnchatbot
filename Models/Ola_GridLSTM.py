@@ -53,8 +53,8 @@ tf.app.flags.DEFINE_float("learning_rate", 0.5, "Learning rate.")
 tf.app.flags.DEFINE_float("learning_rate_decay_factor", 0.99, "Learning rate decays by this much.")
 tf.app.flags.DEFINE_float("max_gradient_norm", 5.0, "Clip gradients to this norm.")
 tf.app.flags.DEFINE_integer("batch_size", 64, "Batch size to use during training.")
-tf.app.flags.DEFINE_integer("size", 256, "Size of each model layer.")
-tf.app.flags.DEFINE_integer("num_layers", 1, "Number of layers in the model.")
+tf.app.flags.DEFINE_integer("size", 20, "Size of each model layer.")
+tf.app.flags.DEFINE_integer("num_layers", 2, "Number of layers in the model.")
 tf.app.flags.DEFINE_integer("en_vocab_size", 100000, "English vocabulary size.")
 tf.app.flags.DEFINE_integer("fr_vocab_size", 100000, "French vocabulary size.")
 tf.app.flags.DEFINE_string("data_dir", "./Ola_data", "Data directory")
@@ -78,6 +78,14 @@ x_train_path = '../Preprocessing/x_train.txt'
 y_train_path = '../Preprocessing/y_train.txt'
 x_dev_path = '../Preprocessing/x_val.txt'
 y_dev_path = '../Preprocessing/y_val.txt'
+
+# TODO: Remove paths to Example data
+vocab_path = '../Preprocessing/Example-Data/vocabulary.txt'
+x_train_path = '../Preprocessing/Example-Data/x_train.txt'
+y_train_path = '../Preprocessing/Example-Data/y_train.txt'
+x_val_path = '../Preprocessing/Example-Data/x_val.txt'
+y_val_path = '../Preprocessing/Example-Data/y_val.txt'
+
 
 _PAD = b"_PAD"
 _GO = b"_GO"
