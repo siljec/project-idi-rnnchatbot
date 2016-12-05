@@ -279,8 +279,10 @@ class GridLSTM_model(object):
 
     # Get a random batch of encoder and decoder inputs from data,
     # pad them if needed, reverse encoder inputs and add GO to decoder.
-    for _ in xrange(self.batch_size):
-      encoder_input, decoder_input = random.choice(data[bucket_id])
+    for pair in data[bucket_id]:
+    # for _ in xrange(self.batch_size):
+      # encoder_input, decoder_input = random.choice(data[bucket_id])
+      encoder_input, decoder_input = pair
 
       # Encoder inputs are padded and then reversed.
       encoder_pad = [data_utils.PAD_ID] * (encoder_size - len(encoder_input))

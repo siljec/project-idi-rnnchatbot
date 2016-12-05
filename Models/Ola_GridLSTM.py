@@ -52,8 +52,8 @@ import gridLSTM_model
 tf.app.flags.DEFINE_float("learning_rate", 0.5, "Learning rate.")
 tf.app.flags.DEFINE_float("learning_rate_decay_factor", 0.99, "Learning rate decays by this much.")
 tf.app.flags.DEFINE_float("max_gradient_norm", 5.0, "Clip gradients to this norm.")
-tf.app.flags.DEFINE_integer("batch_size", 64, "Batch size to use during training.")
-tf.app.flags.DEFINE_integer("size", 256, "Size of each model layer.")
+tf.app.flags.DEFINE_integer("batch_size", 8, "Batch size to use during training.")
+tf.app.flags.DEFINE_integer("size", 16, "Size of each model layer.")
 tf.app.flags.DEFINE_integer("num_layers", 1, "Number of layers in the model.")
 tf.app.flags.DEFINE_integer("en_vocab_size", 100000, "English vocabulary size.")
 tf.app.flags.DEFINE_integer("fr_vocab_size", 100000, "French vocabulary size.")
@@ -70,7 +70,8 @@ FLAGS = tf.app.flags.FLAGS
 
 # We use a number of buckets and pad to the closest one for efficiency.
 # See seq2seq_model.Seq2SeqModel for details of how they work.
-_buckets = [(5, 10), (10, 15), (20, 25), (40, 50)]
+# _buckets = [(5, 10), (10, 15), (20, 25), (40, 50)]
+_buckets = [(40, 50)]
 
 # Paths
 vocab_path = '../Preprocessing/vocabulary.txt'
@@ -92,45 +93,24 @@ EOT_ID = 3
 UNK_ID = 4
 
 
-def read_from_csv_files(filename_queue):
-    # TextLineReader strips lines
-    reader = tf.TextLineReader()
-    _, csv_row = reader.read(filename_queue)
-
-    record_defaults = [[EOT_ID], [EOT_ID]]
-
-    x_data, y_data = tf.decode_csv(csv_row, record_defaults=record_defaults)
-    x_train = tf.pack([x_data])
-    y_train = tf.pack([y_data])
-    return x_train, y_train
+def input_pipeline(root='../Preprocessing/', start_name='x_train.txt'):
+    filenames = [root + filename for filename in os.listdir(root) if filename.startswith(start_name)]
+    print("Files added to queue: ", filenames)
+    filename_queue = tf.train.string_input_producer(filenames)  # num_epocs, shuffle=True will shuffle the files from 'filenames'
+    return filename_queue
 
 
-def input_pipeline(root='../Preprocessing/', start_name='csvfile'):
-    filenames = [filename for filename in os.listdir(root) if filename.startswith(start_name)]
-    print(filenames)
-    filename_queue = tf.train.string_input_producer(filenames)  # num_epocs, shuffle
-    x_train, y_train = read_from_csv_files(filename_queue)
-    return x_train, y_train
-
-
-# def create_file_name_queue():
-#
-#     configs = get_session_configs()
-#
-#     with tf.Session(config=configs) as sess:
-#         # Start populating the filename queue.
-#         print("Start populating the filename queue")
-#         coord = tf.train.Coordinator()
-#         threads = tf.train.start_queue_runners(coord=coord)
-#
-#         for i in range(5):
-#             # Retrieve a single instance:
-#             print("Retrieve a single instance")
-#             # example, label = sess.run([features, y_data])
-#             # print(example, label)
-#
-#         coord.request_stop()
-#         coord.join(threads)
+def get_batch(source, batch_size):
+    x_train = []
+    try:
+        for line in range(batch_size):
+            holder = source.eval()
+            # holder = txt_row_x_data.eval()
+            x_train.append([i for i in holder.split()], [12])
+        print(x_train)
+        return x_train
+    except tf.errors.OutOfRangeError:
+        print('Done training, epoch reached')
 
 
 def check_for_needed_files_and_create():
@@ -244,6 +224,8 @@ def train():
     x_dev = x_dev_path
     y_dev = y_dev_path
 
+    filename_queue = input_pipeline()
+
     # Avoid allocating all of the GPU memory
     config = get_session_configs()
 
@@ -259,17 +241,17 @@ def train():
 
         # Read data into buckets and compute their sizes.
         print("Reading development and training data (limit: %d)." % FLAGS.max_train_data_size)
-        dev_set = read_data(x_dev, y_dev)
-        train_set = read_data(x_train, y_train, FLAGS.max_train_data_size)
-        train_bucket_sizes = [len(train_set[b]) for b in xrange(len(_buckets))]
-        train_total_size = float(sum(train_bucket_sizes))
+        # dev_set = read_data(x_dev, y_dev)
+        # train_set = read_data(x_train, y_train, FLAGS.max_train_data_size)
+        # train_bucket_sizes = [len(train_set[b]) for b in xrange(len(_buckets))]
+        # train_total_size = float(sum(train_bucket_sizes))
 
         # A bucket scale is a list of increasing numbers from 0 to 1 that we'll use
         # to select a bucket. Length of [scale[i], scale[i+1]] is proportional to
         # the size if i-th training bucket, as used later.
         print("Creating scaled bucket probability")
-        train_buckets_scale = [sum(train_bucket_sizes[:i + 1]) / train_total_size
-                               for i in xrange(len(train_bucket_sizes))]
+        # train_buckets_scale = [sum(train_bucket_sizes[:i + 1]) / train_total_size
+        #                        for i in xrange(len(train_bucket_sizes))]
 
         # This is for the training loop.
         step_time, loss = 0.0, 0.0
@@ -277,56 +259,87 @@ def train():
         previous_losses = []
 
         # Create log writer object
-        summary_writer = tf.train.SummaryWriter(FLAGS.log_dir, graph=tf.get_default_graph())
+        print("Create log writer object")
+        #summary_writer = tf.train.SummaryWriter(FLAGS.log_dir, graph=tf.get_default_graph())
+
+        reader = tf.TextLineReader()
+        _, txt_row_x_data = reader.read(filename_queue)
+
+        coord = tf.train.Coordinator()
+        threads = tf.train.start_queue_runners(coord=coord)
 
         print("Starts training loop")
-        while True:
+        # while True:
 
-            # Choose a bucket according to data distribution. We pick a random number
-            # in [0, 1] and use the corresponding interval in train_buckets_scale.
-            random_number_01 = np.random.random_sample()
-            bucket_id = min([i for i in xrange(len(train_buckets_scale)) if train_buckets_scale[i] > random_number_01])
 
-            # Get a batch and make a step.
-            start_time = time.time()
-            encoder_inputs, decoder_inputs, target_weights = model.get_batch(train_set, bucket_id)
-            _, step_loss, _ = model.step(sess, encoder_inputs, decoder_inputs, target_weights, bucket_id, False)
-            step_time += (time.time() - start_time) / FLAGS.steps_per_checkpoint
-            loss += step_loss / FLAGS.steps_per_checkpoint
-            current_step += 1
+        try:
+            while True:#not coord.should_stop():
+                print("New training epoch")
+                # Choose a bucket according to data distribution. We pick a random number
+                # in [0, 1] and use the corresponding interval in train_buckets_scale.
+                # random_number_01 = np.random.random_sample()
+                #train_set = get_batch(txt_row_x_data, FLAGS.batch_size)
+                x_train = []
+                for line in range(FLAGS.batch_size):
+                    holder = txt_row_x_data.eval()
+                    print(holder)
+                    x_train.append([[int(i) for i in holder.split()], [12]])
 
-            # Once in a while, we save checkpoint, print statistics, and run evals.
-            if current_step % FLAGS.steps_per_checkpoint == 0:
-                # Print statistics for the previous epoch.
-                perplexity = math.exp(float(loss)) if loss < 300 else float("inf")
-                print ("global step %d learning rate %.4f step-time %.2f perplexity "
-                       "%.2f" % (model.global_step.eval(), model.learning_rate.eval(), step_time, perplexity))
+                train_set = [x_train]  # place in first bucket
+                print(train_set)
+                # bucket_id = np.random.random_integers(0, 3)
+                bucket_id = 0
+                # bucket_id = min([i for i in xrange(len(train_buckets_scale)) if train_buckets_scale[i] > random_number_01])
 
-                # Decrease learning rate if no improvement was seen over last 3 times.
-                if len(previous_losses) > 2 and loss > max(previous_losses[-3:]):
-                    sess.run(model.learning_rate_decay_op)
-                previous_losses.append(loss)
+                # Get a batch and make a step.
+                start_time = time.time()
+                print("Get batch")
+                encoder_inputs, decoder_inputs, target_weights = model.get_batch(train_set, bucket_id)
+                print("Make step")
+                _, step_loss, _ = model.step(sess, encoder_inputs, decoder_inputs, target_weights, bucket_id, False)
+                print("Calculate variables")
+                step_time += (time.time() - start_time) / FLAGS.steps_per_checkpoint
+                loss += step_loss / FLAGS.steps_per_checkpoint
+                current_step += 1
 
-                # Save checkpoint and zero timer and loss.
-                checkpoint_path = os.path.join(FLAGS.train_dir, "Ola.ckpt")
-                model.saver.save(sess, checkpoint_path, global_step=model.global_step)
-                step_time, loss = 0.0, 0.0
-                perplexity_summary = tf.Summary()
+                # # Once in a while, we save checkpoint, print statistics, and run evals.
+                # if current_step % FLAGS.steps_per_checkpoint == 0:
+                #     # Print statistics for the previous epoch.
+                #     perplexity = math.exp(float(loss)) if loss < 300 else float("inf")
+                #     print ("global step %d learning rate %.4f step-time %.2f perplexity "
+                #            "%.2f" % (model.global_step.eval(), model.learning_rate.eval(), step_time, perplexity))
+                #
+                #     # Decrease learning rate if no improvement was seen over last 3 times.
+                #     if len(previous_losses) > 2 and loss > max(previous_losses[-3:]):
+                #         sess.run(model.learning_rate_decay_op)
+                #     previous_losses.append(loss)
+                #
+                #     # Save checkpoint and zero timer and loss.
+                #     checkpoint_path = os.path.join(FLAGS.train_dir, "Ola.ckpt")
+                #     model.saver.save(sess, checkpoint_path, global_step=model.global_step)
+                #     step_time, loss = 0.0, 0.0
+                #     perplexity_summary = tf.Summary()
+                #
+                #     # Run evals on development set and print their perplexity.
+                #     for bucket_id in xrange(len(_buckets)):
+                #         if len(dev_set[bucket_id]) == 0:
+                #             print("  eval: empty bucket %d" % bucket_id)
+                #             continue
+                #         encoder_inputs, decoder_inputs, target_weights = model.get_batch(dev_set, bucket_id)
+                #         _, eval_loss, _ = model.step(sess, encoder_inputs, decoder_inputs, target_weights, bucket_id, True)
+                #         eval_ppx = math.exp(float(eval_loss)) if eval_loss < 300 else float("inf")
+                #         print("  eval: bucket %d perplexity %.2f" % (bucket_id, eval_ppx))
+                #         bucket_value = perplexity_summary.value.add()
+                #         bucket_value.tag = "perplexity_bucket %d" % bucket_id
+                #         bucket_value.simple_value = eval_ppx
+                #     summary_writer.add_summary(perplexity_summary, model.global_step.eval())
+                #     sys.stdout.flush()
+        except tf.errors.OutOfRangeError:
+            print('Done training, epoch reached')
+        finally:
+            #coord.request_stop()
+            coord.join(threads)
 
-                # Run evals on development set and print their perplexity.
-                for bucket_id in xrange(len(_buckets)):
-                    if len(dev_set[bucket_id]) == 0:
-                        print("  eval: empty bucket %d" % bucket_id)
-                        continue
-                    encoder_inputs, decoder_inputs, target_weights = model.get_batch(dev_set, bucket_id)
-                    _, eval_loss, _ = model.step(sess, encoder_inputs, decoder_inputs, target_weights, bucket_id, True)
-                    eval_ppx = math.exp(float(eval_loss)) if eval_loss < 300 else float("inf")
-                    print("  eval: bucket %d perplexity %.2f" % (bucket_id, eval_ppx))
-                    bucket_value = perplexity_summary.value.add()
-                    bucket_value.tag = "perplexity_bucket %d" % bucket_id
-                    bucket_value.simple_value = eval_ppx
-                summary_writer.add_summary(perplexity_summary, model.global_step.eval())
-                sys.stdout.flush()
 
 
 def decode():
