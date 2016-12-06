@@ -54,9 +54,9 @@ import gridLSTM_model
 tf.app.flags.DEFINE_float("learning_rate", 0.5, "Learning rate.")
 tf.app.flags.DEFINE_float("learning_rate_decay_factor", 0.99, "Learning rate decays by this much.")
 tf.app.flags.DEFINE_float("max_gradient_norm", 5.0, "Clip gradients to this norm.")
-tf.app.flags.DEFINE_integer("batch_size", 4, "Batch size to use during training.")
-tf.app.flags.DEFINE_integer("size", 64, "Size of each model layer.")
-tf.app.flags.DEFINE_integer("num_layers", 1, "Number of layers in the model.")
+tf.app.flags.DEFINE_integer("batch_size", 256, "Batch size to use during training.")
+tf.app.flags.DEFINE_integer("size", 1024, "Size of each model layer.")
+tf.app.flags.DEFINE_integer("num_layers", 2, "Number of layers in the model.")
 tf.app.flags.DEFINE_integer("en_vocab_size", 100000, "English vocabulary size.")
 tf.app.flags.DEFINE_integer("fr_vocab_size", 100000, "French vocabulary size.")
 tf.app.flags.DEFINE_string("data_dir", "./Ola_data", "Data directory")
@@ -72,7 +72,7 @@ FLAGS = tf.app.flags.FLAGS
 
 # We use a number of buckets and pad to the closest one for efficiency.
 # See seq2seq_model.Seq2SeqModel for details of how they work.
-_buckets = [(5, 10), (10, 15), (20, 25), (40, 50)]
+_buckets = [(10, 15), (20, 25), (40, 50)]
 
 # Paths
 vocab_path = '../Preprocessing/vocabulary.txt'
@@ -115,10 +115,10 @@ def input_pipeline(root='../Preprocessing/', start_name='train_merged.txt'):
     return filename_queue
 
 
-def get_batch(source, train_set, batch_size=FLAGS.batch_size):
+def get_batch(source, train_set, batch_size=FLAGS.batch_size, ac_function=max):
 
     # Feed buckets until one of them reach the batch_size
-    while len(max(train_set)) < batch_size:
+    while ac_function([len(x) for x in train_set]) < batch_size:
 
         # Convert tensor to array
         holder = source.eval()
@@ -135,17 +135,9 @@ def get_batch(source, train_set, batch_size=FLAGS.batch_size):
                 break
 
     # Find the largest bucket (that made the while loop terminate)
-    largest_bucket = max(train_set)
-    largest_bucket_index = train_set.index(largest_bucket)
+    _, largest_bucket_index = max([(len(x), i) for i, x in enumerate(train_set)])
 
-    # Extracting data that should be returned as training data
-    # This should be of length batch_size. Can later add a check just to be sure
-    train_data = train_set[largest_bucket_index]
-
-    # # Clean the bucket with the extracted data
-    # train_set[largest_bucket_index] = []
-
-    return train_set, train_data, largest_bucket_index
+    return train_set, largest_bucket_index
 
 
 def check_for_needed_files_and_create():
@@ -175,6 +167,7 @@ def check_for_needed_files_and_create():
         generate_all_files(FLAGS.en_vocab_size)
 
 
+# Currently not in use. May remove it in the future
 def read_data(source_path, target_path, max_size=None):
     """Read data from source and target files and put into buckets.
 
@@ -251,14 +244,7 @@ def train():
     print("Checking for needed files")
     check_for_needed_files_and_create()
 
-    # Prepare Ubuntu Dialogue Corpus data.
-    print("Preparing Ubuntu Dialogue Corpus data in %s" % FLAGS.data_dir)
-
-    x_train = x_train_path
-    y_train = y_train_path
-    x_dev = x_dev_path
-    y_dev = y_dev_path
-
+    print("Creating file queue")
     filename_queue = input_pipeline()
     filename_queue_dev = input_pipeline(start_name='val_merged.txt')
 
@@ -274,20 +260,6 @@ def train():
         print("Setting up coordinator")
         coord = tf.train.Coordinator()
         threads = tf.train.start_queue_runners(coord=coord)
-
-        # Read data into buckets and compute their sizes.
-        print("Reading development and training data (limit: %d)." % FLAGS.max_train_data_size)
-        # dev_set = read_data(x_dev, y_dev)
-        # train_set = read_data(x_train, y_train, FLAGS.max_train_data_size)
-        # train_bucket_sizes = [len(train_set[b]) for b in xrange(len(_buckets))]
-        # train_total_size = float(sum(train_bucket_sizes))
-
-        # A bucket scale is a list of increasing numbers from 0 to 1 that we'll use
-        # to select a bucket. Length of [scale[i], scale[i+1]] is proportional to
-        # the size if i-th training bucket, as used later.
-        print("Creating scaled bucket probability")
-        # train_buckets_scale = [sum(train_bucket_sizes[:i + 1]) / train_total_size
-        #                        for i in xrange(len(train_bucket_sizes))]
 
         # This is for the training loop.
         train_set = [[] for _ in _buckets]
@@ -314,9 +286,11 @@ def train():
         try:
             while True: #not coord.should_stop():
                 print("New training epoch")
-                train_set, batch, bucket_id = get_batch(txt_row_train_data, train_set)
+                start_time = time.time()
+                train_set, bucket_id = get_batch(txt_row_train_data, train_set)
+                print("Time taken to get batch: " + str(time.time() - start_time))
 
-                print(train_set)
+                print([len(x) for x in train_set], bucket_id)
 
                 # Get a batch and make a step.
                 start_time = time.time()
@@ -337,8 +311,8 @@ def train():
                 # Once in a while, we save checkpoint, print statistics, and run evals.
                 if current_step % FLAGS.steps_per_checkpoint == 0:
                     # Print statistics for the previous epoch.
-
-                    dev_set, batch, bucket_id = get_batch(txt_row_dev_data, dev_set)
+                    print("Getting development batch set")
+                    dev_set, bucket_id = get_batch(txt_row_dev_data, dev_set, ac_function=min)
 
                     perplexity = math.exp(float(loss)) if loss < 300 else float("inf")
                     print("global step %d learning rate %.4f step-time %.2f perplexity "
@@ -365,7 +339,7 @@ def train():
                         encoder_inputs, decoder_inputs, target_weights = model.get_batch(dev_set, bucket_id)
 
                         # Clean out used bucket
-                        dev_set[bucket_id] = []
+                        del dev_set[bucket_id][:FLAGS.batch_size]
 
                         _, eval_loss, _ = model.step(sess, encoder_inputs, decoder_inputs, target_weights, bucket_id, True)
                         eval_ppx = math.exp(float(eval_loss)) if eval_loss < 300 else float("inf")
@@ -378,8 +352,8 @@ def train():
         except tf.errors.OutOfRangeError:
             print('Done training, epoch reached')
         finally:
-            #coord.request_stop()
-            coord.join(threads)
+            coord.request_stop()
+        coord.join(threads)
 
 
 def decode():
