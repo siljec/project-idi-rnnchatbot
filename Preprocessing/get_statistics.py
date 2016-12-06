@@ -34,13 +34,13 @@ def get_stats(path, num_longest=20, more_than_words=50, less_than_words=5):
                 sentence_lengths[length] = 1
 
     print("File: " + path + ". Turns in total: " + str(num_turns))
-    print("Longest sentence: " + str(max_length))
+    print("Longest turn: " + str(max_length))
 
-    print("Longest turn: " + str(longest))
+    print("Longest " + str(num_longest) + " turns: " + str(longest))
 
-    print("Sentences with more than " + str(more_than_words) + " words: " + str(turns_with_more_than_x_words))
+    print("Turns with more than " + str(more_than_words) + " words: " + str(turns_with_more_than_x_words))
 
-    print("Sentences with less than " + str(less_than_words) + " words: " + str(turns_with_less_than_x_words))
+    print("Turns with less than " + str(less_than_words) + " words: " + str(turns_with_less_than_x_words))
 
     type_length, type_num = max(sentence_lengths.iteritems(), key=operator.itemgetter(1))
 

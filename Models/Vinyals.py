@@ -47,7 +47,7 @@ import numpy as np
 from six.moves import xrange  # pylint: disable=redefined-builtin
 import tensorflow as tf
 
-from tensorflow.models.rnn.translate import seq2seq_model
+import seq2seq_model
 
 
 tf.app.flags.DEFINE_float("learning_rate", 0.5, "Learning rate.")
@@ -80,14 +80,14 @@ FLAGS = tf.app.flags.FLAGS
 
 # We use a number of buckets and pad to the closest one for efficiency.
 # See seq2seq_model.Seq2SeqModel for details of how they work.
-_buckets = [(5, 10), (10, 15), (20, 25), (40, 50)]
+_buckets = [(10, 15), (20, 25), (40, 50)]
 
 # Paths
 vocab_path = '../Preprocessing/vocabulary.txt'
-x_train_path = '../Preprocessing/x_train.txt'
-y_train_path = '../Preprocessing/y_train.txt'
-x_val_path = '../Preprocessing/x_val.txt'
-y_val_path = '../Preprocessing/y_val.txt'
+# Not in use, should preferably convert to use these
+train_path = '../Preprocessing/train_merged.txt'
+dev_path = '../Preprocessing/val_merged.txt'
+test_path = '../Preprocessing/test_merged.txt'
 
 _PAD = b"_PAD"
 _GO = b"_GO"
@@ -246,21 +246,22 @@ def train():
             while True: #not coord.should_stop():
                 print("New training epoch")
                 start_time = time.time()
+
+                # Get a batch
+                print("Get batch")
                 train_set, bucket_id = get_batch(txt_row_train_data, train_set)
                 print("Time taken to get batch: " + str(time.time() - start_time))
-
-                # Get a batch and make a step.
                 start_time = time.time()
-                print("Get batch")
                 encoder_inputs, decoder_inputs, target_weights = model.get_batch(train_set, bucket_id)
 
                 # Clean out trained bucket
                 train_set[bucket_id] = []
 
+                # Make a step
                 print("Make step")
                 _, step_loss, _ = model.step(sess, encoder_inputs, decoder_inputs, target_weights, bucket_id, False)
 
-                print("Calculate variables")
+                # Calculating variables
                 step_time += (time.time() - start_time) / FLAGS.steps_per_checkpoint
                 loss += step_loss / FLAGS.steps_per_checkpoint
                 current_step += 1

@@ -56,7 +56,7 @@ tf.app.flags.DEFINE_float("learning_rate_decay_factor", 0.99, "Learning rate dec
 tf.app.flags.DEFINE_float("max_gradient_norm", 5.0, "Clip gradients to this norm.")
 tf.app.flags.DEFINE_integer("batch_size", 256, "Batch size to use during training.")
 tf.app.flags.DEFINE_integer("size", 512, "Size of each model layer.")
-tf.app.flags.DEFINE_integer("num_layers", 1, "Number of layers in the model.")
+tf.app.flags.DEFINE_integer("num_layers", 2, "Number of layers in the model.")
 tf.app.flags.DEFINE_integer("en_vocab_size", 100000, "English vocabulary size.")
 tf.app.flags.DEFINE_integer("fr_vocab_size", 100000, "French vocabulary size.")
 tf.app.flags.DEFINE_string("data_dir", "./Ola_data", "Data directory")
@@ -76,10 +76,10 @@ _buckets = [(10, 15), (20, 25), (40, 50)]
 
 # Paths
 vocab_path = '../Preprocessing/vocabulary.txt'
-x_train_path = '../Preprocessing/x_train.txt'
-y_train_path = '../Preprocessing/y_train.txt'
-x_dev_path = '../Preprocessing/x_val.txt'
-y_dev_path = '../Preprocessing/y_val.txt'
+# Not in use, should preferably convert to use these
+train_path = '../Preprocessing/train_merged.txt'
+dev_path = '../Preprocessing/val_merged.txt'
+test_path = '../Preprocessing/test_merged.txt'
 
 
 _PAD = b"_PAD"
@@ -96,7 +96,6 @@ UNK_ID = 4
 
 
 def input_pipeline(root='../Preprocessing/', start_name='train_merged.txt'):
-
     # Finds all filenames that match the root and start_name
     filenames = [root + filename for filename in os.listdir(root) if filename.startswith(start_name)]
 
@@ -109,7 +108,6 @@ def input_pipeline(root='../Preprocessing/', start_name='train_merged.txt'):
 
 
 def get_batch(source, train_set, batch_size=FLAGS.batch_size, ac_function=max):
-
     # Feed buckets until one of them reach the batch_size
     while ac_function([len(x) for x in train_set]) < batch_size:
 
@@ -144,60 +142,15 @@ def check_for_needed_files_and_create():
         print('\t cd ubuntu-ranking-dataset-creator/src')
         print('4')
         print('\t ./generate.sh')
-    if not os.path.isfile("./../Preprocessing/x_train.txt"):
+
+    if not os.path.isfile("./../Preprocessing/test_merged.txt"):
         generate_all_files(FLAGS.en_vocab_size)
-    if not os.path.isfile("./../Preprocessing/y_train.txt"):
+    if not os.path.isfile("./../Preprocessing/val_merged.txt"):
         generate_all_files(FLAGS.en_vocab_size)
-    if not os.path.isfile("./../Preprocessing/x_val.txt"):
-        generate_all_files(FLAGS.en_vocab_size)
-    if not os.path.isfile("./../Preprocessing/y_val.txt"):
-        generate_all_files(FLAGS.en_vocab_size)
-    if not os.path.isfile("./../Preprocessing/x_test.txt"):
-        generate_all_files(FLAGS.en_vocab_size)
-    if not os.path.isfile("./../Preprocessing/y_test.txt"):
+    if not os.path.isfile("./../Preprocessing/train_merged.txt"):
         generate_all_files(FLAGS.en_vocab_size)
     if not os.path.isfile("./../Preprocessing/vocabulary.txt"):
         generate_all_files(FLAGS.en_vocab_size)
-
-
-# Currently not in use. May remove it in the future
-def read_data(source_path, target_path, max_size=None):
-    """Read data from source and target files and put into buckets.
-
-    Args:
-    source_path: path to the files with token-ids for the source language.
-    target_path: path to the file with token-ids for the target language;
-      it must be aligned with the source file: n-th line contains the desired
-      output for n-th line from the source_path.
-    max_size: maximum number of lines to read, all other will be ignored;
-      if 0 or None, data files will be read completely (no limit).
-
-    Returns:
-    data_set: a list of length len(_buckets); data_set[n] contains a list of
-      (source, target) pairs read from the provided data files that fit
-      into the n-th bucket, i.e., such that len(source) < _buckets[n][0] and
-      len(target) < _buckets[n][1]; source and target are lists of token-ids.
-    """
-
-    data_set = [[] for _ in _buckets]
-    with tf.gfile.GFile(source_path, mode="r") as source_file:
-        with tf.gfile.GFile(target_path, mode="r") as target_file:
-            source, target = source_file.readline(), target_file.readline()
-            counter = 0
-            while source and target and (not max_size or counter < max_size):
-                counter += 1
-                if counter % 100000 == 0:
-                    print("  reading data line %d" % counter)
-                    sys.stdout.flush()
-                source_ids = [int(x) for x in source.split()]
-                target_ids = [int(x) for x in target.split()]
-                #target_ids.append(EOS_ID)
-                for bucket_id, (source_size, target_size) in enumerate(_buckets):
-                    if len(source_ids) < source_size and len(target_ids) < target_size:
-                        data_set[bucket_id].append([source_ids, target_ids])
-                        break
-                source, target = source_file.readline(), target_file.readline()
-    return data_set
 
 
 def create_model(session, forward_only):
@@ -274,27 +227,27 @@ def train():
         coord = tf.train.Coordinator()
         threads = tf.train.start_queue_runners(coord=coord)
 
-        print("Starts training loop")
-
+        print("Starting training loop")
         try:
             while True: #not coord.should_stop():
                 print("New training epoch")
                 start_time = time.time()
+
+                # Get a batch
+                print("Get batch")
                 train_set, bucket_id = get_batch(txt_row_train_data, train_set)
                 print("Time taken to get batch: " + str(time.time() - start_time))
-
-                # Get a batch and make a step.
                 start_time = time.time()
-                print("Get batch")
                 encoder_inputs, decoder_inputs, target_weights = model.get_batch(train_set, bucket_id)
 
                 # Clean out trained bucket
                 train_set[bucket_id] = []
 
+                # Make a step
                 print("Make step")
                 _, step_loss, _ = model.step(sess, encoder_inputs, decoder_inputs, target_weights, bucket_id, False)
 
-                print("Calculate variables")
+                # Calculating variables
                 step_time += (time.time() - start_time) / FLAGS.steps_per_checkpoint
                 loss += step_loss / FLAGS.steps_per_checkpoint
                 current_step += 1
