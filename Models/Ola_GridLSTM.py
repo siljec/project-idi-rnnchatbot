@@ -42,6 +42,8 @@ from create_vocabulary import read_vocabulary_from_file
 from preprocess import generate_all_files
 from tokenize import sentence_to_token_ids
 
+from preprocess import file_len
+
 import numpy as np
 from six.moves import xrange  # pylint: disable=redefined-builtin
 import tensorflow as tf
@@ -52,8 +54,8 @@ import gridLSTM_model
 tf.app.flags.DEFINE_float("learning_rate", 0.5, "Learning rate.")
 tf.app.flags.DEFINE_float("learning_rate_decay_factor", 0.99, "Learning rate decays by this much.")
 tf.app.flags.DEFINE_float("max_gradient_norm", 5.0, "Clip gradients to this norm.")
-tf.app.flags.DEFINE_integer("batch_size", 8, "Batch size to use during training.")
-tf.app.flags.DEFINE_integer("size", 16, "Size of each model layer.")
+tf.app.flags.DEFINE_integer("batch_size", 4, "Batch size to use during training.")
+tf.app.flags.DEFINE_integer("size", 64, "Size of each model layer.")
 tf.app.flags.DEFINE_integer("num_layers", 1, "Number of layers in the model.")
 tf.app.flags.DEFINE_integer("en_vocab_size", 100000, "English vocabulary size.")
 tf.app.flags.DEFINE_integer("fr_vocab_size", 100000, "French vocabulary size.")
@@ -70,8 +72,7 @@ FLAGS = tf.app.flags.FLAGS
 
 # We use a number of buckets and pad to the closest one for efficiency.
 # See seq2seq_model.Seq2SeqModel for details of how they work.
-# _buckets = [(5, 10), (10, 15), (20, 25), (40, 50)]
-_buckets = [(40, 50)]
+_buckets = [(5, 10), (10, 15), (20, 25), (40, 50)]
 
 # Paths
 vocab_path = '../Preprocessing/vocabulary.txt'
@@ -93,24 +94,50 @@ EOT_ID = 3
 UNK_ID = 4
 
 
-def input_pipeline(root='../Preprocessing/', start_name='x_train.txt'):
+def input_pipeline(root='../Preprocessing/', start_name='train_merged.txt'):
+
+    # Finds all filenames that match the root and start_name
     filenames = [root + filename for filename in os.listdir(root) if filename.startswith(start_name)]
+
+    # Adds the filenames to the queue
+    # Can also add args such as num_epocs and shuffle. shuffle=True will shuffle the files from 'filenames'
+    filename_queue = tf.train.string_input_producer(filenames)
     print("Files added to queue: ", filenames)
-    filename_queue = tf.train.string_input_producer(filenames)  # num_epocs, shuffle=True will shuffle the files from 'filenames'
+
     return filename_queue
 
 
-def get_batch(source, batch_size):
-    x_train = []
-    try:
-        for line in range(batch_size):
-            holder = source.eval()
-            # holder = txt_row_x_data.eval()
-            x_train.append([i for i in holder.split()], [12])
-        print(x_train)
-        return x_train
-    except tf.errors.OutOfRangeError:
-        print('Done training, epoch reached')
+def get_batch(source, train_set, batch_size=FLAGS.batch_size):
+
+    # Feed buckets until one of them reach the batch_size
+    while len(max(train_set)) < batch_size:
+
+        # Convert tensor to array
+        holder = source.eval()
+        holder = holder.split(',')
+
+        # x_data is on the left side of the comma, while y_data is on the right. Also casting to integers.
+        x = [int(i) for i in holder[0].split()]
+        y = [int(i) for i in holder[1].split()]
+
+        # Feed the correct bucket to input the read line. Lines longer than the largest bucket is excluded.
+        for bucket_id, (source_size, target_size) in enumerate(_buckets):
+            if len(x) < source_size and len(y) < target_size:
+                train_set[bucket_id].append([x, y])
+                break
+
+    # Find the largest bucket (that made the while loop terminate)
+    largest_bucket = max(train_set)
+    largest_bucket_index = train_set.index(largest_bucket)
+
+    # Extracting data that should be returned as training data
+    # This should be of length batch_size. Can later add a check just to be sure
+    train_data = train_set[largest_bucket_index]
+
+    # # Clean the bucket with the extracted data
+    # train_set[largest_bucket_index] = []
+
+    return train_set, train_data, largest_bucket_index
 
 
 def check_for_needed_files_and_create():
@@ -225,6 +252,7 @@ def train():
     y_dev = y_dev_path
 
     filename_queue = input_pipeline()
+    filename_queue_dev = input_pipeline(start_name='val_merged.txt')
 
     # Avoid allocating all of the GPU memory
     config = get_session_configs()
@@ -254,92 +282,96 @@ def train():
         #                        for i in xrange(len(train_bucket_sizes))]
 
         # This is for the training loop.
+        train_set = [[] for _ in _buckets]
+        dev_set = [[] for _ in _buckets]
         step_time, loss = 0.0, 0.0
         current_step = 0
         previous_losses = []
 
         # Create log writer object
         print("Create log writer object")
-        #summary_writer = tf.train.SummaryWriter(FLAGS.log_dir, graph=tf.get_default_graph())
+        summary_writer = tf.train.SummaryWriter(FLAGS.log_dir, graph=tf.get_default_graph())
 
-        reader = tf.TextLineReader()
-        _, txt_row_x_data = reader.read(filename_queue)
+        reader_train_data = tf.TextLineReader()  # skip_header_lines=int, number of lines to skip
+        _, txt_row_train_data = reader_train_data.read(filename_queue)
+
+        reader_dev_data = tf.TextLineReader()
+        _, txt_row_dev_data = reader_dev_data.read(filename_queue_dev)
 
         coord = tf.train.Coordinator()
         threads = tf.train.start_queue_runners(coord=coord)
 
         print("Starts training loop")
-        # while True:
-
 
         try:
-            while True:#not coord.should_stop():
+            while True: #not coord.should_stop():
                 print("New training epoch")
-                # Choose a bucket according to data distribution. We pick a random number
-                # in [0, 1] and use the corresponding interval in train_buckets_scale.
-                # random_number_01 = np.random.random_sample()
-                #train_set = get_batch(txt_row_x_data, FLAGS.batch_size)
-                x_train = []
-                for line in range(FLAGS.batch_size):
-                    holder = txt_row_x_data.eval()
-                    print(holder)
-                    x_train.append([[int(i) for i in holder.split()], [12]])
+                train_set, batch, bucket_id = get_batch(txt_row_train_data, train_set)
 
-                train_set = [x_train]  # place in first bucket
                 print(train_set)
-                # bucket_id = np.random.random_integers(0, 3)
-                bucket_id = 0
-                # bucket_id = min([i for i in xrange(len(train_buckets_scale)) if train_buckets_scale[i] > random_number_01])
 
                 # Get a batch and make a step.
                 start_time = time.time()
                 print("Get batch")
                 encoder_inputs, decoder_inputs, target_weights = model.get_batch(train_set, bucket_id)
+
+                # Clean out trained bucket
+                train_set[bucket_id] = []
+
                 print("Make step")
                 _, step_loss, _ = model.step(sess, encoder_inputs, decoder_inputs, target_weights, bucket_id, False)
+
                 print("Calculate variables")
                 step_time += (time.time() - start_time) / FLAGS.steps_per_checkpoint
                 loss += step_loss / FLAGS.steps_per_checkpoint
                 current_step += 1
 
-                # # Once in a while, we save checkpoint, print statistics, and run evals.
-                # if current_step % FLAGS.steps_per_checkpoint == 0:
-                #     # Print statistics for the previous epoch.
-                #     perplexity = math.exp(float(loss)) if loss < 300 else float("inf")
-                #     print ("global step %d learning rate %.4f step-time %.2f perplexity "
-                #            "%.2f" % (model.global_step.eval(), model.learning_rate.eval(), step_time, perplexity))
-                #
-                #     # Decrease learning rate if no improvement was seen over last 3 times.
-                #     if len(previous_losses) > 2 and loss > max(previous_losses[-3:]):
-                #         sess.run(model.learning_rate_decay_op)
-                #     previous_losses.append(loss)
-                #
-                #     # Save checkpoint and zero timer and loss.
-                #     checkpoint_path = os.path.join(FLAGS.train_dir, "Ola.ckpt")
-                #     model.saver.save(sess, checkpoint_path, global_step=model.global_step)
-                #     step_time, loss = 0.0, 0.0
-                #     perplexity_summary = tf.Summary()
-                #
-                #     # Run evals on development set and print their perplexity.
-                #     for bucket_id in xrange(len(_buckets)):
-                #         if len(dev_set[bucket_id]) == 0:
-                #             print("  eval: empty bucket %d" % bucket_id)
-                #             continue
-                #         encoder_inputs, decoder_inputs, target_weights = model.get_batch(dev_set, bucket_id)
-                #         _, eval_loss, _ = model.step(sess, encoder_inputs, decoder_inputs, target_weights, bucket_id, True)
-                #         eval_ppx = math.exp(float(eval_loss)) if eval_loss < 300 else float("inf")
-                #         print("  eval: bucket %d perplexity %.2f" % (bucket_id, eval_ppx))
-                #         bucket_value = perplexity_summary.value.add()
-                #         bucket_value.tag = "perplexity_bucket %d" % bucket_id
-                #         bucket_value.simple_value = eval_ppx
-                #     summary_writer.add_summary(perplexity_summary, model.global_step.eval())
-                #     sys.stdout.flush()
+                # Once in a while, we save checkpoint, print statistics, and run evals.
+                if current_step % FLAGS.steps_per_checkpoint == 0:
+                    # Print statistics for the previous epoch.
+
+                    dev_set, batch, bucket_id = get_batch(txt_row_dev_data, dev_set)
+
+                    perplexity = math.exp(float(loss)) if loss < 300 else float("inf")
+                    print("global step %d learning rate %.4f step-time %.2f perplexity "
+                          "%.2f" % (model.global_step.eval(), model.learning_rate.eval(), step_time, perplexity))
+
+                    # Decrease learning rate if no improvement was seen over last 3 times.
+                    if len(previous_losses) > 2 and loss > max(previous_losses[-3:]):
+                        sess.run(model.learning_rate_decay_op)
+                    previous_losses.append(loss)
+
+                    # Save checkpoint and zero timer and loss.
+                    print("Save checkpoint")
+                    checkpoint_path = os.path.join(FLAGS.train_dir, "Ola.ckpt")
+                    model.saver.save(sess, checkpoint_path, global_step=model.global_step)
+                    step_time, loss = 0.0, 0.0
+                    perplexity_summary = tf.Summary()
+
+                    # Run evals on development set and print their perplexity.
+                    print("Run evaluation on development set")
+                    for bucket_id in xrange(len(_buckets)):
+                        if len(dev_set[bucket_id]) == 0:
+                            print("  eval: empty bucket %d" % bucket_id)
+                            continue
+                        encoder_inputs, decoder_inputs, target_weights = model.get_batch(dev_set, bucket_id)
+
+                        # Clean out used bucket
+                        dev_set[bucket_id] = []
+
+                        _, eval_loss, _ = model.step(sess, encoder_inputs, decoder_inputs, target_weights, bucket_id, True)
+                        eval_ppx = math.exp(float(eval_loss)) if eval_loss < 300 else float("inf")
+                        print("  eval: bucket %d perplexity %.2f" % (bucket_id, eval_ppx))
+                        bucket_value = perplexity_summary.value.add()
+                        bucket_value.tag = "perplexity_bucket %d" % bucket_id
+                        bucket_value.simple_value = eval_ppx
+                    summary_writer.add_summary(perplexity_summary, model.global_step.eval())
+                    sys.stdout.flush()
         except tf.errors.OutOfRangeError:
             print('Done training, epoch reached')
         finally:
             #coord.request_stop()
             coord.join(threads)
-
 
 
 def decode():
@@ -353,21 +385,28 @@ def decode():
         sys.stdout.write("Human: ")
         sys.stdout.flush()
         sentence = sys.stdin.readline()
+
         while sentence:
+
             # Get token-ids for the input sentence.
             token_ids = sentence_to_token_ids(tf.compat.as_bytes(sentence), vocab)
+
             # Which bucket does it belong to?
             bucket_id = min([b for b in xrange(len(_buckets)) if _buckets[b][0] > len(token_ids)])
+
             # Get a 1-element batch to feed the sentence to the model.
             encoder_inputs, decoder_inputs, target_weights = model.get_batch({bucket_id: [(token_ids, [])]}, bucket_id)
+
             # Get output logits for the sentence.
             _, _, output_logits = model.step(sess, encoder_inputs, decoder_inputs, target_weights, bucket_id, True)
+
             # This is a greedy decoder - outputs are just argmaxes of output_logits.
             outputs = [int(np.argmax(logit, axis=1)) for logit in output_logits]
+
             # If there is an EOS symbol in outputs, cut them at that point.
             if EOT_ID in outputs:
                 outputs = outputs[:outputs.index(EOT_ID)]
-            # Print out French sentence corresponding to outputs.
+
             print("Ola: " + " ".join([tf.compat.as_str(rev_vocab[output]) for output in outputs]))
             print("Human: ", end="")
             sys.stdout.flush()
