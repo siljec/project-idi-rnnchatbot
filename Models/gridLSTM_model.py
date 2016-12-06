@@ -128,9 +128,10 @@ class GridLSTM_model(object):
     #   cell = tf.nn.rnn_cell.MultiRNNCell([single_cell] * num_layers)
     additional_cell_args = {}
     additional_cell_args.update({'use_peepholes': True, 'forget_bias': 1.0})
-    cell = Grid2LSTMCell(size, **additional_cell_args)
-
-    cell = tf.nn.rnn_cell.MultiRNNCell([cell] * num_layers)
+    print("Creating Grid2LSTMCell...")
+    single_cell = Grid2LSTMCell(size, **additional_cell_args)
+    print("Creating two layers with Grid2LSTMCell...")
+    cell = tf.nn.rnn_cell.MultiRNNCell([single_cell] * num_layers)
 
     # The seq2seq function: we use embedding for the input and attention.
     def seq2seq_f(encoder_inputs, decoder_inputs, do_decode):
@@ -257,6 +258,7 @@ class GridLSTM_model(object):
       return outputs[1], outputs[2], None  # Gradient norm, loss, no outputs.
     else:
       return None, outputs[0], outputs[1:]  # No gradient norm, loss, outputs.
+
 
   def get_batch(self, data, bucket_id):
     """Get a random batch of data from the specified bucket, prepare for step.

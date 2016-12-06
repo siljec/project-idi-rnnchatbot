@@ -305,15 +305,16 @@ class Grid2LSTMCell(GridRNNCell):
     specified.
   """
 
+  # CHANGED: input_dims=0, output_dims=1
   def __init__(self,
                num_units,
-               tied=False,
+               tied=True,
                non_recurrent_fn=None,
                use_peepholes=False,
                forget_bias=1.0):
     super(Grid2LSTMCell, self).__init__(
         num_units=num_units, num_dims=2,
-        input_dims=0, output_dims=0, priority_dims=0, tied=tied,
+        input_dims=0, output_dims=1, priority_dims=0, tied=tied,
         non_recurrent_dims=None if non_recurrent_fn is None else 0,
         cell_fn=lambda n, i: rnn_cell.LSTMCell(
             num_units=n, input_size=i, forget_bias=forget_bias,

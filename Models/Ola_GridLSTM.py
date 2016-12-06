@@ -81,6 +81,14 @@ y_train_path = '../Preprocessing/y_train.txt'
 x_dev_path = '../Preprocessing/x_val.txt'
 y_dev_path = '../Preprocessing/y_val.txt'
 
+# TODO: Remove paths to Example data
+vocab_path = '../Preprocessing/Example-Data/vocabulary.txt'
+x_train_path = '../Preprocessing/Example-Data/x_train.txt'
+y_train_path = '../Preprocessing/Example-Data/y_train.txt'
+x_val_path = '../Preprocessing/Example-Data/x_val.txt'
+y_val_path = '../Preprocessing/Example-Data/y_val.txt'
+
+
 _PAD = b"_PAD"
 _GO = b"_GO"
 _EOS = b"_EOS"
