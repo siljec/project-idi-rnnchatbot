@@ -22,18 +22,13 @@ from __future__ import print_function
 import random
 
 import numpy as np
-import sys
 from six.moves import xrange  # pylint: disable=redefined-builtin
 import tensorflow as tf
 
 from tensorflow.models.rnn.translate import data_utils
 
 
-sys.path.insert(0, './Cells')
-from grid_rnn_cell import Grid2LSTMCell
-
-
-class GridLSTM_model(object):
+class Seq2SeqModel(object):
   """Sequence-to-sequence model with attention and for multiple buckets.
 
   This class implements a multi-layer recurrent neural network as encoder,
@@ -89,12 +84,11 @@ class GridLSTM_model(object):
     self.target_vocab_size = target_vocab_size
     self.buckets = buckets
     self.batch_size = batch_size
-    self.learning_rate = tf.Variable(float(learning_rate), trainable=False, dtype=dtype)
-    self.learning_rate_decay_op = self.learning_rate.assign(self.learning_rate * learning_rate_decay_factor)
+    self.learning_rate = tf.Variable(
+        float(learning_rate), trainable=False, dtype=dtype)
+    self.learning_rate_decay_op = self.learning_rate.assign(
+        self.learning_rate * learning_rate_decay_factor)
     self.global_step = tf.Variable(0, trainable=False)
-
-    if forward_only:
-        self.batch_size = 1
 
     # If we use sampled softmax, we need an output projection.
     output_projection = None
@@ -120,18 +114,12 @@ class GridLSTM_model(object):
       softmax_loss_function = sampled_loss
 
     # Create the internal multi-layer cell for our RNN.
-    # single_cell = tf.nn.rnn_cell.GRUCell(size)
-    # if use_lstm:
-    #     single_cell = tf.nn.rnn_cell.BasicLSTMCell(size)
-    # cell = single_cell
-    # if num_layers > 1:
-    #   cell = tf.nn.rnn_cell.MultiRNNCell([single_cell] * num_layers)
-    additional_cell_args = {}
-    additional_cell_args.update({'use_peepholes': True, 'forget_bias': 1.0})
-    print("Creating Grid2LSTMCell...")
-    single_cell = Grid2LSTMCell(size, **additional_cell_args)
-    print("Creating two layers with Grid2LSTMCell...")
-    cell = tf.nn.rnn_cell.MultiRNNCell([single_cell] * num_layers)
+    single_cell = tf.nn.rnn_cell.GRUCell(size)
+    if use_lstm:
+      single_cell = tf.nn.rnn_cell.BasicLSTMCell(size)
+    cell = single_cell
+    if num_layers > 1:
+      cell = tf.nn.rnn_cell.MultiRNNCell([single_cell] * num_layers)
 
     # The seq2seq function: we use embedding for the input and attention.
     def seq2seq_f(encoder_inputs, decoder_inputs, do_decode):
@@ -151,13 +139,13 @@ class GridLSTM_model(object):
     self.decoder_inputs = []
     self.target_weights = []
     for i in xrange(buckets[-1][0]):  # Last bucket is the biggest one.
-      self.encoder_inputs.append(tf.placeholder(tf.int32, shape=[self.batch_size],
-                                                name="encoder{0}".format(i))) #Replaced NONE with batch_size
+      self.encoder_inputs.append(tf.placeholder(tf.int32, shape=[None],
+                                                name="encoder{0}".format(i)))
     for i in xrange(buckets[-1][1] + 1):
-      self.decoder_inputs.append(tf.placeholder(tf.int32, shape=[self.batch_size],
-                                                name="decoder{0}".format(i))) #Replaced NONE with self.batch_size
-      self.target_weights.append(tf.placeholder(dtype, shape=[self.batch_size],
-                                                name="weight{0}".format(i))) #Replaced NONE with batch_size
+      self.decoder_inputs.append(tf.placeholder(tf.int32, shape=[None],
+                                                name="decoder{0}".format(i)))
+      self.target_weights.append(tf.placeholder(dtype, shape=[None],
+                                                name="weight{0}".format(i)))
 
     # Our targets are decoder inputs shifted by one.
     targets = [self.decoder_inputs[i + 1]
@@ -165,23 +153,23 @@ class GridLSTM_model(object):
 
     # Training outputs and losses.
     if forward_only:
-        self.outputs, self.losses = tf.nn.seq2seq.model_with_buckets(
-            self.encoder_inputs, self.decoder_inputs, targets,
-            self.target_weights, buckets, lambda x, y: seq2seq_f(x, y, True),
-            softmax_loss_function=softmax_loss_function)
-        # If we use output projection, we need to project outputs for decoding.
-        if output_projection is not None:
-            for b in xrange(len(buckets)):
-                self.outputs[b] = [
-                    tf.matmul(output, output_projection[0]) + output_projection[1]
-                    for output in self.outputs[b]
-                    ]
+      self.outputs, self.losses = tf.nn.seq2seq.model_with_buckets(
+          self.encoder_inputs, self.decoder_inputs, targets,
+          self.target_weights, buckets, lambda x, y: seq2seq_f(x, y, True),
+          softmax_loss_function=softmax_loss_function)
+      # If we use output projection, we need to project outputs for decoding.
+      if output_projection is not None:
+        for b in xrange(len(buckets)):
+          self.outputs[b] = [
+              tf.matmul(output, output_projection[0]) + output_projection[1]
+              for output in self.outputs[b]
+          ]
     else:
-        self.outputs, self.losses = tf.nn.seq2seq.model_with_buckets(
-            self.encoder_inputs, self.decoder_inputs, targets,
-            self.target_weights, buckets,
-            lambda x, y: seq2seq_f(x, y, False),
-            softmax_loss_function=softmax_loss_function)
+      self.outputs, self.losses = tf.nn.seq2seq.model_with_buckets(
+          self.encoder_inputs, self.decoder_inputs, targets,
+          self.target_weights, buckets,
+          lambda x, y: seq2seq_f(x, y, False),
+          softmax_loss_function=softmax_loss_function)
 
     # Gradients and SGD update operation for training the model.
     params = tf.trainable_variables()
@@ -260,6 +248,7 @@ class GridLSTM_model(object):
       return None, outputs[0], outputs[1:]  # No gradient norm, loss, outputs.
 
 
+  # Changed from tensorflows code. The reason for why we need to use our own file.
   def get_batch(self, data, bucket_id):
     """Get a random batch of data from the specified bucket, prepare for step.
 
