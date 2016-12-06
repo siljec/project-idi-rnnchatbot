@@ -1,7 +1,7 @@
 import operator
 
 
-def get_stats(path, num_longest=20, more_than_words=100):
+def get_stats(path, num_longest=20, more_than_words=50, less_than_words=5):
 
     print("############## Stats for " + path + " ##############")
 
@@ -10,15 +10,18 @@ def get_stats(path, num_longest=20, more_than_words=100):
     with open(path) as file_object:
         longest = [0 for _ in range(num_longest)]
         max_length = 0
-        sentences_with_more_than_x_words = 0
+        turns_with_more_than_x_words = 0
+        turns_with_less_than_x_words = 0
         all_lines = file_object.readlines()
-        num_lines = len(all_lines)
+        num_turns = len(all_lines)
         num_words = 0
         for line in all_lines:
             length = len(line.split(' '))
             num_words += length
             if length > more_than_words:
-                sentences_with_more_than_x_words += 1
+                turns_with_more_than_x_words += 1
+            if length < less_than_words:
+                turns_with_less_than_x_words += 1
             if longest[0] < length:
                 longest.pop(0)
                 longest.append(length)
@@ -30,19 +33,21 @@ def get_stats(path, num_longest=20, more_than_words=100):
             else:
                 sentence_lengths[length] = 1
 
-    print("File: " + path + ". Sentences in total: " + str(num_lines))
+    print("File: " + path + ". Turns in total: " + str(num_turns))
     print("Longest sentence: " + str(max_length))
 
-    print("Longest sentences: " + str(longest))
+    print("Longest turn: " + str(longest))
 
-    print("Sentences with more than " + str(more_than_words) + " words: " + str(sentences_with_more_than_x_words))
+    print("Sentences with more than " + str(more_than_words) + " words: " + str(turns_with_more_than_x_words))
+
+    print("Sentences with less than " + str(less_than_words) + " words: " + str(turns_with_less_than_x_words))
 
     type_length, type_num = max(sentence_lengths.iteritems(), key=operator.itemgetter(1))
 
-    print("There are most sentences with length: " + str(type_length) + ". Num sentences: " + str(type_num))
+    print("There are most turns with length: " + str(type_length) + ". Num turns: " + str(type_num))
 
-    print("Average length of sentences: " + str(int(num_words/num_lines)))
+    print("Average length of turn: " + str(int(num_words/num_turns)))
 
 
-get_stats('Example-Data/x_train.txt')
-get_stats('Example-Data/y_train.txt')
+get_stats('Example-Data/x_train.txt', more_than_words=40, less_than_words=6)
+get_stats('Example-Data/y_train.txt', more_than_words=50, less_than_words=11)

@@ -36,13 +36,13 @@ import os
 import random
 import sys
 import time
+import re
 
 sys.path.insert(0, '../Preprocessing') # To access methods from another file from another folder
 from create_vocabulary import read_vocabulary_from_file
 from preprocess import generate_all_files
 from tokenize import sentence_to_token_ids
-
-from preprocess import file_len
+from helpers import replace_misspelled_words_in_sentence
 
 import numpy as np
 from six.moves import xrange  # pylint: disable=redefined-builtin
@@ -55,8 +55,8 @@ tf.app.flags.DEFINE_float("learning_rate", 0.5, "Learning rate.")
 tf.app.flags.DEFINE_float("learning_rate_decay_factor", 0.99, "Learning rate decays by this much.")
 tf.app.flags.DEFINE_float("max_gradient_norm", 5.0, "Clip gradients to this norm.")
 tf.app.flags.DEFINE_integer("batch_size", 256, "Batch size to use during training.")
-tf.app.flags.DEFINE_integer("size", 1024, "Size of each model layer.")
-tf.app.flags.DEFINE_integer("num_layers", 2, "Number of layers in the model.")
+tf.app.flags.DEFINE_integer("size", 512, "Size of each model layer.")
+tf.app.flags.DEFINE_integer("num_layers", 1, "Number of layers in the model.")
 tf.app.flags.DEFINE_integer("en_vocab_size", 100000, "English vocabulary size.")
 tf.app.flags.DEFINE_integer("fr_vocab_size", 100000, "French vocabulary size.")
 tf.app.flags.DEFINE_string("data_dir", "./Ola_data", "Data directory")
@@ -80,13 +80,6 @@ x_train_path = '../Preprocessing/x_train.txt'
 y_train_path = '../Preprocessing/y_train.txt'
 x_dev_path = '../Preprocessing/x_val.txt'
 y_dev_path = '../Preprocessing/y_val.txt'
-
-# TODO: Remove paths to Example data
-vocab_path = '../Preprocessing/Example-Data/vocabulary.txt'
-x_train_path = '../Preprocessing/Example-Data/x_train.txt'
-y_train_path = '../Preprocessing/Example-Data/y_train.txt'
-x_val_path = '../Preprocessing/Example-Data/x_val.txt'
-y_val_path = '../Preprocessing/Example-Data/y_val.txt'
 
 
 _PAD = b"_PAD"
@@ -290,8 +283,6 @@ def train():
                 train_set, bucket_id = get_batch(txt_row_train_data, train_set)
                 print("Time taken to get batch: " + str(time.time() - start_time))
 
-                print([len(x) for x in train_set], bucket_id)
-
                 # Get a batch and make a step.
                 start_time = time.time()
                 print("Get batch")
@@ -356,43 +347,69 @@ def train():
         coord.join(threads)
 
 
+def preprocess_input(sentence):
+    sentence = sentence.strip().lower()
+    sentence = re.sub(' +', ' ', sentence)  # Will remove multiple spaces
+    sentence = re.sub('(?<=[a-z])([!?,.])', r' \1', sentence)  # Add space before special characters [!?,.]
+    sentence = replace_misspelled_words_in_sentence(sentence, '../Preprocessing/misspellings.txt')
+    return sentence
+
+
+def swap_eos(sentence):
+    sentence_holder = []
+    for word in sentence:
+        if word == '_EOS':
+            sentence_holder.append(' \n')
+        else:
+            sentence_holder.append(word)
+    return sentence_holder
+
+
 def decode():
     with tf.Session() as sess:
         # Create model and load parameters.
         model = create_model(sess, True)
         model.batch_size = 1  # We decode one sentence at a time.
+
         # Load vocabularies.
         vocab, rev_vocab = read_vocabulary_from_file(vocab_path)
+
         # Decode from standard input.
         sys.stdout.write("Human: ")
         sys.stdout.flush()
         sentence = sys.stdin.readline()
-
+        sentence = preprocess_input(sentence)
         while sentence:
-
             # Get token-ids for the input sentence.
             token_ids = sentence_to_token_ids(tf.compat.as_bytes(sentence), vocab)
 
             # Which bucket does it belong to?
-            bucket_id = min([b for b in xrange(len(_buckets)) if _buckets[b][0] > len(token_ids)])
+            bucket_id = min([b for b in xrange(len(_buckets))
+                             if _buckets[b][0] > len(token_ids)])
 
             # Get a 1-element batch to feed the sentence to the model.
-            encoder_inputs, decoder_inputs, target_weights = model.get_batch({bucket_id: [(token_ids, [])]}, bucket_id)
+            encoder_inputs, decoder_inputs, target_weights = model.get_batch(
+                {bucket_id: [(token_ids, [])]}, bucket_id)
 
             # Get output logits for the sentence.
-            _, _, output_logits = model.step(sess, encoder_inputs, decoder_inputs, target_weights, bucket_id, True)
+            _, _, output_logits = model.step(sess, encoder_inputs, decoder_inputs,
+                                             target_weights, bucket_id, True)
 
             # This is a greedy decoder - outputs are just argmaxes of output_logits.
             outputs = [int(np.argmax(logit, axis=1)) for logit in output_logits]
 
             # If there is an EOS symbol in outputs, cut them at that point.
             if EOT_ID in outputs:
-                outputs = outputs[:outputs.index(EOT_ID)]
+              outputs = outputs[:outputs.index(EOT_ID)]
 
-            print("Ola: " + " ".join([tf.compat.as_str(rev_vocab[output]) for output in outputs]))
+            # Print out sentence corresponding to outputs.
+            output = [tf.compat.as_str(rev_vocab[output]) for output in outputs]
+            output = swap_eos(output)
+            print("Vinyals: " + " ".join(output))
             print("Human: ", end="")
             sys.stdout.flush()
             sentence = sys.stdin.readline()
+            sentence = preprocess_input(sentence)
 
 
 def self_test():
