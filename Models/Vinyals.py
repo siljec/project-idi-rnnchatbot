@@ -36,7 +36,7 @@ import sys
 import re
 from math import exp
 from random import choice
-from time import time as now
+import time
 
 sys.path.insert(0, '../Preprocessing') # To access methods from another file from another folder
 from create_vocabulary import read_vocabulary_from_file
@@ -50,29 +50,21 @@ import seq2seq_model
 
 
 tf.app.flags.DEFINE_float("learning_rate", 0.5, "Learning rate.")
-tf.app.flags.DEFINE_float("learning_rate_decay_factor", 0.99,
-                          "Learning rate decays by this much.")
-tf.app.flags.DEFINE_float("max_gradient_norm", 5.0,
-                          "Clip gradients to this norm.")
-tf.app.flags.DEFINE_integer("batch_size", 64,
-                            "Batch size to use during training.")
+tf.app.flags.DEFINE_float("learning_rate_decay_factor", 0.99, "Learning rate decays by this much.")
+tf.app.flags.DEFINE_float("max_gradient_norm", 5.0, "Clip gradients to this norm.")
+tf.app.flags.DEFINE_integer("batch_size", 64, "Batch size to use during training.")
 tf.app.flags.DEFINE_integer("size", 512, "Size of each model layer.")
 tf.app.flags.DEFINE_integer("num_layers", 2, "Number of layers in the model.")
 tf.app.flags.DEFINE_integer("vocab_size", 100000, "English vocabulary size.")
 tf.app.flags.DEFINE_string("data_dir", "./Vinyals_data", "Data directory")
 tf.app.flags.DEFINE_string("train_dir", "./Vinyals_data", "Training directory.")
 tf.app.flags.DEFINE_string("log_dir", "./Vinyals_data/log_dir", "Logging directory.")
-
-tf.app.flags.DEFINE_integer("max_train_data_size", 0,
-                            "Limit on the size of training data (0: no limit).")
-tf.app.flags.DEFINE_integer("steps_per_checkpoint", 100,
-                            "How many training steps to do per checkpoint.")
-tf.app.flags.DEFINE_boolean("decode", False,
-                            "Set to True for interactive decoding.")
-tf.app.flags.DEFINE_boolean("self_test", False,
-                            "Run a self-test if this is set to True.")
-tf.app.flags.DEFINE_boolean("use_fp16", False,
-                            "Train using fp16 instead of fp32.")
+tf.app.flags.DEFINE_integer("max_train_data_size", 0, "Limit on the size of training data (0: no limit).")
+tf.app.flags.DEFINE_integer("print_frequency", 10, "How many training steps to do per print.")
+tf.app.flags.DEFINE_integer("steps_per_checkpoint", 100, "How many training steps to do per checkpoint.")
+tf.app.flags.DEFINE_boolean("decode", False, "Set to True for interactive decoding.")
+tf.app.flags.DEFINE_boolean("self_test", False, "Run a self-test if this is set to True.")
+tf.app.flags.DEFINE_boolean("use_fp16", False, "Train using fp16 instead of fp32.")
 
 FLAGS = tf.app.flags.FLAGS
 
@@ -215,32 +207,28 @@ def train():
 
         try:
             while True: #not coord.should_stop():
-                print("New training epoch")
-                start_time = now()
+                if current_step % FLAGS.print_frequency == 0:
+                    print("Step number" + str(current_step))
 
                 # Get a batch
-                print("Get batch")
                 train_set, bucket_id = get_batch(txt_row_train_data, train_set)
-                print("Time taken to get batch: " + str(now() - start_time))
-                start_time = now()
+                start_time = time.time()
                 encoder_inputs, decoder_inputs, target_weights = model.get_batch(train_set, bucket_id)
 
                 # Clean out trained bucket
                 train_set[bucket_id] = []
 
                 # Make a step
-                print("Make step")
                 _, step_loss, _ = model.step(sess, encoder_inputs, decoder_inputs, target_weights, bucket_id, False)
 
                 # Calculating variables
-                step_time += (now() - start_time) / FLAGS.steps_per_checkpoint
+                step_time += (time.time() - start_time) / FLAGS.steps_per_checkpoint
                 loss += step_loss / FLAGS.steps_per_checkpoint
                 current_step += 1
 
                 # Once in a while, we save checkpoint, print statistics, and run evals.
                 if current_step % FLAGS.steps_per_checkpoint == 0:
                     # Print statistics for the previous epoch.
-                    print("Getting development batch set")
                     dev_set, bucket_id = get_batch(txt_row_dev_data, dev_set, ac_function=min)
 
                     perplexity = exp(float(loss)) if loss < 300 else float("inf")

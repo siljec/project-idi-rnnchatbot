@@ -36,7 +36,7 @@ import sys
 import re
 from math import exp
 from random import choice
-from time import time as now
+import time
 
 sys.path.insert(0, '../Preprocessing') # To access methods from another file from another folder
 from create_vocabulary import read_vocabulary_from_file
@@ -57,6 +57,7 @@ tf.app.flags.DEFINE_integer("batch_size", 64, "Batch size to use during training
 tf.app.flags.DEFINE_integer("size", 512, "Size of each model layer.")
 tf.app.flags.DEFINE_integer("num_layers", 2, "Number of layers in the model.")
 tf.app.flags.DEFINE_integer("vocab_size", 100000, "English vocabulary size.")
+tf.app.flags.DEFINE_integer("print_frequency", 10, "How many training steps to do per print.")
 tf.app.flags.DEFINE_string("data_dir", "./Ola_data", "Data directory")
 tf.app.flags.DEFINE_string("train_dir", "./Ola_data", "Training directory.")
 tf.app.flags.DEFINE_string("log_dir", "./Ola_data/log_dir", "Logging directory.")
@@ -206,14 +207,12 @@ def train():
         print("Starting training loop")
         try:
             while True:  # not coord.should_stop():
-                print("New training epoch")
-                start_time = now()
+                if current_step % FLAGS.print_frequency == 0:
+                    print("Step number" + str(current_step))
 
                 # Get a batch
-                print("Get batch")
                 train_set, bucket_id = get_batch(txt_row_train_data, train_set)
-                print("Time taken to get batch: " + str(now() - start_time))
-                start_time = now()
+                start_time = time.time()
                 encoder_inputs, decoder_inputs, target_weights = model.get_batch(train_set, bucket_id)
 
                 # Clean out trained bucket
@@ -224,14 +223,13 @@ def train():
                 _, step_loss, _ = model.step(sess, encoder_inputs, decoder_inputs, target_weights, bucket_id, False)
 
                 # Calculating variables
-                step_time += (now() - start_time) / FLAGS.steps_per_checkpoint
+                step_time += (time.time() - start_time) / FLAGS.steps_per_checkpoint
                 loss += step_loss / FLAGS.steps_per_checkpoint
                 current_step += 1
 
                 # Once in a while, we save checkpoint, print statistics, and run evals.
                 if current_step % FLAGS.steps_per_checkpoint == 0:
                     # Print statistics for the previous epoch.
-                    print("Getting development batch set")
                     dev_set, bucket_id = get_batch(txt_row_dev_data, dev_set, ac_function=min)
 
                     perplexity = exp(float(loss)) if loss < 300 else float("inf")

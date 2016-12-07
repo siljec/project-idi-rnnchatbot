@@ -54,6 +54,7 @@ def get_bucket_stats(path, buckets=[(40, 40), (60, 60), (85, 85), (110, 110), (1
     print("\n############## Stats for " + path + " ##############")
     bucket_content = [0 for _ in buckets]
     total_lines = 0
+    print("Buckets", buckets)
 
     with open(path) as file_object:
         for line in file_object:
@@ -78,6 +79,40 @@ def get_bucket_stats(path, buckets=[(40, 40), (60, 60), (85, 85), (110, 110), (1
           "{0:.2f}".format((100.0*no_match)/total_lines) + "%")
 
 
+def get_dictionary_stats(x_train, y_train, occurrence=10000):
+    print("\n############## Stats for Vocabulary ##############")
+    dictionary = {}
+
+    print("Finding words in " + str(x_train))
+    with open(x_train) as fileobject:
+        for line in fileobject:
+            sentence = line.strip().split(' ')
+            for word in sentence:
+                if word in dictionary:
+                    dictionary[word] += 1
+                else:
+                    dictionary[word] = 1
+
+    print("Finding words in " + str(y_train))
+    with open(y_train) as fileobject:
+        for line in fileobject:
+            sentence = line.strip().split(' ')
+            for word in sentence:
+                if word in dictionary:
+                    dictionary[word] += 1
+                else:
+                    dictionary[word] = 1
+
+    sorted_dict = sorted(dictionary.items(), key=operator.itemgetter(1), reverse = True)
+    counter = 0
+
+    for key, value in sorted_dict:
+        if counter % occurrence == 0:
+            print(counter, key, value)
+        counter += 1
+
+
 # get_stats('x_train.txt', more_than_words=40, less_than_words=6)
 # get_stats('y_train.txt', more_than_words=50, less_than_words=11)
-get_bucket_stats('train_merged.txt', buckets=[(40, 40), (60, 60), (80, 80), (100, 100), (140, 140), (180, 180)])
+get_bucket_stats('train_merged.txt', buckets=[(45, 40), (65, 60), (95, 50), (140, 135)])
+#get_dictionary_stats('./x_train_spell_check.txt', './y_train_spell_check.txt')
