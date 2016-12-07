@@ -3,7 +3,7 @@ import operator
 
 def get_stats(path, num_longest=20, more_than_words=50, less_than_words=5):
 
-    print("############## Stats for " + path + " ##############")
+    print("\n############## Stats for " + path + " ##############")
 
     sentence_lengths = dict()
 
@@ -49,5 +49,35 @@ def get_stats(path, num_longest=20, more_than_words=50, less_than_words=5):
     print("Average length of turn: " + str(int(num_words/num_turns)))
 
 
-get_stats('Example-Data/x_train.txt', more_than_words=40, less_than_words=6)
-get_stats('Example-Data/y_train.txt', more_than_words=50, less_than_words=11)
+def get_bucket_stats(path, buckets=[(40, 40), (60, 60), (85, 85), (110, 110), (150, 150)]):
+
+    print("\n############## Stats for " + path + " ##############")
+    bucket_content = [0 for _ in buckets]
+    total_lines = 0
+
+    with open(path) as file_object:
+        for line in file_object:
+            total_lines += 1
+            # Find correct bucket
+            x, y = line.split(',')
+            for bucket_id, (source_size, target_size) in enumerate(buckets):
+                if len(x) < source_size and len(y) < target_size:
+                    bucket_content[bucket_id] += 1
+                    break
+
+    print("Occurrences in each bucket: " + str(bucket_content))
+
+    all_turns = sum(bucket_content)
+    bucket_content = ["{0:.2f}".format((100.0*num) / total_lines) + "%" for num in bucket_content]
+
+    print("Occurrences in each bucket by percent: " +  str(bucket_content))
+
+    no_match = total_lines - all_turns
+
+    print("Number of turns that did not fit: " + str(no_match) + "/" + str(total_lines) + "\t = " +
+          "{0:.2f}".format((100.0*no_match)/total_lines) + "%")
+
+
+# get_stats('x_train.txt', more_than_words=40, less_than_words=6)
+# get_stats('y_train.txt', more_than_words=50, less_than_words=11)
+get_bucket_stats('train_merged.txt', buckets=[(40, 40), (60, 60), (80, 80), (100, 100), (140, 140), (180, 180)])
