@@ -54,7 +54,7 @@ import gridLSTM_model
 tf.app.flags.DEFINE_float("learning_rate", 0.5, "Learning rate.")
 tf.app.flags.DEFINE_float("learning_rate_decay_factor", 0.99, "Learning rate decays by this much.")
 tf.app.flags.DEFINE_float("max_gradient_norm", 5.0, "Clip gradients to this norm.")
-tf.app.flags.DEFINE_integer("batch_size", 256, "Batch size to use during training.")
+tf.app.flags.DEFINE_integer("batch_size", 128, "Batch size to use during training.")
 tf.app.flags.DEFINE_integer("size", 512, "Size of each model layer.")
 tf.app.flags.DEFINE_integer("num_layers", 2, "Number of layers in the model.")
 tf.app.flags.DEFINE_integer("en_vocab_size", 100000, "English vocabulary size.")
@@ -72,7 +72,7 @@ FLAGS = tf.app.flags.FLAGS
 
 # We use a number of buckets and pad to the closest one for efficiency.
 # See seq2seq_model.Seq2SeqModel for details of how they work.
-_buckets = [(10, 15), (20, 25), (40, 50)]
+_buckets = [(40, 40), (60, 60), (85, 85), (110, 110), (150, 150)]
 
 # Paths
 vocab_path = '../Preprocessing/vocabulary.txt'
@@ -358,7 +358,7 @@ def decode():
             # Print out sentence corresponding to outputs.
             output = [tf.compat.as_str(rev_vocab[output]) for output in outputs]
             output = swap_eos(output)
-            print("Vinyals: " + " ".join(output))
+            print("Ola: " + " ".join(output))
             print("Human: ", end="")
             sys.stdout.flush()
             sentence = sys.stdin.readline()

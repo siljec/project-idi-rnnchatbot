@@ -55,7 +55,7 @@ tf.app.flags.DEFINE_float("learning_rate_decay_factor", 0.99,
                           "Learning rate decays by this much.")
 tf.app.flags.DEFINE_float("max_gradient_norm", 5.0,
                           "Clip gradients to this norm.")
-tf.app.flags.DEFINE_integer("batch_size", 256,
+tf.app.flags.DEFINE_integer("batch_size", 128,
                             "Batch size to use during training.")
 tf.app.flags.DEFINE_integer("size", 512, "Size of each model layer.")
 tf.app.flags.DEFINE_integer("num_layers", 2, "Number of layers in the model.")
@@ -80,7 +80,7 @@ FLAGS = tf.app.flags.FLAGS
 
 # We use a number of buckets and pad to the closest one for efficiency.
 # See seq2seq_model.Seq2SeqModel for details of how they work.
-_buckets = [(10, 15), (20, 25), (40, 50)]
+_buckets = [(40, 40), (60, 60), (85, 85), (110, 110), (150, 150)]
 
 # Paths
 vocab_path = '../Preprocessing/vocabulary.txt'
@@ -283,7 +283,7 @@ def train():
 
                     # Save checkpoint and zero timer and loss.
                     print("Save checkpoint")
-                    checkpoint_path = os.path.join(FLAGS.train_dir, "Ola.ckpt")
+                    checkpoint_path = os.path.join(FLAGS.train_dir, "Vinyals.ckpt")
                     model.saver.save(sess, checkpoint_path, global_step=model.global_step)
                     step_time, loss = 0.0, 0.0
                     perplexity_summary = tf.Summary()
@@ -312,45 +312,6 @@ def train():
         finally:
             coord.request_stop()
         coord.join(threads)
-
-
-def decode():
-    with tf.Session() as sess:
-        # Create model and load parameters.
-        model = create_model(sess, True)
-        model.batch_size = 1  # We decode one sentence at a time.
-        # Load vocabularies.
-        vocab, rev_vocab = read_vocabulary_from_file(vocab_path)
-        # Decode from standard input.
-        sys.stdout.write("Human: ")
-        sys.stdout.flush()
-        sentence = sys.stdin.readline()
-
-        while sentence:
-
-            # Get token-ids for the input sentence.
-            token_ids = sentence_to_token_ids(tf.compat.as_bytes(sentence), vocab)
-
-            # Which bucket does it belong to?
-            bucket_id = min([b for b in xrange(len(_buckets)) if _buckets[b][0] > len(token_ids)])
-
-            # Get a 1-element batch to feed the sentence to the model.
-            encoder_inputs, decoder_inputs, target_weights = model.get_batch({bucket_id: [(token_ids, [])]}, bucket_id)
-
-            # Get output logits for the sentence.
-            _, _, output_logits = model.step(sess, encoder_inputs, decoder_inputs, target_weights, bucket_id, True)
-
-            # This is a greedy decoder - outputs are just argmaxes of output_logits.
-            outputs = [int(np.argmax(logit, axis=1)) for logit in output_logits]
-
-            # If there is an EOS symbol in outputs, cut them at that point.
-            if EOT_ID in outputs:
-                outputs = outputs[:outputs.index(EOT_ID)]
-
-            print("Ola: " + " ".join([tf.compat.as_str(rev_vocab[output]) for output in outputs]))
-            print("Human: ", end="")
-            sys.stdout.flush()
-            sentence = sys.stdin.readline()
 
 
 def preprocess_input(sentence):
