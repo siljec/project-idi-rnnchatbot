@@ -40,9 +40,8 @@ from time import time as now
 
 sys.path.insert(0, '../Preprocessing') # To access methods from another file from another folder
 from create_vocabulary import read_vocabulary_from_file
-from preprocess import generate_all_files
 from tokenize import sentence_to_token_ids
-from helpers import replace_misspelled_words_in_sentence
+from helpers import replace_misspelled_words_in_sentence, check_for_needed_files_and_create
 import numpy as np
 from six.moves import xrange  # pylint: disable=redefined-builtin
 import tensorflow as tf
@@ -59,8 +58,7 @@ tf.app.flags.DEFINE_integer("batch_size", 64,
                             "Batch size to use during training.")
 tf.app.flags.DEFINE_integer("size", 512, "Size of each model layer.")
 tf.app.flags.DEFINE_integer("num_layers", 2, "Number of layers in the model.")
-tf.app.flags.DEFINE_integer("en_vocab_size", 100000, "English vocabulary size.")
-tf.app.flags.DEFINE_integer("fr_vocab_size", 100000, "French vocabulary size.")
+tf.app.flags.DEFINE_integer("vocab_size", 100000, "English vocabulary size.")
 tf.app.flags.DEFINE_string("data_dir", "./Vinyals_data", "Data directory")
 tf.app.flags.DEFINE_string("train_dir", "./Vinyals_data", "Training directory.")
 tf.app.flags.DEFINE_string("log_dir", "./Vinyals_data/log_dir", "Logging directory.")
@@ -100,33 +98,6 @@ GO_ID = 1
 EOS_ID = 2
 EOT_ID = 3
 UNK_ID = 4
-
-
-def check_for_needed_files_and_create():
-    if not os.path.isdir("./../../ubuntu-ranking-dataset-creator"):
-        print("Ubuntu Dialogue Corpus not found or is not on the right path. ")
-        print('1')
-        print('cd out from project-idi-rnnchatbot')
-        print('2')
-        print('\t git clone https://github.com/rkadlec/ubuntu-ranking-dataset-creator.git')
-        print('3')
-        print('\t cd ubuntu-ranking-dataset-creator/src')
-        print('4')
-        print('\t ./generate.sh')
-    if not os.path.isfile("./../Preprocessing/x_train.txt"):
-        generate_all_files(FLAGS.en_vocab_size)
-    if not os.path.isfile("./../Preprocessing/y_train.txt"):
-        generate_all_files(FLAGS.en_vocab_size)
-    if not os.path.isfile("./../Preprocessing/x_val.txt"):
-        generate_all_files(FLAGS.en_vocab_size)
-    if not os.path.isfile("./../Preprocessing/y_val.txt"):
-        generate_all_files(FLAGS.en_vocab_size)
-    if not os.path.isfile("./../Preprocessing/x_test.txt"):
-        generate_all_files(FLAGS.en_vocab_size)
-    if not os.path.isfile("./../Preprocessing/y_test.txt"):
-        generate_all_files(FLAGS.en_vocab_size)
-    if not os.path.isfile("./../Preprocessing/vocabulary.txt"):
-        generate_all_files(FLAGS.en_vocab_size)
 
 
 def input_pipeline(root='../Preprocessing/', start_name='train_merged.txt'):
@@ -177,8 +148,8 @@ def create_model(session, forward_only):
     """Create translation model and initialize or load parameters in session."""
     # dtype = tf.float16 if FLAGS.use_fp16 else tf.float32
     model = seq2seq_model.Seq2SeqModel(
-        FLAGS.en_vocab_size,
-        FLAGS.en_vocab_size,
+        FLAGS.vocab_size,
+        FLAGS.vocab_size,
         _buckets,
         FLAGS.size,
         FLAGS.num_layers,
@@ -201,7 +172,7 @@ def train():
     """Train a en->fr translation model using WMT data."""
 
     print("Checking for needed files")
-    check_for_needed_files_and_create()
+    check_for_needed_files_and_create(FLAGS.vocab_size)
 
     print("Creating file queue")
     filename_queue = input_pipeline()
@@ -333,7 +304,10 @@ def swap_eos(sentence):
 
 
 def decode():
-    with tf.Session() as sess:
+    # Avoid allocating all of the GPU memory
+    config = get_session_configs()
+
+    with tf.Session(config=config) as sess:
         # Create model and load parameters.
         model = create_model(sess, True)
         model.batch_size = 1  # We decode one sentence at a time.
@@ -380,32 +354,36 @@ def decode():
 
 
 def self_test():
-  """Test the translation model."""
-  with tf.Session() as sess:
-    print("Self-test for neural translation model.")
-    # Create model with vocabularies of 10, 2 small buckets, 2 layers of 32.
-    model = seq2seq_model.Seq2SeqModel(10, 10, [(3, 3), (6, 6)], 32, 2,
-                                       5.0, 32, 0.3, 0.99, num_samples=8)
-    sess.run(tf.initialize_all_variables())
+    """Test the translation model."""
 
-    # Fake data set for both the (3, 3) and (6, 6) bucket.
-    data_set = ([([1, 1], [2, 2]), ([3, 3], [4]), ([5], [6])],
-                [([1, 1, 1, 1, 1], [2, 2, 2, 2, 2]), ([3, 3, 3], [5, 6])])
-    for _ in xrange(5):  # Train the fake model for 5 steps.
-      bucket_id = choice([0, 1])
-      encoder_inputs, decoder_inputs, target_weights = model.get_batch(
-          data_set, bucket_id)
-      model.step(sess, encoder_inputs, decoder_inputs, target_weights,
-                 bucket_id, False)
+    # Avoid allocating all of the GPU memory
+    config = get_session_configs()
+
+    with tf.Session(config=config) as sess:
+          print("Self-test for neural translation model.")
+          # Create model with vocabularies of 10, 2 small buckets, 2 layers of 32.
+          model = seq2seq_model.Seq2SeqModel(10, 10, [(3, 3), (6, 6)], 32, 2,
+                                             5.0, 32, 0.3, 0.99, num_samples=8)
+          sess.run(tf.initialize_all_variables())
+
+          # Fake data set for both the (3, 3) and (6, 6) bucket.
+          data_set = ([([1, 1], [2, 2]), ([3, 3], [4]), ([5], [6])],
+                      [([1, 1, 1, 1, 1], [2, 2, 2, 2, 2]), ([3, 3, 3], [5, 6])])
+          for _ in xrange(5):  # Train the fake model for 5 steps.
+            bucket_id = choice([0, 1])
+            encoder_inputs, decoder_inputs, target_weights = model.get_batch(
+                data_set, bucket_id)
+            model.step(sess, encoder_inputs, decoder_inputs, target_weights,
+                       bucket_id, False)
 
 
 def main(_):
-  if FLAGS.self_test:
-    self_test()
-  elif FLAGS.decode:
-    decode()
-  else:
-    train()
+    if FLAGS.self_test:
+        self_test()
+    elif FLAGS.decode:
+        decode()
+    else:
+        train()
 
 if __name__ == "__main__":
-  tf.app.run()
+    tf.app.run()

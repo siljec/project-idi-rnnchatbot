@@ -130,8 +130,10 @@ class GridLSTM_model(object):
     additional_cell_args.update({'use_peepholes': True, 'forget_bias': 1.0})
     print("Creating Grid2LSTMCell...")
     single_cell = Grid2LSTMCell(size, **additional_cell_args)
-    print("Creating two layers with Grid2LSTMCell...")
-    cell = tf.nn.rnn_cell.MultiRNNCell([single_cell] * num_layers)
+    cell = single_cell
+    if num_layers > 1:
+        print("Creating " + str(num_layers) + " layers with Grid2LSTMCell...")
+        cell = tf.nn.rnn_cell.MultiRNNCell([single_cell] * num_layers)
 
     # The seq2seq function: we use embedding for the input and attention.
     def seq2seq_f(encoder_inputs, decoder_inputs, do_decode):
@@ -141,7 +143,7 @@ class GridLSTM_model(object):
           cell,
           num_encoder_symbols=source_vocab_size,
           num_decoder_symbols=target_vocab_size,
-          embedding_size=size,
+          embedding_size=1000,
           output_projection=output_projection,
           feed_previous=do_decode,
           dtype=dtype)
