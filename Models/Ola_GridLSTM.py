@@ -31,12 +31,12 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-import math
 import os
-import random
 import sys
-import time
 import re
+from math import exp
+from random import choice
+from time import time as now
 
 sys.path.insert(0, '../Preprocessing') # To access methods from another file from another folder
 from create_vocabulary import read_vocabulary_from_file
@@ -45,8 +45,8 @@ from tokenize import sentence_to_token_ids
 from helpers import replace_misspelled_words_in_sentence
 
 import numpy as np
-from six.moves import xrange  # pylint: disable=redefined-builtin
 import tensorflow as tf
+from six.moves import xrange  # pylint: disable=redefined-builtin
 
 import gridLSTM_model
 
@@ -231,13 +231,13 @@ def train():
         try:
             while True: #not coord.should_stop():
                 print("New training epoch")
-                start_time = time.time()
+                start_time = now()
 
                 # Get a batch
                 print("Get batch")
                 train_set, bucket_id = get_batch(txt_row_train_data, train_set)
-                print("Time taken to get batch: " + str(time.time() - start_time))
-                start_time = time.time()
+                print("Time taken to get batch: " + str(now() - start_time))
+                start_time = now()
                 encoder_inputs, decoder_inputs, target_weights = model.get_batch(train_set, bucket_id)
 
                 # Clean out trained bucket
@@ -248,7 +248,7 @@ def train():
                 _, step_loss, _ = model.step(sess, encoder_inputs, decoder_inputs, target_weights, bucket_id, False)
 
                 # Calculating variables
-                step_time += (time.time() - start_time) / FLAGS.steps_per_checkpoint
+                step_time += (now() - start_time) / FLAGS.steps_per_checkpoint
                 loss += step_loss / FLAGS.steps_per_checkpoint
                 current_step += 1
 
@@ -258,7 +258,7 @@ def train():
                     print("Getting development batch set")
                     dev_set, bucket_id = get_batch(txt_row_dev_data, dev_set, ac_function=min)
 
-                    perplexity = math.exp(float(loss)) if loss < 300 else float("inf")
+                    perplexity = exp(float(loss)) if loss < 300 else float("inf")
                     print("global step %d learning rate %.4f step-time %.2f perplexity "
                           "%.2f" % (model.global_step.eval(), model.learning_rate.eval(), step_time, perplexity))
 
@@ -286,7 +286,7 @@ def train():
                         del dev_set[bucket_id][:FLAGS.batch_size]
 
                         _, eval_loss, _ = model.step(sess, encoder_inputs, decoder_inputs, target_weights, bucket_id, True)
-                        eval_ppx = math.exp(float(eval_loss)) if eval_loss < 300 else float("inf")
+                        eval_ppx = exp(float(eval_loss)) if eval_loss < 300 else float("inf")
                         print("  eval: bucket %d perplexity %.2f" % (bucket_id, eval_ppx))
                         bucket_value = perplexity_summary.value.add()
                         bucket_value.tag = "perplexity_bucket %d" % bucket_id
@@ -376,7 +376,7 @@ def self_test():
         data_set = ([([1, 1], [2, 2]), ([3, 3], [4]), ([5], [6])],
                     [([1, 1, 1, 1, 1], [2, 2, 2, 2, 2]), ([3, 3, 3], [5, 6])])
         for _ in xrange(5):  # Train the fake model for 5 steps.
-            bucket_id = random.choice([0, 1])
+            bucket_id = choice([0, 1])
             encoder_inputs, decoder_inputs, target_weights = model.get_batch(data_set, bucket_id)
             model.step(sess, encoder_inputs, decoder_inputs, target_weights, bucket_id, False)
 
