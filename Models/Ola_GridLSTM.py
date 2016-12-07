@@ -246,7 +246,12 @@ def train():
                     checkpoint_path = os.path.join(FLAGS.train_dir, "Ola.ckpt")
                     model.saver.save(sess, checkpoint_path, global_step=model.global_step)
                     step_time, loss = 0.0, 0.0
+
+                    # Adding perplexity to tensorboard
                     perplexity_summary = tf.Summary()
+                    overall_value = perplexity_summary.value.add()
+                    overall_value.tag = "perplexity_overall"
+                    overall_value.simple_value = perplexity
 
                     # Run evals on development set and print their perplexity.
                     print("Run evaluation on development set")
@@ -262,6 +267,8 @@ def train():
                         _, eval_loss, _ = model.step(sess, encoder_inputs, decoder_inputs, target_weights, bucket_id, True)
                         eval_ppx = exp(float(eval_loss)) if eval_loss < 300 else float("inf")
                         print("  eval: bucket %d perplexity %.2f" % (bucket_id, eval_ppx))
+
+                        # Adding bucket perplexity to tensorboard
                         bucket_value = perplexity_summary.value.add()
                         bucket_value.tag = "perplexity_bucket %d" % bucket_id
                         bucket_value.simple_value = eval_ppx
