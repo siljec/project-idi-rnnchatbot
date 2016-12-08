@@ -204,11 +204,13 @@ def train():
         coord = tf.train.Coordinator()
         threads = tf.train.start_queue_runners(coord=coord)
 
+        train_time = time.time()
+
         print("Starting training loop")
         try:
             while True:  # not coord.should_stop():
                 if current_step % FLAGS.print_frequency == 0:
-                    print("Step number" + str(current_step))
+                    print("Step number: " + str(current_step))
 
                 # Get a batch
                 train_set, bucket_id = get_batch(txt_row_train_data, train_set)
@@ -219,7 +221,6 @@ def train():
                 train_set[bucket_id] = []
 
                 # Make a step
-                print("Make step")
                 _, step_loss, _ = model.step(sess, encoder_inputs, decoder_inputs, target_weights, bucket_id, False)
 
                 # Calculating variables
@@ -229,6 +230,11 @@ def train():
 
                 # Once in a while, we save checkpoint, print statistics, and run evals.
                 if current_step % FLAGS.steps_per_checkpoint == 0:
+                    duration = time.time() - train_time
+                    minutes = int(duration / 60)
+                    seconds = duration % 60
+                    check_time = time.time()
+                    print("Time ", minutes, " minutes ", seconds, " seconds to train")
                     # Print statistics for the previous epoch.
                     dev_set, bucket_id = get_batch(txt_row_dev_data, dev_set, ac_function=min)
 
@@ -274,6 +280,11 @@ def train():
                         bucket_value.simple_value = eval_ppx
                     summary_writer.add_summary(perplexity_summary, model.global_step.eval())
                     sys.stdout.flush()
+                    duration = time.time() - check_time
+                    minutes = int(duration / 60)
+                    seconds = duration % 60
+                    print("Time ", minutes, " minutes ", seconds, " seconds to do checkpoint")
+                    train_time = time.time()
         except tf.errors.OutOfRangeError:
             print('Done training, epoch reached')
         finally:
