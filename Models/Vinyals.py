@@ -56,12 +56,13 @@ tf.app.flags.DEFINE_integer("batch_size", 64, "Batch size to use during training
 tf.app.flags.DEFINE_integer("size", 512, "Size of each model layer.")
 tf.app.flags.DEFINE_integer("num_layers", 2, "Number of layers in the model.")
 tf.app.flags.DEFINE_integer("vocab_size", 100000, "English vocabulary size.")
+tf.app.flags.DEFINE_integer("print_frequency", 100, "How many training steps to do per print.")
+tf.app.flags.DEFINE_integer("max_train_steps", 75010, "How many training steps to do.")
 tf.app.flags.DEFINE_string("data_dir", "./Vinyals_data", "Data directory")
 tf.app.flags.DEFINE_string("train_dir", "./Vinyals_data", "Training directory.")
 tf.app.flags.DEFINE_string("log_dir", "./Vinyals_data/log_dir", "Logging directory.")
 tf.app.flags.DEFINE_integer("max_train_data_size", 0, "Limit on the size of training data (0: no limit).")
-tf.app.flags.DEFINE_integer("print_frequency", 10, "How many training steps to do per print.")
-tf.app.flags.DEFINE_integer("steps_per_checkpoint", 100, "How many training steps to do per checkpoint.")
+tf.app.flags.DEFINE_integer("steps_per_checkpoint", 3000, "How many training steps to do per checkpoint.")
 tf.app.flags.DEFINE_boolean("decode", False, "Set to True for interactive decoding.")
 tf.app.flags.DEFINE_boolean("self_test", False, "Run a self-test if this is set to True.")
 tf.app.flags.DEFINE_boolean("use_fp16", False, "Train using fp16 instead of fp32.")
@@ -70,7 +71,7 @@ FLAGS = tf.app.flags.FLAGS
 
 # We use a number of buckets and pad to the closest one for efficiency.
 # See seq2seq_model.Seq2SeqModel for details of how they work.
-_buckets = [(40, 40), (60, 60), (85, 85), (110, 110), (150, 150)]
+_buckets = [(45, 40), (65, 60), (90, 85), (140, 135)]
 
 # Paths
 vocab_path = '../Preprocessing/vocabulary.txt'
@@ -203,10 +204,12 @@ def train():
         coord = tf.train.Coordinator()
         threads = tf.train.start_queue_runners(coord=coord)
 
+        train_time = time.time()
+
         print("Starts training loop")
 
         try:
-            while True: #not coord.should_stop():
+            while FLAGS.max_train_steps >= current_step: #not coord.should_stop():
                 if current_step % FLAGS.print_frequency == 0:
                     print("Step number" + str(current_step))
 
@@ -228,6 +231,12 @@ def train():
 
                 # Once in a while, we save checkpoint, print statistics, and run evals.
                 if current_step % FLAGS.steps_per_checkpoint == 0:
+                    duration = time.time() - train_time
+                    minutes = int(duration / 60)
+                    seconds = duration % 60
+                    check_time = time.time()
+                    print("Time ", minutes, " minutes ", seconds, " seconds to train")
+
                     # Print statistics for the previous epoch.
                     dev_set, bucket_id = get_batch(txt_row_dev_data, dev_set, ac_function=min)
 
@@ -273,6 +282,11 @@ def train():
                         bucket_value.simple_value = eval_ppx
                     summary_writer.add_summary(perplexity_summary, model.global_step.eval())
                     sys.stdout.flush()
+                    duration = time.time() - check_time
+                    minutes = int(duration / 60)
+                    seconds = duration % 60
+                    print("Time ", minutes, " minutes ", seconds, " seconds to do checkpoint")
+                    train_time = time.time()
         except tf.errors.OutOfRangeError:
             print('Done training, epoch reached')
         finally:
