@@ -71,7 +71,7 @@ FLAGS = tf.app.flags.FLAGS
 
 # We use a number of buckets and pad to the closest one for efficiency.
 # See seq2seq_model.Seq2SeqModel for details of how they work.
-_buckets = [(40, 40), (60, 60), (85, 85), (110, 110), (150, 150)]
+_buckets = [(45, 40), (65, 60), (90, 85), (140, 135)]
 
 # Paths
 vocab_path = '../Preprocessing/vocabulary.txt'
