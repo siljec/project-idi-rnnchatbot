@@ -311,7 +311,7 @@ def swap_eos(sentence):
 
 
 def decode():
-    with tf.Session() as sess:
+    with tf.Session(config=get_session_configs()) as sess:
         # Create model and load parameters.
         model = create_model(sess, True)
         model.batch_size = 1  # We decode one sentence at a time.
@@ -358,8 +358,8 @@ def decode():
 
 
 def self_test():
-    """Test the translation model."""
-    with tf.Session() as sess:
+    """Test the model."""
+    with tf.Session(config=get_session_configs()) as sess:
         print("Self-test for neural translation model.")
         # Create model with vocabularies of 10, 2 small buckets, 2 layers of 32.
         model = gridLSTM_model.GridLSTM_model(10, 10, [(3, 3), (6, 6)], 32, 2, 5.0, 32, 0.3, 0.99, num_samples=8)

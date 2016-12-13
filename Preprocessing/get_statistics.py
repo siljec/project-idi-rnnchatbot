@@ -106,13 +106,27 @@ def get_dictionary_stats(x_train, y_train, occurrence=10000):
     sorted_dict = sorted(dictionary.items(), key=operator.itemgetter(1), reverse = True)
     counter = 0
 
+    words_represented = 0
+    words_not_represented = 0
+
+
     for key, value in sorted_dict:
+        if counter < 100000:
+            words_represented += value
+        else:
+            words_not_represented += value
         if counter % occurrence == 0:
             print(counter, key, value)
         counter += 1
 
+    # Removing the _EOS_ token. The other tokens are added later
+    words_represented -= sorted_dict[0][1]
+
+    print("Words in dictionary occurs " + str(words_represented) + " times")
+    print("Words not in dictionary occurs " + str(words_not_represented) + " times")
+
 
 # get_stats('x_train.txt', more_than_words=40, less_than_words=6)
 # get_stats('y_train.txt', more_than_words=50, less_than_words=11)
-get_bucket_stats('train_merged.txt', buckets=[(45, 40), (65, 60), (95, 50), (140, 135)])
-#get_dictionary_stats('./x_train_spell_check.txt', './y_train_spell_check.txt')
+# get_bucket_stats('train_merged.txt', buckets=[(5, 10), (10, 15), (20, 25), (40, 50)])
+get_dictionary_stats('./x_train_spell_check.txt', './y_train_spell_check.txt')

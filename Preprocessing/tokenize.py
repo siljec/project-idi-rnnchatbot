@@ -3,13 +3,16 @@ import re
 _PAD = b"_PAD"
 _GO = b"_GO"
 _EOS = b"_EOS"
+_EOT = b"_EOT"
 _UNK = b"_UNK"
-_START_VOCAB = [_PAD, _GO, _EOS, _UNK]
+
+_START_VOCAB = [_PAD, _GO, _EOS, _EOT, _UNK]
 
 PAD_ID = 0
 GO_ID = 1
 EOS_ID = 2
-UNK_ID = 3
+EOT_ID = 3
+UNK_ID = 4
 
 _WORD_SPLIT = re.compile(b"([.,!?\":;)(])")
 _DIGIT_RE = re.compile(br"\d")
