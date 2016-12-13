@@ -363,7 +363,7 @@ def decode():
 
 
 def self_test():
-    """Test the translation model."""
+    """Test the model."""
 
     # Avoid allocating all of the GPU memory
     config = get_session_configs()
