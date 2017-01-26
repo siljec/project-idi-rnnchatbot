@@ -213,89 +213,6 @@ class GridRNNCell(rnn_cell.RNNCell):
 """
 
 
-class Grid1BasicRNNCell(GridRNNCell):
-  """1D BasicRNN cell"""
-
-  def __init__(self, num_units):
-    super(Grid1BasicRNNCell, self).__init__(
-        num_units=num_units, num_dims=1,
-        input_dims=0, output_dims=0, priority_dims=0, tied=False,
-        cell_fn=lambda n, i: rnn_cell.BasicRNNCell(num_units=n, input_size=i))
-
-
-class Grid2BasicRNNCell(GridRNNCell):
-  """2D BasicRNN cell
-
-  This creates a 2D cell which receives input and gives output in the first
-  dimension.
-
-  The first dimension can optionally be non-recurrent if `non_recurrent_fn` is
-  specified.
-  """
-
-  def __init__(self, num_units, tied=False, non_recurrent_fn=None):
-    super(Grid2BasicRNNCell, self).__init__(
-        num_units=num_units, num_dims=2,
-        input_dims=0, output_dims=0, priority_dims=0, tied=tied,
-        non_recurrent_dims=None if non_recurrent_fn is None else 0,
-        cell_fn=lambda n, i: rnn_cell.BasicRNNCell(num_units=n, input_size=i),
-        non_recurrent_fn=non_recurrent_fn)
-
-
-class Grid1BasicLSTMCell(GridRNNCell):
-  """1D BasicLSTM cell"""
-
-  def __init__(self, num_units, forget_bias=1):
-    super(Grid1BasicLSTMCell, self).__init__(
-        num_units=num_units, num_dims=1,
-        input_dims=0, output_dims=0, priority_dims=0, tied=False,
-        cell_fn=lambda n, i: rnn_cell.BasicLSTMCell(
-            num_units=n,
-            forget_bias=forget_bias, input_size=i,
-            state_is_tuple=False))
-
-
-class Grid2BasicLSTMCell(GridRNNCell):
-  """2D BasicLSTM cell
-
-    This creates a 2D cell which receives input and gives output in the first
-    dimension.
-
-    The first dimension can optionally be non-recurrent if `non_recurrent_fn` is
-    specified.
-  """
-
-  def __init__(self,
-               num_units,
-               tied=False,
-               non_recurrent_fn=None,
-               forget_bias=1):
-    super(Grid2BasicLSTMCell, self).__init__(
-        num_units=num_units, num_dims=2,
-        input_dims=0, output_dims=0, priority_dims=0, tied=tied,
-        non_recurrent_dims=None if non_recurrent_fn is None else 0,
-        cell_fn=lambda n, i: rnn_cell.BasicLSTMCell(
-            num_units=n, forget_bias=forget_bias, input_size=i,
-            state_is_tuple=False),
-        non_recurrent_fn=non_recurrent_fn)
-
-
-class Grid1LSTMCell(GridRNNCell):
-  """1D LSTM cell
-
-    This is different from Grid1BasicLSTMCell because it gives options to
-    specify the forget bias and enabling peepholes
-  """
-
-  def __init__(self, num_units, use_peepholes=False, forget_bias=1.0):
-    super(Grid1LSTMCell, self).__init__(
-        num_units=num_units, num_dims=1,
-        input_dims=0, output_dims=0, priority_dims=0,
-        cell_fn=lambda n, i: rnn_cell.LSTMCell(
-            num_units=n, input_size=i, use_peepholes=use_peepholes,
-            forget_bias=forget_bias, state_is_tuple=False))
-
-
 class Grid2LSTMCell(GridRNNCell):
   """2D LSTM cell
 
@@ -315,32 +232,6 @@ class Grid2LSTMCell(GridRNNCell):
     super(Grid2LSTMCell, self).__init__(
         num_units=num_units, num_dims=2,
         input_dims=0, output_dims=1, priority_dims=0, tied=tied,
-        non_recurrent_dims=None if non_recurrent_fn is None else 0,
-        cell_fn=lambda n, i: rnn_cell.LSTMCell(
-            num_units=n, input_size=i, forget_bias=forget_bias,
-            use_peepholes=use_peepholes, state_is_tuple=False),
-        non_recurrent_fn=non_recurrent_fn)
-
-
-class Grid3LSTMCell(GridRNNCell):
-  """3D BasicLSTM cell
-
-    This creates a 2D cell which receives input and gives output in the first
-    dimension.
-    The first dimension can optionally be non-recurrent if `non_recurrent_fn` is
-    specified.
-    The second and third dimensions are LSTM.
-  """
-
-  def __init__(self,
-               num_units,
-               tied=False,
-               non_recurrent_fn=None,
-               use_peepholes=False,
-               forget_bias=1.0):
-    super(Grid3LSTMCell, self).__init__(
-        num_units=num_units, num_dims=3,
-        input_dims=0, output_dims=0, priority_dims=0, tied=tied,
         non_recurrent_dims=None if non_recurrent_fn is None else 0,
         cell_fn=lambda n, i: rnn_cell.LSTMCell(
             num_units=n, input_size=i, forget_bias=forget_bias,

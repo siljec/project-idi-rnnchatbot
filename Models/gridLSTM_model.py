@@ -31,6 +31,7 @@ from tensorflow.models.rnn.translate import data_utils
 
 sys.path.insert(0, './Cells')
 from grid_rnn_cell import Grid2LSTMCell
+from bidirectional_grid import Bidirectional
 
 
 class GridLSTM_model(object):
@@ -133,7 +134,8 @@ class GridLSTM_model(object):
     cell = single_cell
     if num_layers > 1:
         print("Creating " + str(num_layers) + " layers with Grid2LSTMCell...")
-        cell = tf.nn.rnn_cell.MultiRNNCell([single_cell] * num_layers)
+        cell = Bidirectional([single_cell] * num_layers)
+        print("Done creating cell")
 
     # The seq2seq function: we use embedding for the input and attention.
     def seq2seq_f(encoder_inputs, decoder_inputs, do_decode):
@@ -160,11 +162,9 @@ class GridLSTM_model(object):
                                                 name="decoder{0}".format(i))) #Replaced NONE with self.batch_size
       self.target_weights.append(tf.placeholder(dtype, shape=[self.batch_size],
                                                 name="weight{0}".format(i))) #Replaced NONE with batch_size
-
     # Our targets are decoder inputs shifted by one.
     targets = [self.decoder_inputs[i + 1]
                for i in xrange(len(self.decoder_inputs) - 1)]
-
     # Training outputs and losses.
     if forward_only:
         self.outputs, self.losses = tf.nn.seq2seq.model_with_buckets(
@@ -184,7 +184,6 @@ class GridLSTM_model(object):
             self.target_weights, buckets,
             lambda x, y: seq2seq_f(x, y, False),
             softmax_loss_function=softmax_loss_function)
-
     # Gradients and SGD update operation for training the model.
     params = tf.trainable_variables()
     if not forward_only:
