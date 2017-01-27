@@ -45,6 +45,7 @@ from helpers import replace_misspelled_words_in_sentence, check_for_needed_files
 
 import numpy as np
 import tensorflow as tf
+
 from six.moves import xrange  # pylint: disable=redefined-builtin
 
 import gridLSTM_model
@@ -53,8 +54,8 @@ import gridLSTM_model
 tf.app.flags.DEFINE_float("learning_rate", 0.5, "Learning rate.")
 tf.app.flags.DEFINE_float("learning_rate_decay_factor", 0.99, "Learning rate decays by this much.")
 tf.app.flags.DEFINE_float("max_gradient_norm", 5.0, "Clip gradients to this norm.")
-tf.app.flags.DEFINE_integer("batch_size", 8, "Batch size to use during training.")
-tf.app.flags.DEFINE_integer("size", 8, "Size of each model layer.")
+tf.app.flags.DEFINE_integer("batch_size", 1, "Batch size to use during training.")
+tf.app.flags.DEFINE_integer("size", 1, "Size of each model layer.")
 tf.app.flags.DEFINE_integer("num_layers", 2, "Number of layers in the model.")
 tf.app.flags.DEFINE_integer("vocab_size", 100000, "English vocabulary size.")
 tf.app.flags.DEFINE_integer("print_frequency", 10, "How many training steps to do per print.")
@@ -151,7 +152,9 @@ def create_model(session, forward_only):
         model.saver.restore(session, ckpt.model_checkpoint_path)
     else:
         print("Created model with fresh parameters.")
-        session.run(tf.initialize_all_variables())
+        # tf.initialize_all_variables() will soon be deprecated
+        # session.run(tf.initialize_all_variables())
+        session.run(tf.global_variables_initializer())
     return model
 
 
@@ -193,7 +196,7 @@ def train():
 
         # Create log writer object
         print("Create log writer object")
-        summary_writer = tf.train.SummaryWriter(FLAGS.log_dir, graph=tf.get_default_graph())
+        summary_writer = tf.summary.FileWriter(FLAGS.log_dir, graph=tf.get_default_graph())
 
         reader_train_data = tf.TextLineReader()  # skip_header_lines=int, number of lines to skip
         _, txt_row_train_data = reader_train_data.read(filename_queue)
@@ -363,7 +366,7 @@ def self_test():
         print("Self-test for neural translation model.")
         # Create model with vocabularies of 10, 2 small buckets, 2 layers of 32.
         model = gridLSTM_model.GridLSTM_model(10, 10, [(3, 3), (6, 6)], 32, 2, 5.0, 32, 0.3, 0.99, num_samples=8)
-        sess.run(tf.initialize_all_variables())
+        sess.run(tf.global_variables_initializer())
         # Fake data set for both the (3, 3) and (6, 6) bucket.
         data_set = ([([1, 1], [2, 2]), ([3, 3], [4]), ([5], [6])],
                     [([1, 1, 1, 1, 1], [2, 2, 2, 2, 2]), ([3, 3, 3], [5, 6])])
