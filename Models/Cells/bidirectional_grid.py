@@ -78,15 +78,11 @@ class Bidirectional(rnn_cell.RNNCell):
 
     # Silinho and Siminho tried this
     def __call__(self, inputs, state, scope=None):
-        """Run this multi-layer cell on inputs, starting from state."""
-        with vs.variable_scope(scope or type(self).__name__):  # "MultiRNNCell"
-            cur_state_pos = 0
+        """Run this bidirecional cell on inputs, starting from state."""
+        with vs.variable_scope(scope or type(self).__name__):
             cur_inp = inputs  # Shape: (batch_size, embedding)
 
             new_states = []
-            print("###### States to be run on ######")
-            print(state)
-            print("---------------------------------")
 
             # Expecting that there are only two cells. Need to either check (or create them here in stead)
 
@@ -100,7 +96,7 @@ class Bidirectional(rnn_cell.RNNCell):
                 new_states.append(new_state)
 
             bw_cell = self._cells[1]
-            cur_reversed_inputs = array_ops.reverse(inputs, [True, False]) # Output_dim = 1, input_dim = 0
+            cur_reversed_inputs = array_ops.reverse(inputs, [True, False])  # Output_dim = 1, input_dim = 0
             with vs.variable_scope("Cell%d" % 1):
                 if not nest.is_sequence(state):  # Checks if state is NOT a tuple
                     raise ValueError("Expected state to be a tuple of length %d, but received: %s"
