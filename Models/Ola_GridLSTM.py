@@ -153,8 +153,8 @@ def create_model(session, forward_only):
     else:
         print("Created model with fresh parameters.")
         # tf.initialize_all_variables() will soon be deprecated
-        # session.run(tf.initialize_all_variables())
-        session.run(tf.global_variables_initializer())
+        session.run(tf.initialize_all_variables())
+        # session.run(tf.global_variables_initializer())
     return model
 
 
@@ -166,7 +166,7 @@ def get_session_configs():
 
 def train():
     """Train a en->fr translation model using WMT data."""
-
+    boot_time = time.time()
     print("Checking for needed files")
     check_for_needed_files_and_create(FLAGS.vocab_size)
 
@@ -208,6 +208,11 @@ def train():
         threads = tf.train.start_queue_runners(coord=coord)
 
         train_time = time.time()
+        boot_time = time.time()-boot_time
+
+        minutes = int(boot_time / 60)
+        seconds = boot_time % 60
+        print("Time ", minutes, " minutes ", seconds, " seconds to boot")
 
         print("Starting training loop")
         try:
@@ -366,7 +371,8 @@ def self_test():
         print("Self-test for neural translation model.")
         # Create model with vocabularies of 10, 2 small buckets, 2 layers of 32.
         model = gridLSTM_model.GridLSTM_model(10, 10, [(3, 3), (6, 6)], 32, 2, 5.0, 32, 0.3, 0.99, num_samples=8)
-        sess.run(tf.global_variables_initializer())
+        # sess.run(tf.global_variables_initializer())
+        sess.run(tf.initialize_all_variables())
         # Fake data set for both the (3, 3) and (6, 6) bucket.
         data_set = ([([1, 1], [2, 2]), ([3, 3], [4]), ([5], [6])],
                     [([1, 1, 1, 1, 1], [2, 2, 2, 2, 2]), ([3, 3, 3], [5, 6])])
