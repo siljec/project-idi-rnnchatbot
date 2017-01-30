@@ -196,7 +196,7 @@ def train():
 
         # Create log writer object
         print("Create log writer object")
-        summary_writer = tf.summary.FileWriter(FLAGS.log_dir, graph=tf.get_default_graph())
+        summary_writer = tf.train.SummaryWriter(FLAGS.log_dir, graph=tf.get_default_graph())
 
         reader_train_data = tf.TextLineReader()  # skip_header_lines=int, number of lines to skip
         _, txt_row_train_data = reader_train_data.read(filename_queue)
