@@ -144,15 +144,6 @@ class GridLSTM_model(object):
         print("Done creating cell")
 
 
-    ## Second try
-    additional_cell_args = {}
-    additional_cell_args.update({'use_peepholes': True, 'forget_bias': 1.0})
-    fwd_cell = Grid2LSTMCell(size, additional_cell_args)
-
-    bwd_cell = Grid2LSTMCell(size, additional_cell_args)
-
-    # cell = Bidirectional([fwd_cell, bwd_cell])
-
     # The seq2seq function: we use embedding for the input and attention.
     def seq2seq_f(encoder_inputs, decoder_inputs, do_decode):
       return tf.nn.seq2seq.embedding_attention_seq2seq(
@@ -303,7 +294,8 @@ class GridLSTM_model(object):
 
       # Encoder inputs are padded and then reversed.
       encoder_pad = [data_utils.PAD_ID] * (encoder_size - len(encoder_input))
-      encoder_inputs.append(list(reversed(encoder_input + encoder_pad)))
+      # encoder_inputs.append(list(reversed(encoder_input + encoder_pad)))
+      encoder_inputs.append(list(encoder_input + encoder_pad))
 
       # Decoder inputs get an extra "GO" symbol, and are padded then.
       decoder_pad_size = decoder_size - len(decoder_input) - 1
