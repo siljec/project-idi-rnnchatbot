@@ -86,26 +86,36 @@ class Bidirectional(rnn_cell.RNNCell):
 
             # Expecting that there are only two cells. Need to either check (or create them here in stead)
 
-            fw_cell = self._cells[0]
+            # Forward processing
+            fwd_m_out_list = []
+            fwd_cell = self._cells[0]
             with vs.variable_scope("Cell%d" % 0):
                 if not nest.is_sequence(state):  # Checks if state is NOT a tuple
                     raise ValueError("Expected state to be a tuple of length %d, but received: %s"
                                      % (len(self.state_size), state))
                 cur_state = state[0]
-                cur_inp, new_state = fw_cell(cur_inp, cur_state)
-                new_states.append(new_state)
+                fwd_m_out, fwd_state_out = fwd_cell(cur_inp, cur_state)
+                #fwd_m_out_list.extend(fwd_m_out)
 
-            bw_cell = self._cells[1]
-            cur_reversed_inputs = array_ops.reverse(inputs, [True, False])  # Output_dim = 1, input_dim = 0
+                new_states.append(fwd_state_out)
+
+            # Backward processing
+            bwd_m_out_list = []
+            bwd_cell = self._cells[1]
+            cur_reversed_inputs = array_ops.reverse(fwd_m_out, [True, False])  # Output_dim = 1, input_dim = 0
             with vs.variable_scope("Cell%d" % 1):
                 if not nest.is_sequence(state):  # Checks if state is NOT a tuple
                     raise ValueError("Expected state to be a tuple of length %d, but received: %s"
                                      % (len(self.state_size), state))
                 cur_state = state[1]
-                cur_inp, new_state = bw_cell(cur_reversed_inputs, cur_state)
-                new_states.append(new_state)
+                bwd_m_out, bwd_state_out = bwd_cell(cur_reversed_inputs, cur_state)
+                #bwd_m_out_list.extend(bwd_m_out)
 
-        new_states = tuple(new_states)
-        return cur_inp, new_states
+                new_states.append(bwd_state_out)
+
+        new_states = (tuple(new_states) if self._state_is_tuple else array_ops.concat(1, new_states))
+        #m_output = array_ops.concat(1, fwd_m_out_list + bwd_m_out_list)
+        m_output = bwd_m_out
+        return m_output, new_states
 
 
