@@ -80,6 +80,7 @@ class Bidirectional(rnn_cell.RNNCell):
     # Silinho and Siminho tried this
     def __call__(self, inputs, state, scope=None):
         """Run this bidirecional cell on inputs, starting from state."""
+
         with vs.variable_scope(scope or type(self).__name__):
             cur_inp = inputs  # Shape: (batch_size, embedding)
 
@@ -115,17 +116,6 @@ class Bidirectional(rnn_cell.RNNCell):
                 new_states.append(bwd_state_out)
 
         new_states = (tuple(new_states) if self._state_is_tuple else array_ops.concat(1, new_states))
-        # print(fwd_m_out_list)
-        # flat_output_fw = nest.flatten(fwd_m_out_list)
-        # flat_output_bw = nest.flatten(bwd_m_out_list)
-        # print("1")
-        # print(flat_output_bw)
-        #
-        # flat_outputs = tuple(
-        #     array_ops.concat([fw, bw], 1)
-        #     for fw, bw in zip(flat_output_fw, flat_output_bw))
-        # print("2")
-
 
         # nest.pack_sequence_as:
         # `flat_sequence` converted to have the same recursive structure as `structure`
@@ -136,7 +126,6 @@ class Bidirectional(rnn_cell.RNNCell):
 
         m_output = array_ops.concat(1, outputs_fwd + outputs_bwd)
         print(m_output)
-        #m_output = bwd_m_out
         return m_output, new_states
 
 
