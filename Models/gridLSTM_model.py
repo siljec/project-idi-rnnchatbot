@@ -27,11 +27,12 @@ from six.moves import xrange  # pylint: disable=redefined-builtin
 import tensorflow as tf
 
 from tensorflow.models.rnn.translate import data_utils
+from tensorflow.python.ops.rnn import bidirectional_dynamic_rnn
 
 
 sys.path.insert(0, './Cells')
 from grid_rnn_cell import Grid2LSTMCell
-from bidirectional_grid import Bidirectional
+#from bidirectional_grid import Bidirectional
 
 
 class GridLSTM_model(object):
@@ -135,13 +136,20 @@ class GridLSTM_model(object):
     ## First try
     additional_cell_args = {}
     additional_cell_args.update({'use_peepholes': True, 'forget_bias': 1.0})
-    print("Creating Grid2LSTMCell...")
-    single_cell = Grid2LSTMCell(size, **additional_cell_args)
-    cell = single_cell
-    if num_layers > 1:
-        print("Creating " + str(num_layers) + " layers with Grid2LSTMCell...")
-        cell = Bidirectional([single_cell] * num_layers)
-        print("Done creating cell")
+    # print("Creating Grid2LSTMCell...")
+    # single_cell = Grid2LSTMCell(size, **additional_cell_args)
+    # cell = single_cell
+    # if num_layers > 1:
+    #     print("Creating " + str(num_layers) + " layers with Grid2LSTMCell...")
+    #     cell = Bidirectional([single_cell] * num_layers)
+    #     print("Done creating cell")
+
+    fwd_cell = Grid2LSTMCell(size, **additional_cell_args)
+    bwd_cell = Grid2LSTMCell(size, **additional_cell_args)
+    #Inputs of shape: `[batch_size, max_time, input_size]` if time major = false
+
+    outputs, output_states = bidirectional_dynamic_rnn(fwd_cell, bwd_cell, True)
+
 
 
     # The seq2seq function: we use embedding for the input and attention.
@@ -176,7 +184,7 @@ class GridLSTM_model(object):
     if forward_only:
         self.outputs, self.losses = tf.nn.seq2seq.model_with_buckets(
             self.encoder_inputs, self.decoder_inputs, targets,
-            self.target_weights, buckets, lambda x, y: seq2seq_f(x, y, True),
+            self.target_weights, buckets, lambda x, y: bidirectional_dynamic_rnn(fwd_cell, bwd_cell),
             softmax_loss_function=softmax_loss_function)
         # If we use output projection, we need to project outputs for decoding.
         if output_projection is not None:
