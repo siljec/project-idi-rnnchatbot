@@ -104,7 +104,7 @@ class Bidirectional(rnn_cell.RNNCell):
             # Backward processing
             bwd_m_out_list = []
             bwd_cell = self._cells[1]
-            cur_reversed_inputs = array_ops.reverse(fwd_m_out, [True, False])  # Output_dim = 1, input_dim = 0
+            cur_reversed_inputs = array_ops.reverse(cur_inp, [True, False])  # Output_dim = 1, input_dim = 0
             with vs.variable_scope("Cell%d" % 1):
                 if not nest.is_sequence(state):  # Checks if state is NOT a tuple
                     raise ValueError("Expected state to be a tuple of length %d, but received: %s"
@@ -125,7 +125,6 @@ class Bidirectional(rnn_cell.RNNCell):
                                             flat_sequence=bwd_m_out_list)
 
         m_output = array_ops.concat(1, outputs_fwd + outputs_bwd)
-        print(m_output)
         return m_output, new_states
 
 
