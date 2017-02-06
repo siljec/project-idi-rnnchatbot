@@ -119,6 +119,7 @@ class GridLSTM_model(object):
             dtype)
       softmax_loss_function = sampled_loss
 
+<<<<<<< HEAD
     # Create the internal multi-layer cell for our RNN.
     # single_cell = tf.nn.rnn_cell.GRUCell(size)
     # if use_lstm:
@@ -126,14 +127,27 @@ class GridLSTM_model(object):
     # cell = single_cell
     # if num_layers > 1:
     #   cell = tf.nn.rnn_cell.MultiRNNCell([single_cell] * num_layers)
+=======
+
+    # Creating Bidirectional Grid2LSTM cell
+>>>>>>> 60025e1... Added exception to check that we only have two layers. Removed comments.
     additional_cell_args = {}
     additional_cell_args.update({'use_peepholes': True, 'forget_bias': 1.0})
     print("Creating Grid2LSTMCell...")
     single_cell = Grid2LSTMCell(size, **additional_cell_args)
     cell = single_cell
-    if num_layers > 1:
+    if num_layers == 2:
         print("Creating " + str(num_layers) + " layers with Grid2LSTMCell...")
+<<<<<<< HEAD
         cell = tf.nn.rnn_cell.MultiRNNCell([single_cell] * num_layers)
+=======
+        cell = Bidirectional([single_cell] * num_layers)
+        print("Done creating bidirectional cell using Grid2LSTMCell")
+    else:
+        raise ValueError("Need two layers to create a Bidirectional Cell, but has " + str(num_layers))
+
+
+>>>>>>> 60025e1... Added exception to check that we only have two layers. Removed comments.
 
     # The seq2seq function: we use embedding for the input and attention.
     def seq2seq_f(encoder_inputs, decoder_inputs, do_decode):
