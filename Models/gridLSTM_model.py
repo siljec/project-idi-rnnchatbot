@@ -32,7 +32,7 @@ from tensorflow.python.ops.rnn import bidirectional_dynamic_rnn
 
 sys.path.insert(0, './Cells')
 from grid_rnn_cell import Grid2LSTMCell
-#from bidirectional_grid import Bidirectional
+from bidirectional_grid import Bidirectional
 
 
 class GridLSTM_model(object):
@@ -148,7 +148,7 @@ class GridLSTM_model(object):
     bwd_cell = Grid2LSTMCell(size, **additional_cell_args)
     #Inputs of shape: `[batch_size, max_time, input_size]` if time major = false
 
-    outputs, output_states = bidirectional_dynamic_rnn(fwd_cell, bwd_cell, True)
+    cell = Bidirectional([fwd_cell, bwd_cell])
 
 
 
