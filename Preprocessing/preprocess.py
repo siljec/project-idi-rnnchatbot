@@ -23,7 +23,7 @@ def preprocess_training_file(path, x_train_path, y_train_path):
             current_user = data[1]
             text = data[3].strip().lower()
             text = re.sub(' +', ' ', text)  # Will remove multiple spaces
-            text = re.sub('(?<=[a-z])([!?,.])', r' \1', text)  # Add space before special characters [!?,.]
+            #text = re.sub('(?<=[a-z])([!?,.])', r' \1', text)  # Add space before special characters [!?,.]
 
             if user1_first_line:
                 init_user = current_user

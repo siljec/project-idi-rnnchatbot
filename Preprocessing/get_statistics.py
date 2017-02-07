@@ -1,5 +1,5 @@
 import operator
-
+import re
 
 def get_stats(path, num_longest=20, more_than_words=50, less_than_words=5):
 
@@ -124,9 +124,47 @@ def get_dictionary_stats(x_train, y_train, occurrence=10000):
 
     print("Words in dictionary occurs " + str(words_represented) + " times")
     print("Words not in dictionary occurs " + str(words_not_represented) + " times")
+    print("UNK-token is represented as " + str("{0:.2f}".format(words_not_represented/(words_represented + words_not_represented))) +
+          "% of all words")
+
+
+def get_number_of_urls(path):
+    urls = []
+    with open(path) as file_object:
+        for line in file_object:
+            new_urls = re.findall(r'(https?://[^\s]+)', line)
+            urls.extend(new_urls)
+
+    print("Number of URLs in " + path + ": " + str(len(urls)))
+
+
+def get_emojis(path):
+    smiley_pattern = r'(?::|;|=)(?:-)?(?:\)|\(|D|P|\|)'  # NB: will take :) from /:) and :)D
+    smiley_pattern = r'(?::|;|=)(?:-)?(?:\)|\(|D|P|\|)(?=$|\s)' # NB: Will take :) from /:) but not from :)D
+    smiles = []
+    with open(path) as file_object:
+        for line in file_object:
+            smiley = re.findall(smiley_pattern, line)
+            smiles.extend(smiley)
+
+    print("Number of smiles in " + path + ": " + str(len(smiles)))
+
+    # Counting every different smiley
+    smiley_dict = {}
+    for s in smiles:
+        if s in smiley_dict:
+            smiley_dict[s] += 1
+        else:
+            smiley_dict[s] = 1
+
+    for key, value in smiley_dict.items():
+        print(key, value)
 
 
 # get_stats('x_train.txt', more_than_words=40, less_than_words=6)
 # get_stats('y_train.txt', more_than_words=50, less_than_words=11)
 # get_bucket_stats('train_merged.txt', buckets=[(5, 10), (10, 15), (20, 25), (40, 50)])
 get_dictionary_stats('./x_train_spell_check.txt', './y_train_spell_check.txt')
+get_number_of_urls('./x_train_spell_check.txt')
+get_number_of_urls('./y_train_spell_check.txt')
+get_emojis('./x_train_spell_check.txt')
