@@ -122,14 +122,24 @@ class GridLSTM_model(object):
 
 
     # Creating Bidirectional Grid2LSTM cell
+    # A placeholder for indicating each sequence length
+    # self.seq_length = []
+    # for i in xrange(self.batch_size):  # Last bucket is the biggest one.
+
+    self.seq_length = tf.placeholder(tf.int32, shape=[135, self.batch_size])
+
+    print(self.seq_length)
+
     additional_cell_args = {}
     additional_cell_args.update({'use_peepholes': True, 'forget_bias': 1.0})
     print("Creating Grid2LSTMCell...")
     single_cell = Grid2LSTMCell(size, **additional_cell_args)
     cell = single_cell
+
     if num_layers == 2:
         print("Creating " + str(num_layers) + " layers with Grid2LSTMCell...")
-        cell = Bidirectional([single_cell] * num_layers)
+        cell = Bidirectional([single_cell] * num_layers, self.seq_length)
+        print("DONE WITH THE MOTHAFUCKING BIDIR")
 
         print("Done creating bidirectional cell using Grid2LSTMCell")
     else:
@@ -154,14 +164,16 @@ class GridLSTM_model(object):
     self.encoder_inputs = []
     self.decoder_inputs = []
     self.target_weights = []
+    self.seq_length = []
     for i in xrange(buckets[-1][0]):  # Last bucket is the biggest one.
-      self.encoder_inputs.append(tf.placeholder(tf.int32, shape=[self.batch_size],
-                                                name="encoder{0}".format(i))) #Replaced NONE with batch_size
+        self.encoder_inputs.append(tf.placeholder(tf.int32, shape=[self.batch_size],
+                                                  name="encoder{0}".format(i)))  # Replaced NONE with batch_size
     for i in xrange(buckets[-1][1] + 1):
-      self.decoder_inputs.append(tf.placeholder(tf.int32, shape=[self.batch_size],
-                                                name="decoder{0}".format(i))) #Replaced NONE with self.batch_size
-      self.target_weights.append(tf.placeholder(dtype, shape=[self.batch_size],
-                                                name="weight{0}".format(i))) #Replaced NONE with batch_size
+        self.decoder_inputs.append(tf.placeholder(tf.int32, shape=[self.batch_size],
+                                                  name="decoder{0}".format(i)))  # Replaced NONE with self.batch_size
+        self.target_weights.append(tf.placeholder(dtype, shape=[self.batch_size],
+                                                  name="weight{0}".format(i)))  # Replaced NONE with batch_size
+
     # Our targets are decoder inputs shifted by one.
     targets = [self.decoder_inputs[i + 1]
                for i in xrange(len(self.decoder_inputs) - 1)]
@@ -184,6 +196,7 @@ class GridLSTM_model(object):
             self.target_weights, buckets,
             lambda x, y: seq2seq_f(x, y, False),
             softmax_loss_function=softmax_loss_function)
+
     # Gradients and SGD update operation for training the model.
     params = tf.trainable_variables()
     if not forward_only:

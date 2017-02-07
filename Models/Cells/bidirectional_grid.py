@@ -22,8 +22,8 @@ from tensorflow.python.ops import variable_scope as vs
 from tensorflow.python.util import nest
 from tensorflow.python.ops import rnn_cell
 from tensorflow.python.ops import array_ops
+from tensorflow.python.ops import rnn
 import tensorflow as tf
-
 
 class Bidirectional(rnn_cell.RNNCell):
     """RNN cell consisting of a forward layer and backward layer. """
@@ -52,8 +52,16 @@ class Bidirectional(rnn_cell.RNNCell):
         return self._cells[-1].output_size
 
     # Silje and Simen made this
-    def __call__(self, inputs, state, scope=None):
+    def __call__(self, inputs, state, seq_len=None, scope=None):
         """Run this bidirecional cell on inputs, starting from state."""
+
+
+        # fwd_cell = self._cells[0]
+        # bwd_cell = self._cells[1]
+        #
+        # outputs, outputs_fwd, outputs_bwd= rnn.bidirectional_rnn(fwd_cell, bwd_cell, inputs, sequence_length=seqlen)
+
+
 
         with vs.variable_scope(scope or type(self).__name__):
             cur_inp = inputs  # Shape: (batch_size, embedding)
@@ -80,7 +88,9 @@ class Bidirectional(rnn_cell.RNNCell):
             # Backward processing
             bwd_m_out_list = []
             bwd_cell = self._cells[1]
-            cur_reversed_inputs = array_ops.reverse(cur_inp, [True, False])  # Output_dim = 1, input_dim = 0
+            #def reverse_sequence(input, seq_lengths, seq_dim, batch_dim=None, name=None):
+
+            cur_reversed_inputs = array_ops.reverse_sequence(cur_inp, seq_len, seq_dim=1, batch_dim=0)  # reverse --> [True, False] Output_dim = 1, input_dim = 0
 
             with vs.variable_scope("Cell%d" % 1):
                 if not nest.is_sequence(state):  # Checks if state is NOT a tuple
