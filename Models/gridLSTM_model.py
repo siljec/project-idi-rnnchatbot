@@ -126,9 +126,7 @@ class GridLSTM_model(object):
     # self.seq_length = []
     # for i in xrange(self.batch_size):  # Last bucket is the biggest one.
 
-    self.seq_length = tf.placeholder(tf.int32, shape=[135, self.batch_size])
-
-    print(self.seq_length)
+    self.seq_length = tf.placeholder(tf.int32, shape=[self.batch_size])
 
     additional_cell_args = {}
     additional_cell_args.update({'use_peepholes': True, 'forget_bias': 1.0})
