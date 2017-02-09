@@ -212,7 +212,7 @@ class GridLSTM_model(object):
     self.saver = tf.train.Saver(tf.all_variables())
 
   def step(self, session, encoder_inputs, decoder_inputs, target_weights,
-           bucket_id, forward_only):
+           bucket_id, forward_only, encoder_seq_lengths, decoder_seq_lengths):
     """Run a step of the model feeding the given inputs.
 
     Args:
@@ -245,6 +245,7 @@ class GridLSTM_model(object):
 
     # Input feed: encoder inputs, decoder inputs, target_weights, as provided.
     input_feed = {}
+
     for l in xrange(encoder_size):
       input_feed[self.encoder_inputs[l].name] = encoder_inputs[l]
     for l in xrange(decoder_size):
@@ -288,21 +289,28 @@ class GridLSTM_model(object):
       The triple (encoder_inputs, decoder_inputs, target_weights) for
       the constructed batch that has the proper format to call step(...) later.
     """
+
     encoder_size, decoder_size = self.buckets[bucket_id]
     encoder_inputs, decoder_inputs = [], []
+    encoder_seq_lengths = []
+    decoder_seq_lengths = []
 
     # Get a random batch of encoder and decoder inputs from data,
     # pad them if needed, reverse encoder inputs and add GO to decoder.
     for pair in data[bucket_id]:
       encoder_input, decoder_input = pair
+      encoder_len = len(encoder_input)
+      decoder_len = len(decoder_input)
+      encoder_seq_lengths.append(encoder_len)
+      decoder_seq_lengths.append(decoder_len)
 
       # Encoder inputs are padded and then reversed.
-      encoder_pad = [data_utils.PAD_ID] * (encoder_size - len(encoder_input))
+      encoder_pad = [data_utils.PAD_ID] * (encoder_size - encoder_len)
       # encoder_inputs.append(list(reversed(encoder_input + encoder_pad)))
       encoder_inputs.append(list(encoder_input + encoder_pad))
 
       # Decoder inputs get an extra "GO" symbol, and are padded then.
-      decoder_pad_size = decoder_size - len(decoder_input) - 1
+      decoder_pad_size = decoder_size - decoder_len - 1
       decoder_inputs.append([data_utils.GO_ID] + decoder_input +
                             [data_utils.PAD_ID] * decoder_pad_size)
 
@@ -331,4 +339,5 @@ class GridLSTM_model(object):
         if length_idx == decoder_size - 1 or target == data_utils.PAD_ID:
           batch_weight[batch_idx] = 0.0
       batch_weights.append(batch_weight)
-    return batch_encoder_inputs, batch_decoder_inputs, batch_weights
+
+    return batch_encoder_inputs, batch_decoder_inputs, batch_weights, encoder_seq_lengths, decoder_seq_lengths

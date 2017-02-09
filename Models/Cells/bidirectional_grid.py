@@ -99,14 +99,15 @@ class Bidirectional(rnn_cell.RNNCell):
                     raise ValueError("Expected state to be a tuple of length %d, but received: %s"
                                      % (len(self.state_size), state))
                 cur_state = state[1]
-                bwd_m_out, bwd_state_out = bwd_cell(cur_reversed_inputs, cur_state)
+                bwd_m_out_reversed, bwd_state_out = bwd_cell(cur_reversed_inputs, cur_state)
 
+                bwd_m_out = array_ops.reverse_sequence(bwd_m_out_reversed, self.seq_len, seq_dim=1, batch_dim=0)
                 bwd_m_out_list.append(bwd_m_out)
 
                 new_states.append(bwd_state_out)
 
+
         new_states = (tuple(new_states) if self._state_is_tuple else array_ops.concat(1, new_states))
-        
         # nest.pack_sequence_as:
         # `flat_sequence` converted to have the same recursive structure as `structure`
         outputs_fwd = nest.pack_sequence_as(structure=fwd_m_out,

@@ -223,13 +223,17 @@ def train():
                 # Get a batch
                 train_set, bucket_id = get_batch(txt_row_train_data, train_set)
                 start_time = time.time()
-                encoder_inputs, decoder_inputs, target_weights = model.get_batch(train_set, bucket_id)
+                encoder_inputs, decoder_inputs, target_weights, encoder_seq_lengths, decoder_seq_lengths = model.get_batch(train_set, bucket_id)
 
                 # Clean out trained bucket
                 train_set[bucket_id] = []
-
+                print("Encoder shape")
+                print(encoder_inputs.get_shape())
+                print("Decoder shape")
+                print(decoder_inputs.get_shape())
                 # Make a step
-                _, step_loss, _ = model.step(sess, encoder_inputs, decoder_inputs, target_weights, bucket_id, False)
+                _, step_loss, _ = model.step(sess, encoder_inputs, decoder_inputs,
+                                             target_weights, bucket_id, False, encoder_seq_lengths, decoder_seq_lengths)
 
                 # Calculating variables
                 step_time += (time.time() - start_time) / FLAGS.steps_per_checkpoint
@@ -273,12 +277,12 @@ def train():
                         if len(dev_set[bucket_id]) == 0:
                             print("  eval: empty bucket %d" % bucket_id)
                             continue
-                        encoder_inputs, decoder_inputs, target_weights = model.get_batch(dev_set, bucket_id)
+                        encoder_inputs, decoder_inputs, target_weights, encoder_seq_lengths, decoder_seq_lengths = model.get_batch(dev_set, bucket_id)
 
                         # Clean out used bucket
                         del dev_set[bucket_id][:FLAGS.batch_size]
 
-                        _, eval_loss, _ = model.step(sess, encoder_inputs, decoder_inputs, target_weights, bucket_id, True)
+                        _, eval_loss, _ = model.step(sess, encoder_inputs, decoder_inputs, target_weights, bucket_id, True, encoder_seq_lengths, decoder_seq_lengths)
                         eval_ppx = exp(float(eval_loss)) if eval_loss < 300 else float("inf")
                         print("  eval: bucket %d perplexity %.2f" % (bucket_id, eval_ppx))
 
@@ -341,12 +345,12 @@ def decode():
                              if _buckets[b][0] > len(token_ids)])
 
             # Get a 1-element batch to feed the sentence to the model.
-            encoder_inputs, decoder_inputs, target_weights = model.get_batch(
+            encoder_inputs, decoder_inputs, target_weights, encoder_seq_lengths, decoder_seq_lengths = model.get_batch(
                 {bucket_id: [(token_ids, [])]}, bucket_id)
 
             # Get output logits for the sentence.
             _, _, output_logits = model.step(sess, encoder_inputs, decoder_inputs,
-                                             target_weights, bucket_id, True)
+                                             target_weights, bucket_id, True, encoder_seq_lengths, decoder_seq_lengths)
 
             # This is a greedy decoder - outputs are just argmaxes of output_logits.
             outputs = [int(np.argmax(logit, axis=1)) for logit in output_logits]
@@ -378,8 +382,8 @@ def self_test():
                     [([1, 1, 1, 1, 1], [2, 2, 2, 2, 2]), ([3, 3, 3], [5, 6])])
         for _ in xrange(5):  # Train the fake model for 5 steps.
             bucket_id = choice([0, 1])
-            encoder_inputs, decoder_inputs, target_weights = model.get_batch(data_set, bucket_id)
-            model.step(sess, encoder_inputs, decoder_inputs, target_weights, bucket_id, False)
+            encoder_inputs, decoder_inputs, target_weights, encoder_seq_lengths, decoder_seq_lengths = model.get_batch(data_set, bucket_id)
+            model.step(sess, encoder_inputs, decoder_inputs, target_weights, bucket_id, False, encoder_seq_lengths, decoder_seq_lengths)
 
 
 def main(_):
