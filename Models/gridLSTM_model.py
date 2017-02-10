@@ -140,6 +140,7 @@ class GridLSTM_model(object):
     if num_layers == 2:
         print("Creating " + str(num_layers) + " layers with Grid2LSTMCell...")
         self.cell = Bidirectional([single_cell] * num_layers, self.encoder_seq_lengths)
+
         print("DONE WITH THE MOTHAFUCKING BIDIR")
 
         print("Done creating bidirectional cell using Grid2LSTMCell")
@@ -268,8 +269,6 @@ class GridLSTM_model(object):
 
     input_feed[self.encoder_seq_lengths.name] = encoder_seq_lengths
     input_feed[self.decoder_seq_lengths.name] = decoder_seq_lengths
-
-
 
     # Since our targets are decoder inputs shifted by one, we need one more.
     last_target = self.decoder_inputs[decoder_size].name
