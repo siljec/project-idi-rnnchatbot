@@ -267,6 +267,17 @@ def train():
                             continue
                         encoder_inputs, decoder_inputs, target_weights = model.get_batch(dev_set, bucket_id)
 
+                        print("encoder_inputs shape")
+                        print(encoder_inputs[0].get_shape())
+                        print("decoder_inputs shape")
+                        print(decoder_inputs[0].get_shape())
+                        print("target_weights shape")
+                        print(target_weights[0].get_shape())
+                        print("encoder_seq_lengths")
+                        print(decoder_seq_lengths.get_shape())
+                        print("decoder_seq_lengths")
+                        print(encoder_seq_lengths.get_shape())
+
                         # Clean out used bucket
                         del dev_set[bucket_id][:FLAGS.batch_size]
 
