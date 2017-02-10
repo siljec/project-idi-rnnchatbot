@@ -40,13 +40,16 @@ class Bidirectional(rnn_cell.RNNCell):
         """
         if not cells:
             raise ValueError("Must specify at least one cell for MultiRNNCell.")
+        self._seq_len = seq_len
         self._cells = cells
         self._state_is_tuple = state_is_tuple
-        self._seq_len = seq_len
 
     @property
     def seq_len(self):
+        print("Get seq len")
+        # print(self.seq_len)
         return self._seq_len
+
     @seq_len.setter
     def seq_len(self, seq):
         self._seq_len = seq
@@ -70,14 +73,13 @@ class Bidirectional(rnn_cell.RNNCell):
         #
         # outputs, outputs_fwd, outputs_bwd= rnn.bidirectional_rnn(fwd_cell, bwd_cell, inputs, sequence_length=seqlen)
 
-        print(self._state_is_tuple)
-
 
         with vs.variable_scope(scope or type(self).__name__):
             cur_inp = inputs  # Shape: (batch_size, embedding)
 
             new_states = []
 
+            # seq_len = self.seq_len
 
             # Expecting that there are only two cells. Need to either check (or create them here in stead)
 
@@ -100,7 +102,7 @@ class Bidirectional(rnn_cell.RNNCell):
             bwd_cell = self._cells[1]
             #def reverse_sequence(input, seq_lengths, seq_dim, batch_dim=None, name=None):
 
-            cur_reversed_inputs = array_ops.reverse_sequence(cur_inp, self._seq_len, seq_dim=1, batch_dim=0)  # reverse --> [True, False] Output_dim = 1, input_dim = 0
+            cur_reversed_inputs = array_ops.reverse_sequence(cur_inp, self.seq_len, seq_dim=1, batch_dim=0)  # reverse --> [True, False] Output_dim = 1, input_dim = 0
 
             with vs.variable_scope("Cell%d" % 1):
                 if not nest.is_sequence(state):  # Checks if state is NOT a tuple
@@ -109,7 +111,7 @@ class Bidirectional(rnn_cell.RNNCell):
                 cur_state = state[1]
                 bwd_m_out_reversed, bwd_state_out = bwd_cell(cur_reversed_inputs, cur_state)
 
-                bwd_m_out = array_ops.reverse_sequence(bwd_m_out_reversed, self._seq_len, seq_dim=1, batch_dim=0)
+                bwd_m_out = array_ops.reverse_sequence(bwd_m_out_reversed, self.seq_len, seq_dim=1, batch_dim=0)
                 bwd_m_out_list.append(bwd_m_out)
 
                 new_states.append(bwd_state_out)
