@@ -63,6 +63,8 @@ class Bidirectional(rnn_cell.RNNCell):
         #
         # outputs, outputs_fwd, outputs_bwd= rnn.bidirectional_rnn(fwd_cell, bwd_cell, inputs, sequence_length=seqlen)
 
+        print(self._state_is_tuple)
+
 
 
         with vs.variable_scope(scope or type(self).__name__):

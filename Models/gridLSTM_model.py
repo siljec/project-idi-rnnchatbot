@@ -126,7 +126,10 @@ class GridLSTM_model(object):
     # self.seq_length = []
     # for i in xrange(self.batch_size):  # Last bucket is the biggest one.
 
-    self.seq_length = tf.placeholder(tf.int32, shape=[self.batch_size])
+    self.encoder_seq_lengths = tf.placeholder(tf.int32, shape=[self.batch_size],
+                                                  name="encoder_seq_len")
+    self.decoder_seq_lengths = tf.placeholder(tf.int32, shape=[self.batch_size],
+                                                  name="decoder_seq_len")
 
     additional_cell_args = {}
     additional_cell_args.update({'use_peepholes': True, 'forget_bias': 1.0})
@@ -136,7 +139,7 @@ class GridLSTM_model(object):
 
     if num_layers == 2:
         print("Creating " + str(num_layers) + " layers with Grid2LSTMCell...")
-        cell = Bidirectional([single_cell] * num_layers, self.seq_length)
+        cell = Bidirectional([single_cell] * num_layers, self.encoder_seq_lengths)
         print("DONE WITH THE MOTHAFUCKING BIDIR")
 
         print("Done creating bidirectional cell using Grid2LSTMCell")
@@ -162,7 +165,6 @@ class GridLSTM_model(object):
     self.encoder_inputs = []
     self.decoder_inputs = []
     self.target_weights = []
-    self.seq_length = []
     for i in xrange(buckets[-1][0]):  # Last bucket is the biggest one.
         self.encoder_inputs.append(tf.placeholder(tf.int32, shape=[self.batch_size],
                                                   name="encoder{0}".format(i)))  # Replaced NONE with batch_size
@@ -171,6 +173,18 @@ class GridLSTM_model(object):
                                                   name="decoder{0}".format(i)))  # Replaced NONE with self.batch_size
         self.target_weights.append(tf.placeholder(dtype, shape=[self.batch_size],
                                                   name="weight{0}".format(i)))  # Replaced NONE with batch_size
+
+
+    print("encoder_inputs shape")
+    print(self.encoder_inputs[0].get_shape())
+    print("decoder_inputs shape")
+    print(self.decoder_inputs[0].get_shape())
+    print("target_weights shape")
+    print(self.target_weights[0].get_shape())
+    print("encoder_seq_lengths")
+    print(self.decoder_seq_lengths.get_shape())
+    print("decoder_seq_lengths")
+    print(self.encoder_seq_lengths.get_shape())
 
     # Our targets are decoder inputs shifted by one.
     targets = [self.decoder_inputs[i + 1]
@@ -251,6 +265,9 @@ class GridLSTM_model(object):
     for l in xrange(decoder_size):
       input_feed[self.decoder_inputs[l].name] = decoder_inputs[l]
       input_feed[self.target_weights[l].name] = target_weights[l]
+
+    input_feed[self.encoder_seq_lengths.name] = encoder_seq_lengths
+    input_feed[self.decoder_seq_lengths.name] = decoder_seq_lengths
 
     # Since our targets are decoder inputs shifted by one, we need one more.
     last_target = self.decoder_inputs[decoder_size].name

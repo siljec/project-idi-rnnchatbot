@@ -54,8 +54,8 @@ import gridLSTM_model
 tf.app.flags.DEFINE_float("learning_rate", 0.5, "Learning rate.")
 tf.app.flags.DEFINE_float("learning_rate_decay_factor", 0.99, "Learning rate decays by this much.")
 tf.app.flags.DEFINE_float("max_gradient_norm", 5.0, "Clip gradients to this norm.")
-tf.app.flags.DEFINE_integer("batch_size", 32, "Batch size to use during training.")
-tf.app.flags.DEFINE_integer("size", 512, "Size of each model layer.")
+tf.app.flags.DEFINE_integer("batch_size", 8, "Batch size to use during training.")
+tf.app.flags.DEFINE_integer("size", 16, "Size of each model layer.")
 tf.app.flags.DEFINE_integer("num_layers", 2, "Number of layers in the model.")
 tf.app.flags.DEFINE_integer("vocab_size", 100000, "English vocabulary size.")
 tf.app.flags.DEFINE_integer("print_frequency", 10, "How many training steps to do per print.")
@@ -227,10 +227,7 @@ def train():
 
                 # Clean out trained bucket
                 train_set[bucket_id] = []
-                print("Encoder shape")
-                print(encoder_inputs.get_shape())
-                print("Decoder shape")
-                print(decoder_inputs.get_shape())
+
                 # Make a step
                 _, step_loss, _ = model.step(sess, encoder_inputs, decoder_inputs,
                                              target_weights, bucket_id, False, encoder_seq_lengths, decoder_seq_lengths)
