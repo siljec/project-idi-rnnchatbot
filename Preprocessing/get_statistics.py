@@ -141,6 +141,7 @@ def get_number_of_urls(path):
 def get_emojis(path):
     smiley_pattern = r'(?::|;|=)(?:-)?(?:\)|\(|D|P|\|)'  # NB: will take :) from /:) and :)D
     smiley_pattern = r'(?::|;|=)(?:-)?(?:\)|\(|D|P|\|)(?=$|\s)' # NB: Will take :) from /:) but not from :)D
+    smiley_pattern = r'((?:^|\s)(?::|;|=)(?:-)?(?:\)|\(|D|P|\|)(?=$|\s))' # NB: Will neither take :) from /:) nor from :)D
     smiles = []
     with open(path) as file_object:
         for line in file_object:

@@ -1,18 +1,21 @@
-import operator, collections
+import operator
 from tensorflow.python.platform import gfile
 
 
 def find_dictionary(x_train, y_train):
 	dictionary = {}
 
+	counter = 0
 	with open(x_train) as fileobject:
 		for line in fileobject:
 			sentence = line.strip().split(' ')
 			for word in sentence:
+				counter += 1
 				if word in dictionary:
 					dictionary[word] += 1
 				else:
-					dictionary[word] = 1
+					if word.strip() != "":  # Check for empty word
+						dictionary[word] = 1
 
 	with open(y_train) as fileobject:
 		for line in fileobject:
@@ -21,14 +24,17 @@ def find_dictionary(x_train, y_train):
 				if word in dictionary:
 					dictionary[word] += 1
 				else:
-					dictionary[word] = 1
+					if word.strip() != "":  # Check for empty word
+						dictionary[word] = 1
 
-	sorted_dict = sorted(dictionary.items(), key=operator.itemgetter(1), reverse = True)
+	sorted_dict = sorted(dictionary.items(), key=operator.itemgetter(1), reverse=True)
 	return sorted_dict
 
 
-def create_vocabulary(sorted_dict, vocab_path, vocab_size):
+def create_vocabulary_and_return_unknown_words(sorted_dict, vocab_path, vocab_size):
 	INIT_TOKENS = ['_PAD', '_GO', '_EOS', '_EOT', '_UNK']
+
+	unknown_dict = {}
 
 	vocabulary = open(vocab_path, 'w')
 
@@ -41,9 +47,11 @@ def create_vocabulary(sorted_dict, vocab_path, vocab_size):
 			vocabulary.write(str(key[0])+ '\n')
 			counter += 1
 		if counter >= vocab_size:
-			break
+			unknown_dict[key[0]] = 0
 
 	vocabulary.close()
+
+	return unknown_dict
 
 
 # Finds vocabulary file, returns a dictionary with the word as a key, and occurences as value

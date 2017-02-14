@@ -4642,6 +4642,7 @@ wasn't was not
 wasnt was not
 aren't are not
 arent are not
+automoticlly automatically
 can't cannot
 cant cannot
 couldn't could not
@@ -4669,6 +4670,7 @@ i've i have
 i'll i will
 it'll it will
 mine's mine is
+mozila mozilla
 packg package
 pasword password
 she's she is
