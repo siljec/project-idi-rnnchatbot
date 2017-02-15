@@ -43,10 +43,11 @@ def create_vocabulary_and_return_unknown_words(sorted_dict, vocab_path, vocab_si
 
 	counter = 0
 	for key in sorted_dict:
-		if key[0] not in INIT_TOKENS:
-			vocabulary.write(str(key[0])+ '\n')
-			counter += 1
-		if counter >= vocab_size:
+		if counter < vocab_size:
+			if key[0] not in INIT_TOKENS:
+				vocabulary.write(str(key[0])+ '\n')
+				counter += 1
+		else:
 			unknown_dict[key[0]] = 0
 
 	vocabulary.close()
