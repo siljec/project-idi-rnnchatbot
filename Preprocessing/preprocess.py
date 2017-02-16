@@ -12,11 +12,11 @@ val_size_fraction = 0.1
 test_size_fraction = 0.1
 
 source_folder_root = "../../ubuntu-ranking-dataset-creator/src/dialogs/"
-squashed_source_data_x = "./datafiles/squashed_source_data_x"
-squashed_source_data_y = "./datafiles/squashed_source_data_y"
+squashed_source_data_x = "./datafiles/squashed_source_data_x.txt"
+squashed_source_data_y = "./datafiles/squashed_source_data_y.txt"
 
-spell_checked_data_x = "./datafiles/spell_checked_data_x"
-spell_checked_data_y = "./datafiles/spell_checked_data_y"
+spell_checked_data_x = "./datafiles/spell_checked_data_x.txt"
+spell_checked_data_y = "./datafiles/spell_checked_data_y.txt"
 spell_checked_vocabulary = "./datafiles/misspellings.txt"
 
 fast_text_training_data = "./datafiles/fast_text_training_data.txt"
@@ -24,15 +24,15 @@ fast_text_training_data = "./datafiles/fast_text_training_data.txt"
 no_unk_words_x = "./datafiles/no_unk_words_x.txt"
 no_unk_words_y = "./datafiles/no_unk_words_y.txt"
 
-unshuffled_training_data = "./datafiles/unshuffled_training_data"
-unshuffled_validation_data = "./datafiles/unshuffled_validation_data"
-unshuffled_test_data = "./datafiles/unshuffled_test_data"
+unshuffled_training_data = "./datafiles/unshuffled_training_data.txt"
+unshuffled_validation_data = "./datafiles/unshuffled_validation_data.txt"
+unshuffled_test_data = "./datafiles/unshuffled_test_data.txt"
 
-training_data = "./datafiles/training_data"
-validation_data = "./datafiles/validation_data"
-test_data = "./datafiles/test_data"
+training_data = "./datafiles/training_data.txt"
+validation_data = "./datafiles/validation_data.txt"
+test_data = "./datafiles/test_data.txt"
 
-vocabulary = "./datafiles/vocabulary"
+vocabulary = "./datafiles/vocabulary.txt"
 
 
 # --------- Folders to loop -----------------------------------------------------------------------------
@@ -90,12 +90,12 @@ merge_files(x_path=spell_checked_data_x, y_path=spell_checked_data_y, final_file
 # --------- Create FastText model and replace vectors for FastText model --------------------------------
 print('Creating vocabulary for FastText model...')
 sorted_dict = find_dictionary(x_train=spell_checked_data_x, y_train=spell_checked_data_y)
-unknown_words = create_vocabulary_and_return_unknown_words(sorted_dict=sorted_dict, vocab_path=vocabulary,
-                                                   vocab_size=vocab_size)
+unknown_words = create_vocabulary_and_return_unknown_words(sorted_dict=sorted_dict, vocab_path=vocabulary, vocab_size=vocab_size)
 
-if path_exists("./model.bin"):
+# If model exists, just read parameters in stead of training all over
+if path_exists("./datafiles/model.bin"):
     print("Load existing FastText model...")
-    model = fasttext.load_model('model.bin', encoding='utf-8')
+    model = fasttext.load_model('./datafiles/model.bin', encoding='utf-8')
 else:
     print("Create FastText model...")
     model = create_fast_text_model(merged_spellcheck_path=fast_text_training_data)

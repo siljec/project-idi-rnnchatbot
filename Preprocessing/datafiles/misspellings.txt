@@ -4640,6 +4640,7 @@ zookeenee zucchini
 zylophone xylophone
 wasn't was not
 wasnt was not
+adress address
 aren't are not
 arent are not
 automoticlly automatically
@@ -4663,7 +4664,6 @@ he's he is
 he'll he will
 isn't is not
 it's it is
-its it is
 i'd i would
 i'm i am
 im i am

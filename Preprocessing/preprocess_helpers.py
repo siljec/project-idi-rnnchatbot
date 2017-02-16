@@ -33,7 +33,7 @@ def file_len(file_name):
 
 def create_fast_text_model(merged_spellcheck_path):
 	start_time_fasttext = time.time()
-	model = fasttext.skipgram(merged_spellcheck_path, 'model')
+	model = fasttext.skipgram(merged_spellcheck_path, './datafiles/model')
 	print("Time used to create Fasttext model: ", get_time(start_time_fasttext))
 	return model
 
@@ -77,7 +77,7 @@ def split_line_and_do_regex(line, url_token, emoji_token, dir_token):
 	text = re.sub('((\/\w+)|(\.\/\w+)|(\w+(?=(\/))))()((\/)|(\w+)|(\.\w+)|(\w+|\-|\~))+', dir_token, text)  # Replace directory-paths
 	text = re.sub("(?!(')([a-z]{1})(\s))(')(?=\w|\s)", "", text)  # Remove ', unless it is like "banana's"
 
-	return data, text, current_user
+	return text, current_user
 
 
 # Reads all folders and squash into one file
@@ -97,7 +97,7 @@ def preprocess_training_file(path, x_train_path, y_train_path):
 	sentence_holder = ""
 	with open(path) as fileobject:
 		for line in fileobject:
-			data, text, current_user = split_line_and_do_regex(line, url_token=url_token, emoji_token=emoji_token, dir_token=dir_token)
+			text, current_user = split_line_and_do_regex(line, url_token=url_token, emoji_token=emoji_token, dir_token=dir_token)
 
 			if user1_first_line:
 				init_user, previous_user = current_user, current_user
@@ -193,16 +193,17 @@ def get_most_similar_words_for_UNK(unknown_words, vocab_words):
 
 
 def replace_UNK_words_in_file(source_file_path, new_file_path, dictionary):
-	new_file = open(new_file_path, 'a')
+	new_file = open(new_file_path, 'w')
 	with open(source_file_path) as fileobject:
 		for line in fileobject:
-			sentence = line.split(' ')
-			last_word = sentence.pop().strip()
-			for word in sentence:
+			words = line.split(' ')
+			sentence = ""
+			last_word = words.pop().strip()
+			for word in words:
 				new_word = replace_misspelled_word_helper(word, dictionary)
-				new_file.write(new_word + ' ')
+				sentence += new_word + ' '
 			new_word = replace_misspelled_word_helper(last_word, dictionary)
-			new_file.write(new_word + '\n')
+			new_file.write(sentence + new_word + '\n')
 	new_file.close()
 
 
