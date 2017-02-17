@@ -4,6 +4,7 @@ from spell_error_fix import replace_misspelled_word_helper
 from random import shuffle
 from itertools import izip
 import fasttext
+import pickle
 import numpy as np
 import time
 
@@ -27,6 +28,17 @@ def file_len(file_name):
 		for i, l in enumerate(f):
 			pass
 	return i + 1
+
+
+def save_dict_to_file(file_name, pickle_name, obj):
+	with open(file_name, 'w') as fileObject:
+		for key, value in obj.items():
+			fileObject.write(key + " : " + value + "\n")
+	print("Dictionary saved to file " + file_name)
+
+	with open(pickle_name, 'w') as pickleObject:
+		pickle.dump(obj, pickleObject)
+	print("Dictionary saved to pickle " + pickle_name)
 
 
 # ------------- FastText helpers ----------------------------------------------------
@@ -178,16 +190,20 @@ def create_final_merged_files(x_path, y_path, vocabulary_path, train_path, val_p
 
 
 def get_most_similar_words_for_UNK(unknown_words, vocab_words):
+	counter = 1
 	start_time_unk = time.time()
 	for unk_key, unk_values in unknown_words.iteritems():
 		min_dist = 1
 		word = ""
+		if (counter % 2500) == 0:
+			print("     Calculated " + str(counter) + " unknown words")
 		for key, value in vocab_words.iteritems():
 			cur_dist = distance(unk_values, value[0], value[1])
 			if cur_dist < min_dist:
 				min_dist = cur_dist
 				word = key
 		unknown_words[unk_key] = word
+		counter += 1
 	print("Time to get similar words for all UNK:", get_time(start_time_unk))
 	return unknown_words
 

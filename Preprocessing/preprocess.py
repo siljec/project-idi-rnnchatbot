@@ -1,6 +1,6 @@
 from preprocess_helpers import read_every_data_file_and_create_initial_files, merge_files, create_fast_text_model, \
     get_most_similar_words, replace_UNK_words_in_file, create_final_merged_files, shuffle_file, path_exists, \
-    get_most_similar_words_for_UNK
+    get_most_similar_words_for_UNK, save_dict_to_file
 from spell_error_fix import replace_mispelled_words_in_file
 from create_vocabulary import find_dictionary, create_vocabulary_and_return_unknown_words
 import fasttext
@@ -104,6 +104,7 @@ print("Find most similar words to out-of-vocabulary words...")
 unknown_words, vocab_words = get_most_similar_words(model=model, vocabulary_path=vocabulary, unknown_words=unknown_words)
 unknown_words = get_most_similar_words_for_UNK(unknown_words=unknown_words, vocab_words=vocab_words)
 
+save_dict_to_file("./unknown_words.txt", "./unknown_words.pickle", unknown_words)
 
 # --------- Replace unknown words in dataset ---------------------------------
 
