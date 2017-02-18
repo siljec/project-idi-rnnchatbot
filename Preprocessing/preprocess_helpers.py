@@ -16,11 +16,10 @@ def path_exists(path):
 
 
 def get_time(start_time):
-	end_time = time.time()
-	duration = end_time - start_time
-	minutes = int(duration / 60)
-	seconds = duration % 60
-	return "Time " + str(minutes) + " minutes " + str(seconds) +" seconds"
+	duration = time.time() - start_time
+	m, s = divmod(duration, 60)
+	h, m = divmod(m, 60)
+	return "%d hours %d minutes %d seconds" % (h, m, s)
 
 
 def file_len(file_name):
@@ -56,13 +55,13 @@ def get_most_similar_words(model, vocabulary_path, unknown_words):
 		vocab_words = {}
 		for word in vocabObject:
 			word = word.strip()
-			vector = model[word]
+			vector = np.array(model[word])
 			vocab_words[word] = vector, np.linalg.norm(vector)
 		# pickle.dump(vocab_words, open(known_words_dict, "wb"))
 
 	print('Get vectors for out-of-vocabulary words')
 	for key in unknown_words:
-		unknown_words[key] = model[key]
+		unknown_words[key] = np.array(model[key])
 
 	print("# UNK words: ", len(unknown_words))
 	return unknown_words, vocab_words
@@ -195,7 +194,7 @@ def get_most_similar_words_for_UNK(unknown_words, vocab_words):
 	for unk_key, unk_values in unknown_words.iteritems():
 		min_dist = 1
 		word = ""
-		if (counter % 2500) == 0:
+		if (counter % 100) == 0:
 			print("     Calculated " + str(counter) + " unknown words")
 		for key, value in vocab_words.iteritems():
 			cur_dist = distance(unk_values, value[0], value[1])
