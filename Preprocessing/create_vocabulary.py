@@ -5,12 +5,10 @@ from tensorflow.python.platform import gfile
 def find_dictionary(x_train, y_train):
 	dictionary = {}
 
-	counter = 0
 	with open(x_train) as fileobject:
 		for line in fileobject:
 			sentence = line.strip().split(' ')
 			for word in sentence:
-				counter += 1
 				if word in dictionary:
 					dictionary[word] += 1
 				else:

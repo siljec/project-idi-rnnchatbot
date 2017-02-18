@@ -4680,6 +4680,7 @@ shouldn't should not
 shouldnt should not
 shouldnt' should not
 skreen screen
+somehitng something
 they're they are
 that's that is
 you're you are

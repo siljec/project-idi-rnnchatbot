@@ -3,7 +3,8 @@ import re
 import time
 import random
 import numpy as np
-from preprocess_helpers import distance, get_time
+from preprocess_helpers import distance
+from create_vocabulary import find_dictionary
 
 def get_stats(path, num_longest=20, more_than_words=50, less_than_words=5):
 
@@ -201,6 +202,19 @@ def get_emojis(path):
         print(key, value)
 
 
+def get_unknown_words_stats(vocab_size=100000):
+    sorted_dict = find_dictionary(x_train='./datafiles/spell_checked_data_x.txt', y_train='./datafiles/spell_checked_data_y.txt')
+    print("Known and unknown words found")
+    known_words = sorted_dict[:vocab_size]
+    unknown_words = sorted_dict[vocab_size:]
+
+    print("Number of words in vocabulary %d" % (len(known_words)))
+    print("Number of unknown words %d" % (len(unknown_words)))
+
+    print(known_words[:10])
+    print(unknown_words[-10:])
+
+
 # get_stats('x_train.txt', more_than_words=40, less_than_words=6)
 # get_stats('y_train.txt', more_than_words=50, less_than_words=11)
 # get_bucket_stats('train_merged.txt', buckets=[(5, 10), (10, 15), (20, 25), (40, 50)])
@@ -208,4 +222,5 @@ def get_emojis(path):
 # get_number_of_urls('./datafiles/x_train_spell_check.txt')
 # get_number_of_urls('./datafiles/y_train_spell_check.txt')
 # get_emojis('./datafiles/x_train_spell_check.txt')
-estimate_vector_similarity_time()
+# estimate_vector_similarity_time()
+get_unknown_words_stats(vocab_size=40000)

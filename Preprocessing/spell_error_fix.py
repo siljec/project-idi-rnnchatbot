@@ -20,7 +20,7 @@ def replace_misspelled_word_helper(candidate, dictionary):
 
 def replace_mispelled_words_in_file(source_file_path, new_file_path, misspelled_vocabulary):
 	dictionary = read_words_from_misspelling_file(misspelled_vocabulary)
-	new_file = open(new_file_path, 'a')
+	new_file = open(new_file_path, 'w')
 	with open(source_file_path) as fileobject:
 		for line in fileobject:
 			sentence = line.split(' ')
