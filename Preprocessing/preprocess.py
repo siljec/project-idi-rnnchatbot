@@ -99,7 +99,7 @@ else:
 
 # --------- Merge training files to one for feeding into fasttext model ---------------------------------
 
-if not path_exists(fast_text_training_data) and not force_create_new_files:
+if not path_exists(fast_text_training_data) or not force_create_new_files:
     merge_files(x_path=spell_checked_data_x, y_path=spell_checked_data_y, final_file=fast_text_training_data)
 
 
