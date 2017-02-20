@@ -94,12 +94,12 @@ def get_number_of_urls(path):
     print("Number of URLs in " + path + ": " + str(len(urls)))
 
 
-def estimate_vector_similarity_time(num_known_words=100000, dimension=100, real_number_of_unk_words=1260513, fraction=10):
+def estimate_vector_similarity_time_dict(num_known_words=100000, dimension=100, real_number_of_unk_words=1260513, fraction=10):
     # Create random known_words:
-    known_words = {"known_"+str(i): (np.array([random.random()])*dimension, random.random()*random.randint(1, 10)) for i in range(num_known_words)}
+    known_words = {"known_"+str(i): (np.array([random.random()]*dimension), random.random()*random.randint(1, 10)) for i in range(num_known_words)}
 
     # Create random part of unk_words
-    part_of_dict = {"unk_"+str(i): np.array([random.random()])*dimension for i in range(fraction)}
+    part_of_dict = {"unk_"+str(i): np.array([random.random()]*dimension) for i in range(fraction)}
 
     print("   Placeholders created and fed")
 
@@ -128,6 +128,48 @@ def estimate_vector_similarity_time(num_known_words=100000, dimension=100, real_
     print("Estimated time for calculating " + str(real_number_of_unk_words) + " unknown words, with " +
           str(len(known_words)) + "-dictionary and " + str(dimension) +
           "-word embedding: %d days %d hours %02d minutes %02d seconds" % (d, h, m, s))
+
+
+def estimate_vector_similarity_time_list(num_known_words=100000, dimension=100, real_number_of_unk_words=1260513, fraction=10):
+    # Create random known_words:
+
+    known_words = [("known_"+str(i), np.array([random.random()]*dimension), random.random()*random.randint(1, 10)) for i in range(num_known_words)]
+
+    # print(known_words[0])
+
+    # Create random part of unk_words
+    part_of_dict = [("unk_"+str(i), np.array([random.random()]*dimension)) for i in range(fraction)]
+    # part_of_dict = np.array(part_of_dict)
+    # Placeholder for results
+    result_dict = {}
+
+    print("   Placeholders created and fed")
+
+    multiplier = real_number_of_unk_words/fraction
+    start_time = time.time()
+    counter = 1
+    for unk_key, unk_values in part_of_dict:
+        min_dist = 1
+        word = ""
+        for key, value, dis in known_words:
+            cur_dist = distance(unk_values, value, dis)
+            if cur_dist < min_dist:
+                min_dist = cur_dist
+                word = key
+        result_dict[unk_key] = word
+        print("   Estimation " + str(counter) + "/" + str(fraction) + " done")
+        counter += 1
+
+    est_time = (time.time() - start_time) * multiplier
+
+    m, s = divmod(est_time, 60)
+    h, m = divmod(m, 60)
+    d, h = divmod(h, 24)
+
+    print("Estimated time for calculating " + str(real_number_of_unk_words) + " unknown words, with " +
+          str(len(known_words)) + "-dictionary and " + str(dimension) +
+          "-word embedding: %d days %d hours %02d minutes %02d seconds" % (d, h, m, s))
+
 
 
 def get_emojis(path):
@@ -206,13 +248,6 @@ def get_unknown_words_stats(vocab_size=100000, occurrence=10000):
     print("UNK-token with frequency 1 is represented as %.2f%% of all words (%i unique words)" % ((100.0 * num_words_1 / all_words), num_words_1/1))
 
 
-
-
-
-
-
-
-
 # get_stats('x_train.txt', more_than_words=40, less_than_words=6)
 # get_stats('y_train.txt', more_than_words=50, less_than_words=11)
 # get_bucket_stats('train_merged.txt', buckets=[(5, 10), (10, 15), (20, 25), (40, 50)])
@@ -220,5 +255,6 @@ def get_unknown_words_stats(vocab_size=100000, occurrence=10000):
 # get_number_of_urls('./datafiles/x_train_spell_check.txt')
 # get_number_of_urls('./datafiles/y_train_spell_check.txt')
 # get_emojis('./datafiles/x_train_spell_check.txt')
-# estimate_vector_similarity_time()
-get_unknown_words_stats(vocab_size=20000)
+# estimate_vector_similarity_time_dict()
+estimate_vector_similarity_time_list()
+#get_unknown_words_stats(vocab_size=20000)

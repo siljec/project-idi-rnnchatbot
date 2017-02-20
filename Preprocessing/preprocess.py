@@ -11,7 +11,9 @@ import pickle
 force_create_new_files = True
 force_train_fast_model_all_over = False
 
-vocab_size = 100000 - 7  # Minus number of tokens
+tokens = ['_PAD', '_GO', '_EOS', '_EOT', '_UNK', '_URL', '_EMJ', '_DIR']
+
+vocab_size = 100000 - len(tokens)  # Minus number of tokens
 val_size_fraction = 0.1
 test_size_fraction = 0.1
 
@@ -104,7 +106,7 @@ if not path_exists(fast_text_training_data) and not force_create_new_files:
 # --------- Create FastText model and replace vectors for FastText model --------------------------------
 print('Creating vocabulary for FastText model...')
 sorted_dict = find_dictionary(x_train=spell_checked_data_x, y_train=spell_checked_data_y)
-unknown_words = create_vocabulary_and_return_unknown_words(sorted_dict=sorted_dict, vocab_path=vocabulary, vocab_size=vocab_size)
+unknown_words = create_vocabulary_and_return_unknown_words(sorted_dict=sorted_dict, vocab_path=vocabulary, vocab_size=vocab_size, init_tokens=tokens)
 
 # If model exists, just read parameters in stead of training all over
 if path_exists("./datafiles/model.bin") and not force_train_fast_model_all_over:

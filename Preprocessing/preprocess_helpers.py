@@ -189,15 +189,19 @@ def create_final_merged_files(x_path, y_path, vocabulary_path, train_path, val_p
 
 
 def get_most_similar_words_for_UNK(unknown_words, vocab_words):
+
+	known_words_list = [(key, value[0], value[1]) for key, value in vocab_words.iteritems()]
+	unknown_words_list = [(key, value) for key, value in unknown_words.iteritems()]
+
 	counter = 1
 	start_time_unk = time.time()
-	for unk_key, unk_values in unknown_words.iteritems():
+	for unk_key, unk_values in unknown_words_list:
 		min_dist = 1
 		word = ""
 		if (counter % 100) == 0:
 			print("     Calculated " + str(counter) + " unknown words")
-		for key, value in vocab_words.iteritems():
-			cur_dist = distance(unk_values, value[0], value[1])
+		for key, value, dis in known_words_list:
+			cur_dist = distance(unk_values, value, dis)
 			if cur_dist < min_dist:
 				min_dist = cur_dist
 				word = key
