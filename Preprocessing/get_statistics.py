@@ -84,54 +84,6 @@ def get_bucket_stats(path, buckets=[(40, 40), (60, 60), (85, 85), (110, 110), (1
           "{0:.2f}".format((100.0*no_match)/total_lines) + "%")
 
 
-def get_dictionary_stats(x_train, y_train, occurrence=10000):
-    print("\n############## Stats for Vocabulary ##############")
-    dictionary = {}
-
-    print("Finding words in " + str(x_train))
-    with open(x_train) as fileobject:
-        for line in fileobject:
-            sentence = line.strip().split(' ')
-            for word in sentence:
-                if word in dictionary:
-                    dictionary[word] += 1
-                else:
-                    dictionary[word] = 1
-
-    print("Finding words in " + str(y_train))
-    with open(y_train) as fileobject:
-        for line in fileobject:
-            sentence = line.strip().split(' ')
-            for word in sentence:
-                if word in dictionary:
-                    dictionary[word] += 1
-                else:
-                    dictionary[word] = 1
-
-    sorted_dict = sorted(dictionary.items(), key=operator.itemgetter(1), reverse = True)
-    counter = 0
-
-    words_represented = 0
-    words_not_represented = 0
-
-    for key, value in sorted_dict:
-        if counter < 100000:
-            words_represented += value
-        else:
-            words_not_represented += value
-        if counter % occurrence == 0:
-            print(counter, key, value)
-        counter += 1
-
-    # Removing the _EOS_ token. The other tokens are added later
-    words_represented -= sorted_dict[0][1]
-
-    print("Words in dictionary occurs " + str(words_represented) + " times")
-    print("Words not in dictionary occurs " + str(words_not_represented) + " times")
-    print("UNK-token is represented as " + str("{0:.2f}".format(words_not_represented/(words_represented + words_not_represented))) +
-          "% of all words")
-
-
 def get_number_of_urls(path):
     urls = []
     with open(path) as file_object:
@@ -202,17 +154,63 @@ def get_emojis(path):
         print(key, value)
 
 
-def get_unknown_words_stats(vocab_size=100000):
+def get_unknown_words_stats(vocab_size=100000, occurrence=10000):
     sorted_dict = find_dictionary(x_train='./datafiles/spell_checked_data_x.txt', y_train='./datafiles/spell_checked_data_y.txt')
     print("Known and unknown words found")
     known_words = sorted_dict[:vocab_size]
     unknown_words = sorted_dict[vocab_size:]
 
-    print("Number of words in vocabulary %d" % (len(known_words)))
-    print("Number of unknown words %d" % (len(unknown_words)))
 
-    print(known_words[:10])
-    print(unknown_words[-10:])
+    num_words_5 = 0
+    num_words_4 = 0
+    num_words_3 = 0
+    num_words_2 = 0
+    num_words_1 = 0
+
+    words_represented = 0
+    words_not_represented = 0
+    counter = 0
+
+    for key, value in sorted_dict:
+        if counter < vocab_size:
+            words_represented += value
+        else:
+            words_not_represented += value
+            if value == 5:
+                num_words_5 += value
+            elif value == 4:
+                num_words_4 += value
+            elif value == 3:
+                num_words_3 += value
+            elif value == 2:
+                num_words_2 += value
+            elif value == 1:
+                num_words_1 += value
+        if counter % occurrence == 0:
+            print(counter, key, value)
+        counter += 1
+
+    all_words = words_represented + words_not_represented
+
+    print("\nNumber of unique words in vocabulary %i (Total occurrences: %i)" % (len(known_words), words_represented))
+    print("Number of unique unknown words %i (Total occurrences: %i)" % (len(unknown_words), words_not_represented))
+
+    # Removing the _EOS_ token. The other tokens are added later
+    # all_words -= sorted_dict[0][1]
+
+    print("\nUNK-token is represented as %.2f%% of all words" % (100.0 * words_not_represented / all_words))
+    print("UNK-token with frequency 5 is represented as %.2f%% of all words (%i unique words)" % ((100.0 * num_words_5 / all_words), num_words_5/5))
+    print("UNK-token with frequency 4 is represented as %.2f%% of all words (%i unique words)" % ((100.0 * num_words_4 / all_words), num_words_4/4))
+    print("UNK-token with frequency 3 is represented as %.2f%% of all words (%i unique words)" % ((100.0 * num_words_3 / all_words), num_words_3/3))
+    print("UNK-token with frequency 2 is represented as %.2f%% of all words (%i unique words)" % ((100.0 * num_words_2 / all_words), num_words_2/2))
+    print("UNK-token with frequency 1 is represented as %.2f%% of all words (%i unique words)" % ((100.0 * num_words_1 / all_words), num_words_1/1))
+
+
+
+
+
+
+
 
 
 # get_stats('x_train.txt', more_than_words=40, less_than_words=6)
@@ -223,4 +221,4 @@ def get_unknown_words_stats(vocab_size=100000):
 # get_number_of_urls('./datafiles/y_train_spell_check.txt')
 # get_emojis('./datafiles/x_train_spell_check.txt')
 # estimate_vector_similarity_time()
-get_unknown_words_stats(vocab_size=40000)
+get_unknown_words_stats(vocab_size=20000)
