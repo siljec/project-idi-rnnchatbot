@@ -94,11 +94,13 @@ def split_line_and_do_regex(line, url_token, emoji_token, dir_token):
 # Reads all folders and squash into one file
 def preprocess_training_file(path, x_train_path, y_train_path):
 	go_token = ""
-	eos_token = " _EOS "
+	eos_token = " . "
 	url_token = " _URL "
 	emoji_token = " _EMJ "
 	eot_token = ""
 	dir_token = "_DIR"
+
+	ending_symbols = tuple(["!", "?", ".", "_EMJ "])
 
 	user1_first_line = True
 
@@ -109,24 +111,29 @@ def preprocess_training_file(path, x_train_path, y_train_path):
 	with open(path) as fileobject:
 		for line in fileobject:
 			text, current_user = split_line_and_do_regex(line, url_token=url_token, emoji_token=emoji_token, dir_token=dir_token)
-
+			if text == "":
+				continue
 			if user1_first_line:
 				init_user, previous_user = current_user, current_user
 				user1_first_line = False
 				sentence_holder = go_token
 
 			if current_user == previous_user:  # The user is still talking
-				sentence_holder += text + eos_token
-			else:  # A new user responds
-				if '_EOS' in sentence_holder:
-					sentence_holder += eot_token + "\n"
+				if text.endswith(ending_symbols):
+					sentence_holder += text
 				else:
-					sentence_holder += eot_token + "\n"
+					sentence_holder += text + eos_token
+			else:  # A new user responds
+				sentence_holder += eot_token + "\n"
+
 				if current_user == init_user:  # Init user talks (should add previous sentence to y_train)
 					y_train.append(sentence_holder)
 				else:
 					x_train.append(sentence_holder)
-				sentence_holder = go_token + text + eos_token
+				if text.endswith(ending_symbols):
+					sentence_holder = go_token + text
+				else:
+					sentence_holder = go_token + text + eos_token
 
 			previous_user = current_user
 

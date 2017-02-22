@@ -6,10 +6,18 @@ from create_vocabulary import find_dictionary, create_vocabulary_and_return_unkn
 import fasttext
 import os
 import pickle
+import time
 
 # --------- All paths -----------------------------------------------------------------------------------
-force_create_new_files = True
+force_create_new_files = False
 force_train_fast_model_all_over = False
+
+print("-------------------- INFORMATION --------------------")
+print("Force create new files: " + str(force_create_new_files))
+print("Force train fast model: " + str(force_train_fast_model_all_over))
+print("Will start preprocessing in 4 seconds")
+print("-----------------------------------------------------\n")
+time.sleep(4)
 
 tokens = ['_PAD', '_GO', '_EOS', '_EOT', '_UNK', '_URL', '_EMJ', '_DIR']
 
@@ -68,9 +76,15 @@ folders = ['30', '356', '195', '142', '555', '43', '50', '36', '46', '85', '41',
            '60', '465', '218', '83', '131', '239', '227', '10', '220', '272', '158', '384']
 
 
+print("-------------------- PARAMETERS ---------------------")
+print("Vocabulary size: %i" % (vocab_size + len(tokens)))
+print("Read number of folders: %i" % len(folders))
+print("-----------------------------------------------------\n")
+
+
 # --------- Read all Ubuntu source files, do regex operations and squash them into two giant files ------
 
-if not force_create_new_files and path_exists(squashed_source_data_x) and path_exists(squashed_source_data_y):
+if force_create_new_files and path_exists(squashed_source_data_x) and path_exists(squashed_source_data_y):
     os.remove(squashed_source_data_x)
     os.remove(squashed_source_data_y)
 if path_exists(squashed_source_data_x) and path_exists(squashed_source_data_y):
