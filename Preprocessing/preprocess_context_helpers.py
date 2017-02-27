@@ -1,45 +1,9 @@
-import os, re, time
-from create_vocabulary import read_vocabulary_from_file, encode_sentence
-from spell_error_fix import replace_misspelled_word_helper
-from random import shuffle
-from itertools import izip
-import fasttext
-import pickle
-import numpy as np
+import os
 import time
+from preprocess_helpers import split_line_and_do_regex, get_time
 
 
-# ------------- Code beautify helpers -----------------------------------------------
-
-def path_exists(path):
-    return os.path.exists(path)
-
-
-def get_time(start_time):
-    duration = time.time() - start_time
-    m, s = divmod(duration, 60)
-    h, m = divmod(m, 60)
-    return "%d hours %d minutes %d seconds" % (h, m, s)
-
-
-# ------------- Read all data helpers -----------------------------------------------
-def split_line_and_do_regex(line, url_token, emoji_token, dir_token):
-    data = line.split("\t")
-    current_user = data[1]
-    text = data[3].strip().lower()  # user user timestamp text
-
-    text = re.sub(' +', ' ', text)  # Will remove multiple spaces
-    text = re.sub(r'(www|https?:\/\/)([^\s]+)', url_token, text)  # Exchange urls with URL token
-    text = re.sub(r'((?:^|\s)(?::|;|=)(?:-)?(?:\)|\(|D|P|\|)(?=$|\s))', emoji_token, text)  # Exchange smiles with EMJ token NB: Will neither take :) from /:) nor from :)D
-    text = re.sub('(?<=[a-z])([!?,.])', r' \1', text)  # Add space before special characters [!?,.]
-    text = re.sub('"', '', text)  # Remove "
-    text = re.sub('((\/\w+)|(\.\/\w+)|(\w+(?=(\/))))()((\/)|(\w+)|(\.\w+)|(\w+|\-|\~))+', dir_token, text)  # Replace directory-paths
-    text = re.sub("(?!(')([a-z]{1})(\s))(')(?=\w|\s)", "", text)  # Remove ', unless it is like "banana's"
-
-    return text, current_user
-
-
-# Reads all folders and squash into one file
+# Reads all folders and squash into one file with context
 def preprocess_training_file(path, x_train_path, y_train_path):
     go_token = ""
     eos_token = " . "

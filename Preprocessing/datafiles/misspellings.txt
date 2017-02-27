@@ -4692,6 +4692,7 @@ youve you have
 we'll we will
 we've we have
 we're we are
+weren't were not
 what's what is
 won't will not
 wouldn't would not
