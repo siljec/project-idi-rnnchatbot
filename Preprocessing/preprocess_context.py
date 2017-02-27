@@ -1,11 +1,11 @@
-from preprocess_helpers import read_every_data_file_and_create_initial_files, merge_files, create_fast_text_model, \
+from preprocess_context_helpers import read_every_data_file_and_create_initial_files
+from preprocess_helpers import merge_files, create_fast_text_model, \
     get_most_similar_words, replace_UNK_words_in_file, create_final_merged_files, shuffle_file, path_exists, \
-    get_most_similar_words_for_UNK, save_dict_to_file
+    get_most_similar_words_for_UNK
 from spell_error_fix import replace_mispelled_words_in_file
 from create_vocabulary import find_dictionary, create_vocabulary_and_return_unknown_words
 import fasttext
 import os
-import pickle
 import time
 
 # --------- All paths -----------------------------------------------------------------------------------
@@ -13,7 +13,7 @@ force_create_new_files = False
 force_train_fast_model_all_over = False
 
 print("-------------------- INFORMATION --------------------")
-print("Force create new files: " + str(force_create_new_files))
+print("Force create new files with context: " + str(force_create_new_files))
 print("Force train fast model: " + str(force_train_fast_model_all_over))
 print("Will start preprocessing in 4 seconds")
 print("-----------------------------------------------------\n")
@@ -21,32 +21,32 @@ time.sleep(4)
 
 tokens = ['_PAD', '_GO', '_EOS', '_EOT', '_UNK', '_URL', '_EMJ', '_DIR']
 
-vocab_size = 100000 - len(tokens)  # Minus number of tokens
+vocab_size = 500 - len(tokens)  # Minus number of tokens
 val_size_fraction = 0.1
 test_size_fraction = 0.1
 
 source_folder_root = "../../ubuntu-ranking-dataset-creator/src/dialogs/"
-squashed_source_data_x = "./datafiles/squashed_source_data_x.txt"
-squashed_source_data_y = "./datafiles/squashed_source_data_y.txt"
+squashed_source_data_x = "./context/squashed_source_data_x.txt"
+squashed_source_data_y = "./context/squashed_source_data_y.txt"
 
-spell_checked_data_x = "./datafiles/spell_checked_data_x.txt"
-spell_checked_data_y = "./datafiles/spell_checked_data_y.txt"
+spell_checked_data_x = "./context/spell_checked_data_x.txt"
+spell_checked_data_y = "./context/spell_checked_data_y.txt"
 spell_checked_vocabulary = "./datafiles/misspellings.txt"
 
-fast_text_training_data = "./datafiles/fast_text_training_data.txt"
+fast_text_training_data = "./context/fast_text_training_data.txt"
 
-no_unk_words_x = "./datafiles/no_unk_words_x.txt"
-no_unk_words_y = "./datafiles/no_unk_words_y.txt"
+no_unk_words_x = "./context/no_unk_words_x.txt"
+no_unk_words_y = "./context/no_unk_words_y.txt"
 
-unshuffled_training_data = "./datafiles/unshuffled_training_data.txt"
-unshuffled_validation_data = "./datafiles/unshuffled_validation_data.txt"
-unshuffled_test_data = "./datafiles/unshuffled_test_data.txt"
+unshuffled_training_data = "./context/unshuffled_training_data.txt"
+unshuffled_validation_data = "./context/unshuffled_validation_data.txt"
+unshuffled_test_data = "./context/unshuffled_test_data.txt"
 
-training_data = "./datafiles/training_data.txt"
-validation_data = "./datafiles/validation_data.txt"
-test_data = "./datafiles/test_data.txt"
+training_data = "./context/training_data.txt"
+validation_data = "./context/validation_data.txt"
+test_data = "./context/test_data.txt"
 
-vocabulary = "./datafiles/vocabulary.txt"
+vocabulary = "./context/vocabulary.txt"
 
 
 # --------- Folders to loop -----------------------------------------------------------------------------
@@ -74,7 +74,7 @@ folders = ['30', '356', '195', '142', '555', '43', '50', '36', '46', '85', '41',
            '577', '367', '160', '35', '87', '81', '61', '271', '314', '161', '200', '101', '127', '190', '173',
            '303', '99', '209', '106', '164', '40', '215', '483', '254', '114', '143', '193', '203', '261', '70',
            '60', '465', '218', '83', '131', '239', '227', '10', '220', '272', '158', '384']
-
+folders = ['test']
 
 print("-------------------- PARAMETERS ---------------------")
 print("Vocabulary size: %i" % (vocab_size + len(tokens)))
@@ -90,7 +90,7 @@ if force_create_new_files and path_exists(squashed_source_data_x) and path_exist
 if path_exists(squashed_source_data_x) and path_exists(squashed_source_data_y):
     print('Source files already created')
 else:
-    print('Reading all the files and create initial files...')
+    print('Reading all the files and create initial files with context...')
     read_every_data_file_and_create_initial_files(folders=folders,
                                               initial_x_file_path=squashed_source_data_x,
                                               initial_y_file_path=squashed_source_data_y)
@@ -123,9 +123,9 @@ sorted_dict = find_dictionary(x_train=spell_checked_data_x, y_train=spell_checke
 unknown_words = create_vocabulary_and_return_unknown_words(sorted_dict=sorted_dict, vocab_path=vocabulary, vocab_size=vocab_size, init_tokens=tokens)
 
 # If model exists, just read parameters in stead of training all over
-if path_exists("./datafiles/model.bin") and not force_train_fast_model_all_over:
+if path_exists("./context/model.bin") and not force_train_fast_model_all_over:
     print("Load existing FastText model...")
-    model = fasttext.load_model('./datafiles/model.bin', encoding='utf-8')
+    model = fasttext.load_model('./context/model.bin', encoding='utf-8')
 else:
     print("Create FastText model...")
     model = create_fast_text_model(merged_spellcheck_path=fast_text_training_data)
@@ -133,8 +133,8 @@ else:
 print("Find most similar words to out-of-vocabulary words...")
 unknown_words, vocab_words = get_most_similar_words(model=model, vocabulary_path=vocabulary, unknown_words=unknown_words)
 unknown_words = get_most_similar_words_for_UNK(unknown_words=unknown_words, vocab_words=vocab_words,
-                                               unknown_dict_pickle_path="./datafiles/unknown_words.pickle",
-                                               unknown_dict_file_path="./datafiles/unknown_words.txt",
+                                               unknown_dict_pickle_path="./context/unknown_words.pickle",
+                                               unknown_dict_file_path="./context/unknown_words.txt",
                                                save_freq=5)
 
     # --------- Replace unknown words in dataset ---------------------------------
