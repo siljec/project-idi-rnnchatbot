@@ -96,10 +96,3 @@ def read_every_data_file_and_create_initial_files(folders, initial_x_file_path, 
 
     print "Number of files read: " + str(number_of_files_read)
     print get_time(start_time)
-
-
-
-
-# preprocess_training_file('../../ubuntu-ranking-dataset-creator/src/dialogs/30/5.tsv', './datafiles/x_test_context_silje.txt', './datafiles/y_test_context_silje.txt')
-# preprocess_training_file('../../ubuntu-ranking-dataset-creator/src/dialogs/30/6.tsv', './datafiles/x_test_context_silje.txt', './datafiles/y_test_context_silje.txt')
-# preprocess_training_file('../../ubuntu-ranking-dataset-creator/src/dialogs/30/7.tsv', './datafiles/x_test_context_silje.txt', './datafiles/y_test_context_silje.txt')

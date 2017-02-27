@@ -4694,5 +4694,8 @@ we've we have
 we're we are
 weren't were not
 what's what is
+whats what is
 won't will not
 wouldn't would not
+wouldnt would not
+
