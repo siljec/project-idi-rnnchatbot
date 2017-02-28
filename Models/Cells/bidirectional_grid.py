@@ -22,7 +22,6 @@ from tensorflow.python.ops import variable_scope as vs
 from tensorflow.python.util import nest
 from tensorflow.python.ops import rnn_cell
 from tensorflow.python.ops import array_ops
-import tensorflow as tf
 
 
 class Bidirectional(rnn_cell.RNNCell):
