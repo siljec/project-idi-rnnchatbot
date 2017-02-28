@@ -21,7 +21,7 @@ time.sleep(4)
 
 tokens = ['_PAD', '_GO', '_EOS', '_EOT', '_UNK', '_URL', '_EMJ', '_DIR']
 
-vocab_size = 500 - len(tokens)  # Minus number of tokens
+vocab_size = 100000 - len(tokens)  # Minus number of tokens
 val_size_fraction = 0.1
 test_size_fraction = 0.1
 
@@ -74,7 +74,7 @@ folders = ['30', '356', '195', '142', '555', '43', '50', '36', '46', '85', '41',
            '577', '367', '160', '35', '87', '81', '61', '271', '314', '161', '200', '101', '127', '190', '173',
            '303', '99', '209', '106', '164', '40', '215', '483', '254', '114', '143', '193', '203', '261', '70',
            '60', '465', '218', '83', '131', '239', '227', '10', '220', '272', '158', '384']
-folders = ['test']
+# folders = ['test']
 
 print("-------------------- PARAMETERS ---------------------")
 print("Vocabulary size: %i" % (vocab_size + len(tokens)))
