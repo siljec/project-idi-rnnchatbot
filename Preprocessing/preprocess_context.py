@@ -74,7 +74,7 @@ folders = ['30', '356', '195', '142', '555', '43', '50', '36', '46', '85', '41',
            '577', '367', '160', '35', '87', '81', '61', '271', '314', '161', '200', '101', '127', '190', '173',
            '303', '99', '209', '106', '164', '40', '215', '483', '254', '114', '143', '193', '203', '261', '70',
            '60', '465', '218', '83', '131', '239', '227', '10', '220', '272', '158', '384']
-#folders = ['test']
+folders = ['test']
 
 print("-------------------- PARAMETERS ---------------------")
 print("Vocabulary size: %i" % (vocab_size + len(tokens)))
@@ -135,7 +135,7 @@ unknown_words, vocab_words = get_most_similar_words(model=model, vocabulary_path
 unknown_words = get_most_similar_words_for_UNK(unknown_words=unknown_words, vocab_words=vocab_words,
                                                unknown_dict_pickle_path="./context/unknown_words.pickle",
                                                unknown_dict_file_path="./context/unknown_words.txt",
-                                               save_freq=5)
+                                               save_freq=50000)
 
     # --------- Replace unknown words in dataset ---------------------------------
 
