@@ -9,6 +9,8 @@ def find_dictionary(x_train, y_train):
 		for line in fileobject:
 			sentence = line.strip().split(' ')
 			for word in sentence:
+				if word.strip() == "":
+					continue
 				if word in dictionary:
 					dictionary[word] += 1
 				else:
@@ -18,6 +20,8 @@ def find_dictionary(x_train, y_train):
 		for line in fileobject:
 			sentence = line.strip().split(' ')
 			for word in sentence:
+				if word.strip() == "":
+					continue
 				if word in dictionary:
 					dictionary[word] += 1
 				else:

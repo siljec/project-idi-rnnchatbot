@@ -4682,14 +4682,19 @@ shouldnt' should not
 skreen screen
 somehitng something
 they're they are
+there's there is
 that's that is
 you're you are
 you've you have
 you'll you will
 you'd you would
+youve you have
 we'll we will
 we've we have
 we're we are
+weren't were not
 what's what is
+whats what is
 won't will not
 wouldn't would not
+wouldnt would not
