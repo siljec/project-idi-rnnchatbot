@@ -12,7 +12,7 @@ def preprocess_training_file(path, x_train_path, y_train_path):
     eot_token = ""
     dir_token = "_DIR"
 
-    ending_symbols = tuple(["!", "?", ".", "_EMJ"])
+    ending_symbols = tuple(["!", "?", ".", "_EMJ "])
 
     user1_first_line = True
 

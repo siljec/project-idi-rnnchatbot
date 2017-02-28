@@ -42,6 +42,7 @@ sys.path.insert(0, '../Preprocessing') # To access methods from another file fro
 from create_vocabulary import read_vocabulary_from_file
 from tokenize import sentence_to_token_ids
 from helpers import replace_misspelled_words_in_sentence, check_for_needed_files_and_create
+from preprocess_helpers import distance
 
 import numpy as np
 import tensorflow as tf
@@ -49,7 +50,7 @@ import tensorflow as tf
 from six.moves import xrange  # pylint: disable=redefined-builtin
 
 import gridLSTM_model
-
+import fasttext
 
 tf.app.flags.DEFINE_float("learning_rate", 0.5, "Learning rate.")
 tf.app.flags.DEFINE_float("learning_rate_decay_factor", 0.99, "Learning rate decays by this much.")
@@ -300,7 +301,7 @@ def train():
         coord.join(threads)
 
 
-def preprocess_input(sentence):
+def preprocess_input(sentence, fast_text_model, vocab):
     emoji_token = " _EMJ "
     dir_token = "_DIR"
     url_token = " _URL "
@@ -317,6 +318,28 @@ def preprocess_input(sentence):
                   sentence)  # Replace directory-paths
     sentence = re.sub("(?!(')([a-z]{1})(\s))(')(?=\w|\s)", "", sentence)  # Remove ', unless it is like "banana's"
     sentence = replace_misspelled_words_in_sentence(sentence, '../Preprocessing/datafiles/misspellings.txt')
+
+    # Must replace OOV with most similar vocab-words:
+    unk_words = {}
+    for word in sentence.split(' '):
+        if word not in vocab:
+            unk_words[word] = fast_text_model[word]
+
+    # Find most similar words
+    similar_words = {}
+    for unk_word, unk_vector in unk_words.iteritems():
+        for key, value in vocab:
+            cur_dist = distance(unk_vector, value[0], dis[1])
+            # Save the word that is most similar
+            if cur_dist < min_dist:
+                min_dist = cur_dist
+                word = key
+        similar_words[unk_word] = word
+
+    # Replace words
+    for word, similar_word in unk_words.iteritems():
+        sentence.replace(word, similar_word)
+
     return sentence
 
 
@@ -336,14 +359,23 @@ def decode():
         model = create_model(sess, True)
         model.batch_size = 1  # We decode one sentence at a time.
 
+        # Load trained FastText model
+        fast_text_model = model = fasttext.load_model('./../Preprocessing/datafiles/model.bin', encoding='utf-8')
+
         # Load vocabularies.
         vocab, rev_vocab = read_vocabulary_from_file(vocab_path)
+
+        # Get vocab_word vectors TODO: Should be a file to load
+        vocab_vectors = {}
+        for word, item in vocab.iteritems():
+            vector = fast_text_model[word]
+            vocab_vectors[word] = vector, np.linalg.norm(vector)
 
         # Decode from standard input.
         sys.stdout.write("Human: ")
         sys.stdout.flush()
         sentence = sys.stdin.readline()
-        sentence = preprocess_input(sentence)
+        sentence = preprocess_input(sentence, fast_text_model, vocab_vectors)
         context = ""
         while sentence:
             # Get token-ids for the input sentence.
