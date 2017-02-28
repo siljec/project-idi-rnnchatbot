@@ -286,17 +286,36 @@ def get_emojis(path):
         print(key, value)
 
 
+def find_percentage_of_vocab_size(x_path, y_path, percentage):
+    vocab = find_dictionary(x_path, y_path)
+
+    all_words = 0.0
+
+    for word, occurrences in vocab:
+        all_words += occurrences
+
+    vocab_size = 0
+    vocab_occurrences = 0.0
+    for word, occurrences in vocab:
+        vocab_occurrences += occurrences
+        vocab_size += 1
+        if (vocab_occurrences / all_words) >= percentage:
+            break
+
+    print("Need vocabulary size %i to cover %f of the dataset (%i / %i)" %(vocab_size, percentage, vocab_occurrences, all_words))
+
 # get_stats('x_train.txt', more_than_words=40, less_than_words=6)
 # get_stats('y_train.txt', more_than_words=50, less_than_words=11)
 # get_bucket_stats('train_merged.txt', buckets=[(5, 10), (10, 15), (20, 25), (40, 50)])
 # get_dictionary_stats('./datafiles/no_unk_words_x.txt', './datafiles/no_unk_words_y.txt')
-# get_number_of_urls('./datafiles/x_train_spell_check.txt')
-# get_number_of_urls('./datafiles/y_train_spell_check.txt')
-# get_emojis('./datafiles/x_train_spell_check.txt')
+# get_number_of_urls('./datafiles/spell_checked_data_x.txt')
+# get_number_of_urls('./datafiles/spell_checked_data_y.txt')
+# get_emojis('./datafiles/spell_checked_data_x.txt')
 # estimate_vector_similarity_time_dict()
 # estimate_vector_similarity_time_list()
 # get_unknown_words_stats(vocab_size=20000)
-# get_dictionary_stats('./x_train_spell_check.txt', './y_train_spell_check.txt')
-# get_number_of_urls('./x_train_spell_check.txt')
-# get_number_of_urls('./y_train_spell_check.txt')
-# get_emojis('./x_train_spell_check.txt')
+# get_dictionary_stats('./spell_checked_data_x.txt', './spell_checked_data_y.txt')
+# get_number_of_urls('./spell_checked_data_x.txt')
+# get_number_of_urls('./spell_checked_data_y.txt')
+# get_emojis('./spell_checked_data_x.txt')
+find_percentage_of_vocab_size("./datafiles/spell_checked_data_x.txt", "./datafiles/spell_checked_data_y.txt", 0.95)
