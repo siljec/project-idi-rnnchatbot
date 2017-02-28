@@ -27,23 +27,27 @@ def find_dictionary(x_train, y_train):
 	return sorted_dict
 
 
-def create_vocabulary(sorted_dict, vocab_path, vocab_size):
-	INIT_TOKENS = ['_PAD', '_GO', '_EOS', '_EOT', '_UNK']
+def create_vocabulary_and_return_unknown_words(sorted_dict, vocab_path, vocab_size, init_tokens=['_PAD', '_GO', '_EOS', '_EOT', '_UNK']):
+
+	unknown_dict = {}
 
 	vocabulary = open(vocab_path, 'w')
 
-	for token in INIT_TOKENS:
+	for token in init_tokens:
 		vocabulary.write(token + '\n')
 
 	counter = 0
 	for key in sorted_dict:
-		if key[0] not in INIT_TOKENS:
-			vocabulary.write(str(key[0])+ '\n')
-			counter += 1
-		if counter >= vocab_size:
-			break
+		if counter < vocab_size:
+			if key[0] not in init_tokens:
+				vocabulary.write(str(key[0])+ '\n')
+				counter += 1
+		else:
+			unknown_dict[key[0]] = 0
 
 	vocabulary.close()
+
+	return unknown_dict
 
 
 # Finds vocabulary file, returns a dictionary with the word as a key, and occurences as value
