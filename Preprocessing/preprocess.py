@@ -1,288 +1,154 @@
-import os, re, time
-from create_vocabulary import read_vocabulary_from_file, encode_sentence, create_vocabulary, find_dictionary
+from preprocess_helpers import read_every_data_file_and_create_initial_files, merge_files, create_fast_text_model, \
+    get_most_similar_words, replace_UNK_words_in_file, create_final_merged_files, shuffle_file, path_exists, \
+    get_most_similar_words_for_UNK, save_dict_to_file
 from spell_error_fix import replace_mispelled_words_in_file
-from random import shuffle
-from itertools import izip
+from create_vocabulary import find_dictionary, create_vocabulary_and_return_unknown_words
+import fasttext
+import os
+import time
+
+# --------- All paths -----------------------------------------------------------------------------------
+force_create_new_files = False
+force_train_fast_model_all_over = False
+
+print("-------------------- INFORMATION --------------------")
+print("Force create new files: " + str(force_create_new_files))
+print("Force train fast model: " + str(force_train_fast_model_all_over))
+print("Will start preprocessing in 4 seconds")
+print("-----------------------------------------------------\n")
+time.sleep(4)
+
+tokens = ['_PAD', '_GO', '_EOS', '_EOT', '_UNK', '_URL', '_EMJ', '_DIR']
+
+vocab_size = 100000 - len(tokens)  # Minus number of tokens
+val_size_fraction = 0.1
+test_size_fraction = 0.1
+
+source_folder_root = "../../ubuntu-ranking-dataset-creator/src/dialogs/"
+squashed_source_data_x = "./datafiles/squashed_source_data_x.txt"
+squashed_source_data_y = "./datafiles/squashed_source_data_y.txt"
+
+spell_checked_data_x = "./datafiles/spell_checked_data_x.txt"
+spell_checked_data_y = "./datafiles/spell_checked_data_y.txt"
+spell_checked_vocabulary = "./datafiles/misspellings.txt"
+
+fast_text_training_data = "./datafiles/fast_text_training_data.txt"
+
+no_unk_words_x = "./datafiles/no_unk_words_x.txt"
+no_unk_words_y = "./datafiles/no_unk_words_y.txt"
+
+unshuffled_training_data = "./datafiles/unshuffled_training_data.txt"
+unshuffled_validation_data = "./datafiles/unshuffled_validation_data.txt"
+unshuffled_test_data = "./datafiles/unshuffled_test_data.txt"
+
+training_data = "./datafiles/training_data.txt"
+validation_data = "./datafiles/validation_data.txt"
+test_data = "./datafiles/test_data.txt"
+
+vocabulary = "./datafiles/vocabulary.txt"
 
 
-def preprocess_training_file(path, x_train_path, y_train_path):
-    go_token = ""
-    eos_token = " _EOS "
-    eot_token = ""
+# --------- Folders to loop -----------------------------------------------------------------------------
 
-    user1_first_line = True
-
-    x_train = []
-    y_train = []
-
-    sentence_holder = ""
-
-    with open(path) as fileobject:
-        for line in fileobject:
-            data = line.split("\t")
-            current_user = data[1]
-            text = data[3].strip().lower()
-            text = re.sub(' +', ' ', text)  # Will remove multiple spaces
-            #text = re.sub('(?<=[a-z])([!?,.])', r' \1', text)  # Add space before special characters [!?,.]
-
-            if user1_first_line:
-                init_user = current_user
-                previous_user = current_user
-                user1_first_line = False
-                sentence_holder = go_token
-
-            if current_user == previous_user:  # The user is still talking
-                sentence_holder += text + eos_token
-            else:  # A new user responds
-                if ('_EOS' in sentence_holder):
-                    sentence_holder += eot_token + "\n"
-                else:
-                    sentence_holder += eot_token + "\n"
-                if current_user == init_user:  # Init user talks (should add previous sentence to y_train)
-                    y_train.append(sentence_holder)
-                else:
-                    x_train.append(sentence_holder)
-                sentence_holder = go_token + text + eos_token
-
-            previous_user = current_user
-
-    if current_user != init_user:
-        y_train.append(sentence_holder + eot_token + "\n")
-
-    x_train_file = open(x_train_path, 'a')
-    y_train_file = open(y_train_path, 'a')
-
-    for i in range(len(y_train)):
-        x_train_file.write(x_train[i].strip() + "\n")
-        y_train_file.write(y_train[i].strip() + "\n")
-
-    x_train_file.close()
-    y_train_file.close()
+folders = ['30', '356', '195', '142', '555', '43', '50', '36', '46', '85', '41', '118', '166', '104', '471', '37',
+           '115', '47', '290', '308', '191', '457', '32', '231', '45', '133', '222', '213', '89', '92', '374', '98',
+           '219', '25', '21', '182', '140', '129', '264', '132', '258', '243', '42', '456', '301', '9', '269', '88',
+           '211', '123', '112', '23', '149', '105', '145', '39', '287', '249', '66', '51', '305', '241', '136',
+           '57', '174', '245', '407', '17', '281', '205', '235', '383', '38', '183', '2', '521', '408', '18', '347',
+           '74', '392', '334', '56', '156', '278', '230', '14', '265', '194', '187', '77', '163', '479', '82',
+           '320', '147', '178', '373', '172', '113', '75', '564', '224', '214', '71', '151', '226', '237', '167',
+           '52', '12', '128', '84', '342', '64', '102', '165', '91', '107', '97', '242', '44', '532', '336', '76',
+           '180', '130', '155', '393', '229', '94', '33', '13', '146', '73', '8', '958', '62', '125', '359', '6',
+           '198', '255', '49', '302', '154', '260', '313', '103', '263', '294', '196', '335', '170', '11', '152',
+           '19', '126', '596', '95', '29', '86', '210', '16', '204', '181', '349', '527', '386', '5', '223', '68',
+           '65', '201', '288', '28', '251', '364', '285', '343', '171', '274', '325', '247', '150', '449', '169',
+           '199', '283', '157', '368', '252', '282', '26', '176', '234', '232', '338', '22', '108', '168', '240',
+           '134', '418', '273', '441', '277', '248', '179', '186', '80', '188', '184', '238', '53', '93', '207',
+           '109', '233', '425', '79', '122', '27', '444', '24', '54', '208', '162', '111', '153', '90', '236',
+           '159', '138', '135', '266', '250', '256', '110', '148', '318', '67', '341', '346', '293', '225', '189',
+           '59', '217', '433', '760', '321', '330', '117', '315', '738', '594', '48', '322', '297', '100', '63',
+           '34', '304', '58', '228', '55', '120', '516', '3', '124', '192', '202', '119', '286', '221', '141',
+           '137', '398', '139', '354', '216', '96', '327', '259', '177', '299', '20', '31', '7', '197', '121',
+           '206', '69', '257', '15', '185', '291', '72', '144', '212', '366', '4', '116', '78', '175', '326', '365',
+           '577', '367', '160', '35', '87', '81', '61', '271', '314', '161', '200', '101', '127', '190', '173',
+           '303', '99', '209', '106', '164', '40', '215', '483', '254', '114', '143', '193', '203', '261', '70',
+           '60', '465', '218', '83', '131', '239', '227', '10', '220', '272', '158', '384']
 
 
-def file_len(fname):
-    with open(fname) as f:
-        for i, l in enumerate(f):
-            pass
-    return i + 1
+print("-------------------- PARAMETERS ---------------------")
+print("Vocabulary size: %i" % (vocab_size + len(tokens)))
+print("Read number of folders: %i" % len(folders))
+print("-----------------------------------------------------\n")
 
 
-def create_final_merged_files(x_path, y_path, vocabulary_path, train_path, val_path, test_path, val_size_fraction,
-                              test_size_fraction):
-    vocabulary, _ = read_vocabulary_from_file(vocabulary_path)
-    train_final = open(train_path, 'w')
-    val_final = open(val_path, 'w')
-    test_final = open(test_path, 'w')
-    num_lines = file_len(x_path)
+# --------- Read all Ubuntu source files, do regex operations and squash them into two giant files ------
 
-    train_size = num_lines * (1 - val_size_fraction - test_size_fraction)
-    val_size = train_size + num_lines * test_size_fraction
-    line_counter = 0
-    with open(x_path) as x_file, open(y_path) as y_file:
-        for x, y in izip(x_file, y_file):
-            if line_counter < train_size:
-                train_final.write(
-                    encode_sentence(x.strip().split(" "), vocabulary) + ", " + encode_sentence(y.strip().split(" "),
-                                                                                               vocabulary) + '\n')
-            elif line_counter < val_size:
-                val_final.write(
-                    encode_sentence(x.strip().split(" "), vocabulary) + ", " + encode_sentence(y.strip().split(" "),
-                                                                                               vocabulary) + '\n')
-            else:
-                test_final.write(
-                    encode_sentence(x.strip().split(" "), vocabulary) + ", " + encode_sentence(y.strip().split(" "),
-                                                                                               vocabulary) + '\n')
-            line_counter += 1
-    train_final.close()
-    val_final.close()
-    test_final.close()
-
-
-def create_final_files(source_path, vocabulary_path, train_path, val_path, test_path, val_size_fraction,
-                       test_size_fraction):
-    vocabulary, _ = read_vocabulary_from_file(vocabulary_path)
-    train_final = open(train_path, 'w')
-    val_final = open(val_path, 'w')
-    test_final = open(test_path, 'w')
-    num_lines = file_len(source_path)
-    train_size = num_lines * (1 - val_size_fraction - test_size_fraction)
-    val_size = train_size + num_lines * test_size_fraction
-    line_counter = 0
-    with open(source_path) as fileobject:
-        for line in fileobject:
-            if line_counter < train_size:
-                train_final.write(encode_sentence(line.strip().split(" "), vocabulary) + '\n')
-            elif line_counter < val_size:
-                val_final.write(encode_sentence(line.strip().split(" "), vocabulary) + '\n')
-            else:
-                test_final.write(encode_sentence(line.strip().split(" "), vocabulary) + '\n')
-            line_counter += 1.0
-    train_final.close()
-    val_final.close()
-    test_final.close()
-
-
-def read_every_data_file_and_create_initial_files(folders, initial_x_file_path, initial_y_file_path):
-    start_time = time.time()
-    number_of_files_read = 0  # Can remove, but nice for the report best regards siljus christus
-    for folder in folders:
-        folder_path = "../../ubuntu-ranking-dataset-creator/src/dialogs/" + folder
-        for filename in os.listdir(folder_path):
-            number_of_files_read += 1
-            file_path = folder_path + "/" + filename
-            preprocess_training_file(file_path, initial_x_file_path, initial_y_file_path)
-        print("Done with folder: " + str(folder) + ", read " + str(number_of_files_read) + " files")
-
-    print("Number of files read: " + str(number_of_files_read))
-    end_time = time.time()
-    duration = end_time - start_time
-    minutes = int(duration / 60)
-    seconds = duration % 60
-    print("Time ", minutes, " minutes ", seconds, " seconds")
-
-
-# Used to shuffle the list
-def get_random_folders():
-    folders = os.listdir("../../ubuntu-ranking-dataset-creator/src/dialogs")
-    shuffle(folders)
-    new_folders = []
-    for i in range(len(folders)):
-        if folders[i] != ".DS_Store":
-            new_folders.append(folders[i])
-    return new_folders
-
-
-def shuffle_file(path, target_file):
-    lines = open(path).readlines()
-    shuffle(lines)
-    open(target_file, 'w').writelines(lines)
-
-
-####################################################
-
-def generate_all_files(vocab_size=100000, tokens=["_PAD", "_GO ", "_EOS", "_EOT", "_UNK"], val_size_fraction=0.1,
-                       test_size_fraction=0.1):
-    vocab_size -= len(tokens)
-    start_time = time.time()
-
-    # Get current location and find the folder the script is running from
-    path = os.getcwd()
-    current_folder = path.split("/")[-1]
-
-    # Different folders have different paths to source files
-    if current_folder == "Models":
-        misspelled_words_path = './../Preprocessing/misspellings.txt'  # Is not generated by the code. Don't delete!
-        vocabulary_path = './../Preprocessing/vocabulary.txt'
-        x_train_initial_path = './../Preprocessing/x_train_init.txt'
-        y_train_initial_path = './../Preprocessing/y_train_init.txt'
-        x_train_spell_check_path = './../Preprocessing/x_train_spell_check.txt'
-        y_train_spell_check_path = './../Preprocessing/y_train_spell_check.txt'
-        x_train_final_path = './../Preprocessing/x_train.txt'
-        y_train_final_path = './../Preprocessing/y_train.txt'
-        x_val_path = './../Preprocessing/x_val.txt'
-        y_val_path = './../Preprocessing/y_val.txt'
-        x_test_path = './../Preprocessing/x_test.txt'
-        y_test_path = './../Preprocessing/y_test.txt'
-
-        train_merged_path = './../Preprocessing/train_merged.txt'
-        val_merged_path = './../Preprocessing/val_merged.txt'
-        test_merged_path = './../Preprocessing/test_merged.txt'
-
-        shuffled_train_merged_path = './../Preprocessing/shuffled_train_merged.txt'
-        shuffled_val_merged_path = './../Preprocessing/shuffled_val_merged.txt'
-        shuffled_test_merged_path = './../Preprocessing/shuffled_test_merged.txt'
-    else:
-        misspelled_words_path = './misspellings.txt'  # Is not generated by the code. Don't delete!
-        vocabulary_path = './vocabulary.txt'
-        x_train_initial_path = './x_train_init.txt'
-        y_train_initial_path = './y_train_init.txt'
-        x_train_spell_check_path = './x_train_spell_check.txt'
-        y_train_spell_check_path = './y_train_spell_check.txt'
-        x_train_final_path = './x_train.txt'
-        y_train_final_path = './y_train.txt'
-        x_val_path = './x_val.txt'
-        y_val_path = './y_val.txt'
-        x_test_path = './x_test.txt'
-        y_test_path = './y_test.txt'
-
-        train_merged_path = './train_merged.txt'
-        val_merged_path = './val_merged.txt'
-        test_merged_path = './test_merged.txt'
-
-        shuffled_train_merged_path = './shuffled_train_merged.txt'
-        shuffled_val_merged_path = './shuffled_val_merged.txt'
-        shuffled_test_merged_path = './shuffled_test_merged.txt'
-
-    # Remove all files if exists
-    all_files = [x_train_initial_path, y_train_initial_path, x_train_spell_check_path, y_train_spell_check_path,
-                 x_train_final_path, y_train_final_path, vocabulary_path, x_val_path, y_val_path, x_test_path,
-                 y_test_path, train_merged_path, val_merged_path, test_merged_path]
-    for filename in all_files:
-        try:
-            os.remove(filename)
-        except OSError:
-            print('File not found: ', filename)
-
-    print('Shuffle data source files')
-    # folders = get_random_folders()  # Cant use this because we want to train the different models with the same data.
-    folders = ['30', '356', '195', '142', '555', '43', '50', '36', '46', '85', '41', '118', '166', '104', '471', '37',
-               '115', '47', '290', '308', '191', '457', '32', '231', '45', '133', '222', '213', '89', '92', '374', '98',
-               '219', '25', '21', '182', '140', '129', '264', '132', '258', '243', '42', '456', '301', '9', '269', '88',
-               '211', '123', '112', '23', '149', '105', '145', '39', '287', '249', '66', '51', '305', '241', '136',
-               '57', '174', '245', '407', '17', '281', '205', '235', '383', '38', '183', '2', '521', '408', '18', '347',
-               '74', '392', '334', '56', '156', '278', '230', '14', '265', '194', '187', '77', '163', '479', '82',
-               '320', '147', '178', '373', '172', '113', '75', '564', '224', '214', '71', '151', '226', '237', '167',
-               '52', '12', '128', '84', '342', '64', '102', '165', '91', '107', '97', '242', '44', '532', '336', '76',
-               '180', '130', '155', '393', '229', '94', '33', '13', '146', '73', '8', '958', '62', '125', '359', '6',
-               '198', '255', '49', '302', '154', '260', '313', '103', '263', '294', '196', '335', '170', '11', '152',
-               '19', '126', '596', '95', '29', '86', '210', '16', '204', '181', '349', '527', '386', '5', '223', '68',
-               '65', '201', '288', '28', '251', '364', '285', '343', '171', '274', '325', '247', '150', '449', '169',
-               '199', '283', '157', '368', '252', '282', '26', '176', '234', '232', '338', '22', '108', '168', '240',
-               '134', '418', '273', '441', '277', '248', '179', '186', '80', '188', '184', '238', '53', '93', '207',
-               '109', '233', '425', '79', '122', '27', '444', '24', '54', '208', '162', '111', '153', '90', '236',
-               '159', '138', '135', '266', '250', '256', '110', '148', '318', '67', '341', '346', '293', '225', '189',
-               '59', '217', '433', '760', '321', '330', '117', '315', '738', '594', '48', '322', '297', '100', '63',
-               '34', '304', '58', '228', '55', '120', '516', '3', '124', '192', '202', '119', '286', '221', '141',
-               '137', '398', '139', '354', '216', '96', '327', '259', '177', '299', '20', '31', '7', '197', '121',
-               '206', '69', '257', '15', '185', '291', '72', '144', '212', '366', '4', '116', '78', '175', '326', '365',
-               '577', '367', '160', '35', '87', '81', '61', '271', '314', '161', '200', '101', '127', '190', '173',
-               '303', '99', '209', '106', '164', '40', '215', '483', '254', '114', '143', '193', '203', '261', '70',
-               '60', '465', '218', '83', '131', '239', '227', '10', '220', '272', '158', '384']
-
+if force_create_new_files and path_exists(squashed_source_data_x) and path_exists(squashed_source_data_y):
+    os.remove(squashed_source_data_x)
+    os.remove(squashed_source_data_y)
+if path_exists(squashed_source_data_x) and path_exists(squashed_source_data_y):
+    print('Source files already created')
+else:
     print('Reading all the files and create initial files...')
-    read_every_data_file_and_create_initial_files(folders, x_train_initial_path, y_train_initial_path)
+    read_every_data_file_and_create_initial_files(folders=folders,
+                                              initial_x_file_path=squashed_source_data_x,
+                                              initial_y_file_path=squashed_source_data_y)
 
+
+# --------- Do spell check ------------------------------------------------------------------------------
+
+if path_exists(spell_checked_data_x) and path_exists(spell_checked_data_y) and not force_create_new_files:
+    print('Spellcheck already done')
+else:
     print('Spellchecker for the initial files, create new spell checked files...')
-    replace_mispelled_words_in_file(x_train_initial_path, x_train_spell_check_path, misspelled_words_path)
-    replace_mispelled_words_in_file(y_train_initial_path, y_train_spell_check_path, misspelled_words_path)
+    replace_mispelled_words_in_file(source_file_path=squashed_source_data_x,
+                                new_file_path=spell_checked_data_x,
+                                misspelled_vocabulary=spell_checked_vocabulary)
 
-    print('Creating vocabulary...')
-    sorted_dict = find_dictionary(x_train_spell_check_path, y_train_spell_check_path)
-    create_vocabulary(sorted_dict, vocabulary_path, vocab_size)
+    replace_mispelled_words_in_file(source_file_path=squashed_source_data_y,
+                                new_file_path=spell_checked_data_y,
+                                misspelled_vocabulary=spell_checked_vocabulary)
 
-    print('Creating final files...')
-    create_final_files(x_train_spell_check_path, vocabulary_path, x_train_final_path, x_val_path, x_test_path,
-                       val_size_fraction, test_size_fraction)
-    create_final_files(y_train_spell_check_path, vocabulary_path, y_train_final_path, y_val_path, y_test_path,
-                       val_size_fraction, test_size_fraction)
 
+# --------- Merge training files to one for feeding into fasttext model ---------------------------------
+
+if not path_exists(fast_text_training_data) or not force_create_new_files:
+    merge_files(x_path=spell_checked_data_x, y_path=spell_checked_data_y, final_file=fast_text_training_data)
+
+
+# --------- Create FastText model and replace vectors for FastText model --------------------------------
+print('Creating vocabulary for FastText model...')
+sorted_dict = find_dictionary(x_train=spell_checked_data_x, y_train=spell_checked_data_y)
+unknown_words = create_vocabulary_and_return_unknown_words(sorted_dict=sorted_dict, vocab_path=vocabulary, vocab_size=vocab_size, init_tokens=tokens)
+
+# If model exists, just read parameters in stead of training all over
+if path_exists("./datafiles/model.bin") and not force_train_fast_model_all_over:
+    print("Load existing FastText model...")
+    model = fasttext.load_model('./datafiles/model.bin', encoding='utf-8')
+else:
+    print("Create FastText model...")
+    model = create_fast_text_model(merged_spellcheck_path=fast_text_training_data)
+
+print("Find most similar words to out-of-vocabulary words...")
+unknown_words, vocab_words = get_most_similar_words(model=model, vocabulary_path=vocabulary, unknown_words=unknown_words)
+unknown_words = get_most_similar_words_for_UNK(unknown_words=unknown_words, vocab_words=vocab_words,
+                                               unknown_dict_pickle_path="./datafiles/unknown_words.pickle",
+                                               unknown_dict_file_path="./datafiles/unknown_words.txt",
+                                               save_freq=5)
+
+    # --------- Replace unknown words in dataset ---------------------------------
+
+if force_create_new_files or not path_exists(no_unk_words_x) or not path_exists(no_unk_words_y):
+    replace_UNK_words_in_file(source_file_path=spell_checked_data_x, new_file_path=no_unk_words_x, dictionary=unknown_words)
+    replace_UNK_words_in_file(source_file_path=spell_checked_data_y, new_file_path=no_unk_words_y, dictionary=unknown_words)
+
+if force_create_new_files or not path_exists(unshuffled_training_data):
     print('Creating final merged files')
-    create_final_merged_files(x_train_spell_check_path, y_train_spell_check_path, vocabulary_path, train_merged_path,
-                              val_merged_path, test_merged_path, val_size_fraction, test_size_fraction)
+    create_final_merged_files(no_unk_words_x, no_unk_words_y, vocabulary, unshuffled_training_data,
+                              unshuffled_validation_data, unshuffled_test_data, val_size_fraction, test_size_fraction)
 
+if force_create_new_files or not path_exists(training_data):
     print('Shuffle files')
-    shuffle_file(train_merged_path, shuffled_train_merged_path)
-    shuffle_file(val_merged_path, shuffled_val_merged_path)
-    shuffle_file(test_merged_path, shuffled_test_merged_path)
-
-    end_time = time.time()
-    duration = end_time - start_time
-    minutes = int(duration / 60)
-    seconds = duration % 60
-    print("Time ", minutes, " minutes ", seconds, " seconds to generate all files")
-
-
-path = os.getcwd()
-current_folder = path.split("/")[-1]
-if current_folder == "Preprocessing":
-    generate_all_files()
+    shuffle_file(unshuffled_training_data, training_data)
+    shuffle_file(unshuffled_validation_data, validation_data)
+    shuffle_file(unshuffled_test_data, test_data)
