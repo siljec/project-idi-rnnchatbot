@@ -3,6 +3,8 @@ from preprocessing1 import preprocess1
 from preprocessing2 import preprocessing2
 from preprocessing3 import preprocessing3
 
+from preprocess_helpers import path_exists, shuffle_file, create_final_merged_files
+
 # --------- All paths -----------------------------------------------------------------------------------
 force_create_new_files = False
 force_train_fast_model_all_over = False
@@ -12,13 +14,13 @@ print("Force create new files: " + str(force_create_new_files))
 print("Force train fast model: " + str(force_train_fast_model_all_over))
 print("Will start preprocessing in 4 seconds")
 print("-----------------------------------------------------\n")
-#time.sleep(4)
+time.sleep(4)
 
 tokens = ['_PAD', '_GO', '_EOS', '_EOT', '_UNK', '_URL', '_EMJ', '_DIR']
 init_tokens = ['_PAD', '_GO', '_EOS', '_EOT', '_UNK']
 buckets = [(50, 50)]
 
-vocab_size = 100 - len(tokens)  # Minus number of tokens
+vocab_size = 30000 - len(tokens)  # Minus number of tokens
 save_frequency_unk_words = 50000
 val_size_fraction = 0.1
 test_size_fraction = 0.1
@@ -56,6 +58,7 @@ vocabulary_pickle_path = "./datafiles/vocabulary.pickle"
 vocab_vectors_path = "./datafiles/vocab_vectors_path.pickle"
 unk_vectors_path = "./datafiles/unk_vectors_path.pickle"
 unk_to_vocab_pickle_path = "./datafiles/unk_to_vocab.pickle"
+unk_to_vocab_txt_path = "./datafiles/unk_to_vocab.txt"
 
 
 
@@ -86,89 +89,27 @@ folders = ['30', '356', '195', '142', '555', '43', '50', '36', '46', '85', '41',
            '303', '99', '209', '106', '164', '40', '215', '483', '254', '114', '143', '193', '203', '261', '70',
            '60', '465', '218', '83', '131', '239', '227', '10', '220', '272', '158', '384']
 
-folders = ['test']
+# folders = ['40']
 
 print("-------------------- PARAMETERS ---------------------")
 print("Vocabulary size: %i" % (vocab_size + len(tokens)))
 print("Read number of folders: %i" % len(folders))
 print("-----------------------------------------------------\n")
 
-preprocess1(folders, True, raw_data_x_path, raw_data_y_path, regex_x_path, regex_y_path, spell_checked_data_x_path, spell_checked_data_y_path, misspellings_path)
-fast_text_model = preprocessing2(spell_checked_data_x_path, spell_checked_data_y_path, fast_text_train_path, True, vocab_size)
+preprocess1(folders, force_create_new_files, raw_data_x_path, raw_data_y_path, regex_x_path, regex_y_path, spell_checked_data_x_path, spell_checked_data_y_path, misspellings_path)
+fast_text_model = preprocessing2(spell_checked_data_x_path, spell_checked_data_y_path, fast_text_train_path, force_train_fast_model_all_over)
 preprocessing3(buckets, spell_checked_data_x_path, spell_checked_data_y_path, bucket_data_x_path, bucket_data_y_path,
                vocab_size, vocabulary_txt_path, vocabulary_pickle_path, fast_text_model, vocab_vectors_path,
-               unk_vectors_path, unk_to_vocab_pickle_path,save_frequency_unk_words, final_data_x_path,
+               unk_vectors_path, unk_to_vocab_pickle_path, unk_to_vocab_txt_path, save_frequency_unk_words, final_data_x_path,
                final_data_y_path, init_tokens)
 
+if force_create_new_files or not path_exists(unshuffled_training_data):
+    print('Creating final merged files')
+    create_final_merged_files(final_data_x_path, final_data_y_path, vocabulary_txt_path, unshuffled_training_data,
+                              unshuffled_validation_data, unshuffled_test_data, val_size_fraction, test_size_fraction)
 
-# --------- Read all Ubuntu source files, do regex operations and squash them into two giant files ------
-#
-# if force_create_new_files and path_exists(squashed_source_data_x) and path_exists(squashed_source_data_y):
-#     os.remove(squashed_source_data_x)
-#     os.remove(squashed_source_data_y)
-# if path_exists(squashed_source_data_x) and path_exists(squashed_source_data_y):
-#     print('Source files already created')
-# else:
-#     print('Reading all the files and create initial files...')
-#     read_every_data_file_and_create_initial_files(folders=folders,
-#                                               initial_x_file_path=squashed_source_data_x,
-#                                               initial_y_file_path=squashed_source_data_y)
-#
-#
-# # --------- Do spell check ------------------------------------------------------------------------------
-#
-# if path_exists(spell_checked_data_x) and path_exists(spell_checked_data_y) and not force_create_new_files:
-#     print('Spellcheck already done')
-# else:
-#     print('Spellchecker for the initial files, create new spell checked files...')
-#     replace_mispelled_words_in_file(source_file_path=squashed_source_data_x,
-#                                 new_file_path=spell_checked_data_x,
-#                                 misspelled_vocabulary=spell_checked_vocabulary)
-#
-#     replace_mispelled_words_in_file(source_file_path=squashed_source_data_y,
-#                                 new_file_path=spell_checked_data_y,
-#                                 misspelled_vocabulary=spell_checked_vocabulary)
-#
-#
-# # --------- Merge training files to one for feeding into fasttext model ---------------------------------
-#
-# if not path_exists(fast_text_training_data) or not force_create_new_files:
-#     merge_files(x_path=spell_checked_data_x, y_path=spell_checked_data_y, final_file=fast_text_training_data)
-#
-#
-# # --------- Create FastText model and replace vectors for FastText model --------------------------------
-# print('Creating vocabulary for FastText model...')
-# sorted_dict = find_dictionary(x_train=spell_checked_data_x, y_train=spell_checked_data_y)
-# unknown_words = create_vocabulary_and_return_unknown_words(sorted_dict=sorted_dict, vocab_path=vocabulary, vocab_size=vocab_size, init_tokens=tokens)
-#
-# # If model exists, just read parameters in stead of training all over
-# if path_exists("./datafiles/model.bin") and not force_train_fast_model_all_over:
-#     print("Load existing FastText model...")
-#     model = fasttext.load_model('./datafiles/model.bin', encoding='utf-8')
-# else:
-#     print("Create FastText model...")
-#     model = create_fast_text_model(merged_spellcheck_path=fast_text_training_data)
-#
-# print("Find most similar words to out-of-vocabulary words...")
-# unknown_words, vocab_words = get_most_similar_words(model=model, vocabulary_path=vocabulary, unknown_words=unknown_words)
-# unknown_words = get_most_similar_words_for_UNK(unknown_words=unknown_words, vocab_words=vocab_words,
-#                                                unknown_dict_pickle_path="./datafiles/unknown_words.pickle",
-#                                                unknown_dict_file_path="./datafiles/unknown_words.txt",
-#                                                save_freq=50000)
-#
-#     # --------- Replace unknown words in dataset ---------------------------------
-#
-# if force_create_new_files or not path_exists(no_unk_words_x) or not path_exists(no_unk_words_y):
-#     replace_UNK_words_in_file(source_file_path=spell_checked_data_x, new_file_path=no_unk_words_x, dictionary=unknown_words)
-#     replace_UNK_words_in_file(source_file_path=spell_checked_data_y, new_file_path=no_unk_words_y, dictionary=unknown_words)
-#
-# if force_create_new_files or not path_exists(unshuffled_training_data):
-#     print('Creating final merged files')
-#     create_final_merged_files(no_unk_words_x, no_unk_words_y, vocabulary, unshuffled_training_data,
-#                               unshuffled_validation_data, unshuffled_test_data, val_size_fraction, test_size_fraction)
-#
-# if force_create_new_files or not path_exists(training_data):
-#     print('Shuffle files')
-#     shuffle_file(unshuffled_training_data, training_data)
-#     shuffle_file(unshuffled_validation_data, validation_data)
-#     shuffle_file(unshuffled_test_data, test_data)
+if force_create_new_files or not path_exists(training_data):
+    print('Shuffle files')
+    shuffle_file(unshuffled_training_data, training_data)
+    shuffle_file(unshuffled_validation_data, validation_data)
+    shuffle_file(unshuffled_test_data, test_data)
