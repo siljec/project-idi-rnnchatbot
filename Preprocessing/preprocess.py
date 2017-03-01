@@ -20,7 +20,7 @@ tokens = ['_PAD', '_GO', '_EOS', '_EOT', '_UNK', '_URL', '_EMJ', '_DIR']
 init_tokens = ['_PAD', '_GO', '_EOS', '_EOT', '_UNK']
 buckets = [(50, 50)]
 
-vocab_size = 30000 - len(tokens)  # Minus number of tokens
+vocab_size = 2000 - len(init_tokens)  # Minus number of tokens
 save_frequency_unk_words = 50000
 val_size_fraction = 0.1
 test_size_fraction = 0.1
@@ -89,7 +89,7 @@ folders = ['30', '356', '195', '142', '555', '43', '50', '36', '46', '85', '41',
            '303', '99', '209', '106', '164', '40', '215', '483', '254', '114', '143', '193', '203', '261', '70',
            '60', '465', '218', '83', '131', '239', '227', '10', '220', '272', '158', '384']
 
-# folders = ['40']
+folders = ['40']
 
 print("-------------------- PARAMETERS ---------------------")
 print("Vocabulary size: %i" % (vocab_size + len(tokens)))
