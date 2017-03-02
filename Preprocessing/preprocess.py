@@ -2,16 +2,23 @@ import time
 from preprocessing1 import preprocess1
 from preprocessing2 import preprocessing2
 from preprocessing3 import preprocessing3
+from preprocessing1_context import preprocess1_context
 
 from preprocess_helpers import path_exists, shuffle_file, create_final_merged_files
 
 # --------- All paths -----------------------------------------------------------------------------------
 force_create_new_files = False
 force_train_fast_model_all_over = False
+context = False
+dir = "datafiles"
+if context:
+    dir = "context"
 
 print("-------------------- INFORMATION --------------------")
 print("Force create new files: " + str(force_create_new_files))
 print("Force train fast model: " + str(force_train_fast_model_all_over))
+print("Context: " + str(context))
+print("Files will be saved to: " + str(dir))
 print("Will start preprocessing in 4 seconds")
 print("-----------------------------------------------------\n")
 time.sleep(4)
@@ -20,51 +27,50 @@ tokens = ['_PAD', '_GO', '_EOS', '_EOT', '_UNK', '_URL', '_EMJ', '_DIR']
 init_tokens = ['_PAD', '_GO', '_EOS', '_EOT', '_UNK']
 buckets = [(50, 50)]
 
-vocab_size = 2000 - len(init_tokens)  # Minus number of tokens
+vocab_size = 2000 - len(init_tokens)  # Minus number of init tokens
 save_frequency_unk_words = 50000
 val_size_fraction = 0.1
 test_size_fraction = 0.1
 
 source_folder_root = "../../ubuntu-ranking-dataset-creator/src/dialogs/"
-raw_data_x_path = "./datafiles/raw_data_x.txt"
-raw_data_y_path = "./datafiles/raw_data_y.txt"
+raw_data_x_path = "./" + dir + "/raw_data_x.txt"
+raw_data_y_path = "./" + dir + "/raw_data_y.txt"
 
-regex_x_path = "./datafiles/regex_x.txt"
-regex_y_path = "./datafiles/regex_y.txt"
+regex_x_path = "./" + dir + "/regex_x.txt"
+regex_y_path = "./" + dir + "/regex_y.txt"
 
-spell_checked_data_x_path = "./datafiles/spell_checked_data_x.txt"
-spell_checked_data_y_path = "./datafiles/spell_checked_data_y.txt"
+spell_checked_data_x_path = "./" + dir + "/spell_checked_data_x.txt"
+spell_checked_data_y_path = "./" + dir + "/spell_checked_data_y.txt"
 misspellings_path = "./datafiles/misspellings.txt"
 
-fast_text_train_path = "./datafiles/fast_text_train.txt"
+fast_text_train_path = "./" + dir + "/fast_text_train.txt"
 
-bucket_data_x_path = "./datafiles/bucket_data_x.txt"
-bucket_data_y_path = "./datafiles/bucket_data_y.txt"
+bucket_data_x_path = "./" + dir + "/bucket_data_x.txt"
+bucket_data_y_path = "./" + dir + "/bucket_data_y.txt"
 
-final_data_x_path = "./datafiles/final_data_x.txt"
-final_data_y_path = "./datafiles/final_data_y.txt"
+final_data_x_path = "./" + dir + "/final_data_x.txt"
+final_data_y_path = "./" + dir + "/final_data_y.txt"
 
-unshuffled_training_data = "./datafiles/unshuffled_training_data.txt"
-unshuffled_validation_data = "./datafiles/unshuffled_validation_data.txt"
-unshuffled_test_data = "./datafiles/unshuffled_test_data.txt"
+unshuffled_training_data = "./" + dir + "/unshuffled_training_data.txt"
+unshuffled_validation_data = "./" + dir + "/unshuffled_validation_data.txt"
+unshuffled_test_data = "./" + dir + "/unshuffled_test_data.txt"
 
-training_data = "./datafiles/training_data.txt"
-validation_data = "./datafiles/validation_data.txt"
-test_data = "./datafiles/test_data.txt"
+training_data = "./" + dir + "/training_data.txt"
+validation_data = "./" + dir + "/validation_data.txt"
+test_data = "./" + dir + "/test_data.txt"
 
-vocabulary_txt_path = "./datafiles/vocabulary.txt"
-vocabulary_pickle_path = "./datafiles/vocabulary.pickle"
+vocabulary_txt_path = "./" + dir + "/vocabulary.txt"
+vocabulary_pickle_path = "./" + dir + "/vocabulary.pickle"
 
-vocab_vectors_path = "./datafiles/vocab_vectors_path.pickle"
-unk_vectors_path = "./datafiles/unk_vectors_path.pickle"
-unk_to_vocab_pickle_path = "./datafiles/unk_to_vocab.pickle"
-unk_to_vocab_txt_path = "./datafiles/unk_to_vocab.txt"
-
-
+vocab_vectors_path = "./" + dir + "/vocab_vectors_path.pickle"
+unk_vectors_path = "./" + dir + "/unk_vectors_path.pickle"
+unk_to_vocab_pickle_path = "./" + dir + "/unk_to_vocab.pickle"
+unk_to_vocab_txt_path = "./" + dir + "/unk_to_vocab.txt"
 
 
-# --------- Folders to loop -----------------------------------------------------------------------------
 
+
+# Folders to loop
 folders = ['30', '356', '195', '142', '555', '43', '50', '36', '46', '85', '41', '118', '166', '104', '471', '37',
            '115', '47', '290', '308', '191', '457', '32', '231', '45', '133', '222', '213', '89', '92', '374', '98',
            '219', '25', '21', '182', '140', '129', '264', '132', '258', '243', '42', '456', '301', '9', '269', '88',
@@ -89,15 +95,21 @@ folders = ['30', '356', '195', '142', '555', '43', '50', '36', '46', '85', '41',
            '303', '99', '209', '106', '164', '40', '215', '483', '254', '114', '143', '193', '203', '261', '70',
            '60', '465', '218', '83', '131', '239', '227', '10', '220', '272', '158', '384']
 
-#folders = ['40']
+folders = ['test']
 
 print("-------------------- PARAMETERS ---------------------")
-print("Vocabulary size: %i" % (vocab_size + len(tokens)))
+print("Vocabulary size: %i" % (vocab_size + len(init_tokens)))
 print("Read number of folders: %i" % len(folders))
 print("-----------------------------------------------------\n")
 
-preprocess1(folders, force_create_new_files, raw_data_x_path, raw_data_y_path, regex_x_path, regex_y_path, spell_checked_data_x_path, spell_checked_data_y_path, misspellings_path)
+# Step 1
+if context:
+    preprocess1_context(folders, force_create_new_files, raw_data_x_path, raw_data_y_path, regex_x_path, regex_y_path, spell_checked_data_x_path, spell_checked_data_y_path, misspellings_path)
+else:
+    preprocess1(folders, force_create_new_files, raw_data_x_path, raw_data_y_path, regex_x_path, regex_y_path, spell_checked_data_x_path, spell_checked_data_y_path, misspellings_path)
+# Step 2
 fast_text_model = preprocessing2(spell_checked_data_x_path, spell_checked_data_y_path, fast_text_train_path, force_train_fast_model_all_over)
+# Step 3
 preprocessing3(buckets, spell_checked_data_x_path, spell_checked_data_y_path, bucket_data_x_path, bucket_data_y_path,
                vocab_size, vocabulary_txt_path, vocabulary_pickle_path, fast_text_model, vocab_vectors_path,
                unk_vectors_path, unk_to_vocab_pickle_path, unk_to_vocab_txt_path, save_frequency_unk_words, final_data_x_path,
