@@ -83,7 +83,7 @@ def read_every_data_file_and_create_initial_files(folders, initial_x_file_path, 
     print "Number of files read: " + str(number_of_files_read)
     print get_time(start_time)
 
-# -------------------------- Step 3: Do misspellings --------------------------
+# Step 3: Do misspellings
 
 def read_words_from_misspelling_file(path):
     dictionary = {}

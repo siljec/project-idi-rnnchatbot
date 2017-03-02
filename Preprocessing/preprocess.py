@@ -6,7 +6,7 @@ from preprocessing1_context import preprocess1_context
 
 from preprocess_helpers import path_exists, shuffle_file, create_final_merged_files
 
-# --------- All paths -----------------------------------------------------------------------------------
+# All paths
 force_create_new_files = False
 force_train_fast_model_all_over = False
 context = False
@@ -67,8 +67,6 @@ unk_to_vocab_pickle_path = "./" + dir + "/unk_to_vocab.pickle"
 unk_to_vocab_txt_path = "./" + dir + "/unk_to_vocab.txt"
 
 
-
-
 # Folders to loop
 folders = ['30', '356', '195', '142', '555', '43', '50', '36', '46', '85', '41', '118', '166', '104', '471', '37',
            '115', '47', '290', '308', '191', '457', '32', '231', '45', '133', '222', '213', '89', '92', '374', '98',
@@ -93,7 +91,6 @@ folders = ['30', '356', '195', '142', '555', '43', '50', '36', '46', '85', '41',
            '577', '367', '160', '35', '87', '81', '61', '271', '314', '161', '200', '101', '127', '190', '173',
            '303', '99', '209', '106', '164', '40', '215', '483', '254', '114', '143', '193', '203', '261', '70',
            '60', '465', '218', '83', '131', '239', '227', '10', '220', '272', '158', '384']
-
 #folders = ['test']
 
 print("-------------------- PARAMETERS ---------------------")
@@ -106,8 +103,10 @@ if context:
     preprocess1_context(folders, force_create_new_files, raw_data_x_path, raw_data_y_path, regex_x_path, regex_y_path, spell_checked_data_x_path, spell_checked_data_y_path, misspellings_path)
 else:
     preprocess1(folders, force_create_new_files, raw_data_x_path, raw_data_y_path, regex_x_path, regex_y_path, spell_checked_data_x_path, spell_checked_data_y_path, misspellings_path)
+
 # Step 2
 fast_text_model = preprocessing2(spell_checked_data_x_path, spell_checked_data_y_path, fast_text_train_path, force_train_fast_model_all_over)
+
 # Step 3
 preprocessing3(buckets, spell_checked_data_x_path, spell_checked_data_y_path, bucket_data_x_path, bucket_data_y_path,
                vocab_size, vocabulary_txt_path, vocabulary_pickle_path, fast_text_model, vocab_vectors_path,
@@ -115,7 +114,8 @@ preprocessing3(buckets, spell_checked_data_x_path, spell_checked_data_y_path, bu
                final_data_y_path, init_tokens)
 
 
-# Step 4: Creating final files. X and Y are separated with comma (,) because our model handles the data that way.
+# Step 4
+# Creating final files. X and Y are separated with comma (,))
 if force_create_new_files or not path_exists(unshuffled_training_data):
     print('Creating final merged files')
     create_final_merged_files(final_data_x_path, final_data_y_path, vocabulary_txt_path, unshuffled_training_data,
