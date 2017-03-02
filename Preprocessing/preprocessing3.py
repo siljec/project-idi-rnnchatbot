@@ -41,7 +41,9 @@ def get_data_for_buckets(buckets, source_file_x, bucket_data_x, source_file_y, b
 
     with open(source_file_x) as sourceObjectX, open(source_file_y) as sourceObjectY:
         for x, y in izip(sourceObjectX, sourceObjectY):
-            if len(x) <= biggest_bucket[0] and len(y) <= biggest_bucket[1]:
+            x_words = x.split()
+            y_words = y.split()
+            if len(x_words) <= biggest_bucket[0] and len(y_words) <= biggest_bucket[1]:
                 new_x_data.append(x)
                 new_y_data.append(y)
 
@@ -52,7 +54,6 @@ def get_data_for_buckets(buckets, source_file_x, bucket_data_x, source_file_y, b
 
 
 # Step 3: Find Vectors to word
-
 def get_unk_dict(sorted_dict, vocab_size, init_tokens=['_PAD', '_GO', '_EOS', '_EOT', '_UNK']):
     unknown_dict = {}
     counter = 0

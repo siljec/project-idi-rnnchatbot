@@ -1,9 +1,11 @@
 import time
-import re
 import os
-from preprocess_helpers import get_time, path_exists, save_to_file, split_line, do_regex_on_file, read_words_from_misspelling_file, replace_mispelled_words_in_file
+from preprocess_helpers import get_time, path_exists, save_to_file, do_regex_on_file, split_line
 
-# Extract dialogs, concatenate sentences in the same turn
+
+
+
+# Extract dialogs, concatenate sentences in the same turn and add context to init-talker
 def preprocess_training_file(path, x_train_path, y_train_path):
     go_token = ""
     eos_token = " . "
@@ -16,6 +18,9 @@ def preprocess_training_file(path, x_train_path, y_train_path):
     x_train = []
     y_train = []
 
+    context = ""
+    new_context = ""
+
     sentence_holder = ""
     with open(path) as fileobject:
         for line in fileobject:
@@ -26,6 +31,15 @@ def preprocess_training_file(path, x_train_path, y_train_path):
                 init_user, previous_user = current_user, current_user
                 user1_first_line = False
                 sentence_holder = go_token
+
+            # CONTEXT OPTION 1: context is just the final sentence in the turn
+            if current_user != init_user:
+                if text.endswith(ending_symbols):
+                    context = new_context
+                    new_context = text + " "
+                else:
+                    context = new_context
+                    new_context = text + eos_token
 
             if current_user == previous_user:  # The user is still talking
                 if text.endswith(ending_symbols):
@@ -38,7 +52,7 @@ def preprocess_training_file(path, x_train_path, y_train_path):
                 if current_user == init_user:  # Init user talks (should add previous sentence to y_train)
                     y_train.append(sentence_holder)
                 else:
-                    x_train.append(sentence_holder)
+                    x_train.append(context + " " + sentence_holder)
                 if text.endswith(ending_symbols):
                     sentence_holder = go_token + text + " "
                 else:
@@ -69,7 +83,44 @@ def read_every_data_file_and_create_initial_files(folders, initial_x_file_path, 
     print "Number of files read: " + str(number_of_files_read)
     print get_time(start_time)
 
-def preprocess1(folders, force_create_new_files, raw_data_x_path, raw_data_y_path, regex_x_path, regex_y_path, spell_checked_data_x_path, spell_checked_data_y_path, misspellings_path):
+# Step 3: Do misspellings
+
+def read_words_from_misspelling_file(path):
+    dictionary = {}
+    with open(path) as fileobject:
+        for line in fileobject:
+            splitted_line = line.split(' ', 1)
+            wrong = splitted_line[0]
+            correct = splitted_line[1].strip()
+            dictionary[wrong] = correct
+
+    return dictionary
+
+
+def replace_word_helper(candidate, dictionary):
+    if candidate in dictionary:
+        # print "replacing ", candidate, " with ", dictionary[candidate]
+        return dictionary[candidate]
+    return candidate
+
+
+def replace_mispelled_words_in_file(source_file_path, new_file_path, misspelled_vocabulary):
+    dictionary = read_words_from_misspelling_file(misspelled_vocabulary)
+    new_file = open(new_file_path, 'w')
+    with open(source_file_path) as fileobject:
+        for line in fileobject:
+            sentence = line.split(' ')
+            last_word = sentence.pop().strip()
+            for word in sentence:
+                new_word = replace_word_helper(word, dictionary)
+                new_file.write(new_word + ' ')
+            new_word = replace_word_helper(last_word, dictionary)
+            new_file.write(new_word + '\n')
+
+    new_file.close()
+
+
+def preprocess1_context(folders, force_create_new_files, raw_data_x_path, raw_data_y_path, regex_x_path, regex_y_path, spell_checked_data_x_path, spell_checked_data_y_path, misspellings_path):
 
     # Step 1: Extract dialogs from UDC all source files to x and y
     if force_create_new_files and path_exists(raw_data_x_path) and path_exists(raw_data_y_path):

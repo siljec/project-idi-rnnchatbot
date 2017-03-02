@@ -1,19 +1,16 @@
-import os, re, time
+import os, re
 from create_vocabulary import read_vocabulary_from_file, encode_sentence
 from random import shuffle
 from itertools import izip
-import fasttext
 import operator
 import pickle
-import numpy as np
 import time
 
 
-# ------------- Code beautify helpers -----------------------------------------------
+# Code beautify helpers
 
 def path_exists(path):
     return os.path.exists(path)
-
 
 def get_time(start_time):
     duration = time.time() - start_time
@@ -21,25 +18,88 @@ def get_time(start_time):
     h, m = divmod(m, 60)
     return "%d hours %d minutes %d seconds" % (h, m, s)
 
-
 def file_len(file_name):
     with open(file_name) as f:
         for i, l in enumerate(f):
             pass
     return i + 1
 
-
 def load_pickle_file(path):
     with open(path) as fileObject:
         obj = pickle.load(fileObject)
     return obj
-
 
 def save_to_file(file_name, array):
     with open(file_name, 'w') as fileObject:
         for line in array:
             fileObject.write(line)
 
+# Pre-process 1
+def split_line(line):
+    data = line.split("\t")
+    current_user = data[1]
+    text = data[3].strip().lower()  # user user timestamp text
+    return text, current_user
+
+def do_regex_on_file(path):
+    url_token = "_URL"
+    emoji_token = " _EMJ"
+    dir_token = "_DIR"
+
+    data = []
+
+    with open(path) as fileObject:
+        for line in fileObject:
+            data.append(do_regex_on_line(line, url_token, emoji_token, dir_token))
+    return data
+
+def do_regex_on_line(line, url_token, emoji_token, dir_token):
+    text = re.sub(' +', ' ', line)  # Will remove multiple spaces
+    text = re.sub(r'((www\.|https?:\/\/)[^\s]+)', url_token, text)  # Exchange urls with URL token
+    text = re.sub(r'((?:^|\s)(?::|;|=)(?:-)?(?:\)|\(|D|P|\|)(?=$|\s))', emoji_token, text)  # Exchange smiles with EMJ token NB: Will neither take :) from /:) nor from :)D
+    text = re.sub('"', '', text)  # Remove "
+    text = re.sub("(?!(')([a-z]{1})(\s))(')(?=\w|\s)", "", text)  # Remove ', unless it is like "banana's"
+    text = re.sub("[^\s]+(.(org|com|edu|net|uk)(?=$|\s))", url_token, text)  # Will replace ubuntu.com with URL token
+    text = re.sub('((~\/)|(\/\w+)|(\.\/\w+)|(\w+(?=(\/))))((\/)|(\w+)|(\.\w+)|(\w+|\-|\~))+', dir_token, text)  # Replace directory-paths
+    text = re.sub('(?<=[a-z])([!?,.])', r' \1', text)  # Add space before special characters [!?,.]
+    text = re.sub('(_EMJ \.)', '_EMJ', text)  # Remove period after EMJ token
+    text = re.sub(' +', ' ', text)  # Will remove multiple spaces
+    return text
+
+# Pre-process 1
+def replace_word_helper(candidate, dictionary):
+    if candidate in dictionary:
+        # print "replacing ", candidate, " with ", dictionary[candidate]
+        return dictionary[candidate]
+    return candidate
+
+def read_words_from_misspelling_file(path):
+    dictionary = {}
+    with open(path) as fileobject:
+        for line in fileobject:
+            splitted_line = line.split(' ', 1)
+            wrong = splitted_line[0]
+            correct = splitted_line[1].strip()
+            dictionary[wrong] = correct
+
+    return dictionary
+
+def replace_mispelled_words_in_file(source_file_path, new_file_path, misspelled_vocabulary):
+    dictionary = read_words_from_misspelling_file(misspelled_vocabulary)
+    new_file = open(new_file_path, 'w')
+    with open(source_file_path) as fileobject:
+        for line in fileobject:
+            sentence = line.split(' ')
+            last_word = sentence.pop().strip()
+            for word in sentence:
+                new_word = replace_word_helper(word, dictionary)
+                new_file.write(new_word + ' ')
+            new_word = replace_word_helper(last_word, dictionary)
+            new_file.write(new_word + '\n')
+
+    new_file.close()
+
+# Pre-process 2
 
 def save_vocabulary(path, obj, init_tokens):
 
@@ -150,7 +210,7 @@ def shuffle_file(path, target_file):
     open(target_file, 'w').writelines(lines)
 
 
-# ------------- Currently not in use ------------------------------------------------
+# Currently not in use
 # Used to shuffle the list
 def get_random_folders():
     folders = os.listdir("../../ubuntu-ranking-dataset-creator/src/dialogs")
@@ -206,36 +266,3 @@ def create_vocabulary_and_return_unknown_words(sorted_dict, vocab_path, vocab_si
     vocabulary.close()
 
     return unknown_dict
-
-
-def replace_word_helper(candidate, dictionary):
-    if candidate in dictionary:
-        # print "replacing ", candidate, " with ", dictionary[candidate]
-        return dictionary[candidate]
-    return candidate
-
-def read_words_from_misspelling_file(path):
-    dictionary = {}
-    with open(path) as fileobject:
-        for line in fileobject:
-            splitted_line = line.split(' ', 1)
-            wrong = splitted_line[0]
-            correct = splitted_line[1].strip()
-            dictionary[wrong] = correct
-
-    return dictionary
-
-def replace_mispelled_words_in_file(source_file_path, new_file_path, misspelled_vocabulary):
-    dictionary = read_words_from_misspelling_file(misspelled_vocabulary)
-    new_file = open(new_file_path, 'w')
-    with open(source_file_path) as fileobject:
-        for line in fileobject:
-            sentence = line.split(' ')
-            last_word = sentence.pop().strip()
-            for word in sentence:
-                new_word = replace_word_helper(word, dictionary)
-                new_file.write(new_word + ' ')
-            new_word = replace_word_helper(last_word, dictionary)
-            new_file.write(new_word + '\n')
-
-    new_file.close()
