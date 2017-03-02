@@ -20,14 +20,13 @@ print("Force train fast model: " + str(force_train_fast_model_all_over))
 print("Context: " + str(context))
 print("Files will be saved to: " + str(dir))
 print("Will start preprocessing in 4 seconds")
-print("-----------------------------------------------------\n")
 time.sleep(4)
 
 tokens = ['_PAD', '_GO', '_EOS', '_EOT', '_UNK', '_URL', '_EMJ', '_DIR']
 init_tokens = ['_PAD', '_GO', '_EOS', '_EOT', '_UNK']
 buckets = [(50, 50)]
 
-vocab_size = 2000 - len(init_tokens)  # Minus number of init tokens
+vocab_size = 30000 - len(init_tokens)  # Minus number of init tokens
 save_frequency_unk_words = 50000
 val_size_fraction = 0.1
 test_size_fraction = 0.1
@@ -95,7 +94,7 @@ folders = ['30', '356', '195', '142', '555', '43', '50', '36', '46', '85', '41',
            '303', '99', '209', '106', '164', '40', '215', '483', '254', '114', '143', '193', '203', '261', '70',
            '60', '465', '218', '83', '131', '239', '227', '10', '220', '272', '158', '384']
 
-folders = ['test']
+#folders = ['test']
 
 print("-------------------- PARAMETERS ---------------------")
 print("Vocabulary size: %i" % (vocab_size + len(init_tokens)))
@@ -115,6 +114,8 @@ preprocessing3(buckets, spell_checked_data_x_path, spell_checked_data_y_path, bu
                unk_vectors_path, unk_to_vocab_pickle_path, unk_to_vocab_txt_path, save_frequency_unk_words, final_data_x_path,
                final_data_y_path, init_tokens)
 
+
+# Step 4: Creating final files. X and Y are separated with comma (,) because our model handles the data that way.
 if force_create_new_files or not path_exists(unshuffled_training_data):
     print('Creating final merged files')
     create_final_merged_files(final_data_x_path, final_data_y_path, vocabulary_txt_path, unshuffled_training_data,
