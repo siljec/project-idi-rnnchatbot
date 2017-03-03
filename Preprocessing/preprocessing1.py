@@ -50,9 +50,18 @@ def preprocess_training_file(path, x_train_path, y_train_path):
         y_train.append(sentence_holder + eot_token + "\n")
 
     with open(x_train_path, 'a') as xTrainObject, open(y_train_path, 'a') as yTrainObject:
-        for i in range(len(y_train)):
-            xTrainObject.write(x_train[i].strip() + "\n")
-            yTrainObject.write(y_train[i].strip() + "\n")
+        y_len = len(y_train)
+        if (y_len == len(x_train)):
+            for i in range(y_len):
+                xTrainObject.write(x_train[i].strip() + "\n")
+                yTrainObject.write(y_train[i].strip() + "\n")
+        else:
+            print("-----")
+            print("len x:")
+            print(len(x_train))
+            print("len y:")
+            print(y_len)
+            print("-----")
 
 
 def read_every_data_file_and_create_initial_files(folders, initial_x_file_path, initial_y_file_path):
