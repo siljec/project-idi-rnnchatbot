@@ -42,19 +42,21 @@ sys.path.insert(0, '../Preprocessing') # To access methods from another file fro
 from create_vocabulary import read_vocabulary_from_file
 from tokenize import sentence_to_token_ids
 from helpers import replace_misspelled_words_in_sentence, check_for_needed_files_and_create
+from preprocess_helpers import distance
 
 import numpy as np
 import tensorflow as tf
+
 from six.moves import xrange  # pylint: disable=redefined-builtin
 
 import gridLSTM_model
-
+import fasttext
 
 tf.app.flags.DEFINE_float("learning_rate", 0.5, "Learning rate.")
 tf.app.flags.DEFINE_float("learning_rate_decay_factor", 0.99, "Learning rate decays by this much.")
 tf.app.flags.DEFINE_float("max_gradient_norm", 5.0, "Clip gradients to this norm.")
-tf.app.flags.DEFINE_integer("batch_size", 24, "Batch size to use during training.")
-tf.app.flags.DEFINE_integer("size", 512, "Size of each model layer.")
+tf.app.flags.DEFINE_integer("batch_size", 8, "Batch size to use during training.")
+tf.app.flags.DEFINE_integer("size", 64, "Size of each model layer.")
 tf.app.flags.DEFINE_integer("num_layers", 2, "Number of layers in the model.")
 tf.app.flags.DEFINE_integer("vocab_size", 30000, "English vocabulary size.")
 tf.app.flags.DEFINE_integer("print_frequency", 100, "How many training steps to do per print.")
@@ -83,6 +85,8 @@ dev_file = 'validation_data.txt'
 test_path = '../Preprocessing/datafiles/test_data.txt'
 test_file = 'test_data.txt'
 misspellings_path = '../Preprocessing/datafiles/misspellings.txt'
+fast_text_model_path = './../Preprocessing/datafiles/model.bin'
+
 
 _PAD = b"_PAD"
 _GO = b"_GO"
@@ -154,7 +158,9 @@ def create_model(session, forward_only):
         model.saver.restore(session, ckpt.model_checkpoint_path)
     else:
         print("Created model with fresh parameters.")
+        # tf.initialize_all_variables() will soon be deprecated
         session.run(tf.initialize_all_variables())
+        # session.run(tf.global_variables_initializer())
     return model
 
 
@@ -166,7 +172,7 @@ def get_session_configs():
 
 def train():
     """Train a en->fr translation model using WMT data."""
-
+    boot_time = time.time()
     print("Checking for needed files")
     check_for_needed_files_and_create(FLAGS.vocab_size)
 
@@ -208,6 +214,11 @@ def train():
         threads = tf.train.start_queue_runners(coord=coord)
 
         train_time = time.time()
+        boot_time = time.time()-boot_time
+
+        minutes = int(boot_time / 60)
+        seconds = boot_time % 60
+        print("Time ", minutes, " minutes ", seconds, " seconds to boot")
 
         print("Starting training loop")
         try:
@@ -295,11 +306,45 @@ def train():
         coord.join(threads)
 
 
-def preprocess_input(sentence):
+def preprocess_input(sentence, fast_text_model, vocab):
+    emoji_token = " _EMJ "
+    dir_token = "_DIR"
+    url_token = " _URL "
+
     sentence = sentence.strip().lower()
     sentence = re.sub(' +', ' ', sentence)  # Will remove multiple spaces
     sentence = re.sub('(?<=[a-z])([!?,.])', r' \1', sentence)  # Add space before special characters [!?,.]
+    sentence = re.sub(r'(https?://[^\s]+)', url_token, sentence)  # Exchange urls with URL token
+    sentence = re.sub(r'((?:^|\s)(?::|;|=)(?:-)?(?:\)|\(|D|P|\|)(?=$|\s))', emoji_token,
+                  sentence)  # Exchange smiles with EMJ token NB: Will neither take :) from /:) nor from :)D
+    sentence = re.sub('(?<=[a-z])([!?,.])', r' \1', sentence)  # Add space before special characters [!?,.]
+    sentence = re.sub('"', '', sentence)  # Remove "
+    sentence = re.sub('((\/\w+)|(\.\/\w+)|(\w+(?=(\/))))()((\/)|(\w+)|(\.\w+)|(\w+|\-|\~))+', dir_token,
+                  sentence)  # Replace directory-paths
+    sentence = re.sub("(?!(')([a-z]{1})(\s))(')(?=\w|\s)", "", sentence)  # Remove ', unless it is like "banana's"
     sentence = replace_misspelled_words_in_sentence(sentence, misspellings_path)
+
+    # Must replace OOV with most similar vocab-words:
+    unk_words = {}
+    for word in sentence.split(' '):
+        if word not in vocab:
+            unk_words[word] = fast_text_model[word]
+
+    # Find most similar words
+    similar_words = {}
+    for unk_word, unk_vector in unk_words.iteritems():
+        for key, value in vocab:
+            cur_dist = distance(unk_vector, value[0], dis[1])
+            # Save the word that is most similar
+            if cur_dist < min_dist:
+                min_dist = cur_dist
+                word = key
+        similar_words[unk_word] = word
+
+    # Replace words
+    for word, similar_word in unk_words.iteritems():
+        sentence.replace(word, similar_word)
+
     return sentence
 
 
@@ -319,17 +364,27 @@ def decode():
         model = create_model(sess, True)
         model.batch_size = 1  # We decode one sentence at a time.
 
+        # Load trained FastText model
+        fast_text_model = model = fasttext.load_model(fast_text_model_path, encoding='utf-8')
+
         # Load vocabularies.
         vocab, rev_vocab = read_vocabulary_from_file(vocab_path)
+
+        # Get vocab_word vectors TODO: Should be a file to load
+        vocab_vectors = {}
+        for word, item in vocab.iteritems():
+            vector = fast_text_model[word]
+            vocab_vectors[word] = vector, np.linalg.norm(vector)
 
         # Decode from standard input.
         sys.stdout.write("Human: ")
         sys.stdout.flush()
         sentence = sys.stdin.readline()
-        sentence = preprocess_input(sentence)
+        sentence = preprocess_input(sentence, fast_text_model, vocab_vectors)
+        context = ""
         while sentence:
             # Get token-ids for the input sentence.
-            token_ids = sentence_to_token_ids(tf.compat.as_bytes(sentence), vocab)
+            token_ids = sentence_to_token_ids(tf.compat.as_bytes(context + sentence), vocab)
 
             # Which bucket does it belong to?
             bucket_id = min([b for b in xrange(len(_buckets))
@@ -355,6 +410,8 @@ def decode():
             output = swap_eos(output)
             print("Ola: " + " ".join(output))
             print("Human: ", end="")
+
+            context = sentence # or context = output
             sys.stdout.flush()
             sentence = sys.stdin.readline()
             sentence = preprocess_input(sentence)
@@ -366,6 +423,7 @@ def self_test():
         print("Self-test for neural translation model.")
         # Create model with vocabularies of 10, 2 small buckets, 2 layers of 32.
         model = gridLSTM_model.GridLSTM_model(10, 10, [(3, 3), (6, 6)], 32, 2, 5.0, 32, 0.3, 0.99, num_samples=8)
+        # sess.run(tf.global_variables_initializer())
         sess.run(tf.initialize_all_variables())
         # Fake data set for both the (3, 3) and (6, 6) bucket.
         data_set = ([([1, 1], [2, 2]), ([3, 3], [4]), ([5], [6])],
