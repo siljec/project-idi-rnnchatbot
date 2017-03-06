@@ -264,7 +264,7 @@ def get_unique_words(x_path, y_path):
         for line in file_object:
             words = line.split()
             for word in words:
-                words.add(word)
+                words_set.add(word)
     print("Unique words in " + x_path + " and " + y_path + " is %i" %(len(words_set)))
 
 
