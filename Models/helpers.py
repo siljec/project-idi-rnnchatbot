@@ -6,6 +6,7 @@ from preprocess import start_preprocessing
 from variables import paths_from_model, tokens
 from preprocessing3 import distance
 
+
 def read_words_from_misspelling_file(path):
     dictionary = {}
     with open(path) as fileobject:
@@ -23,6 +24,7 @@ def replace_misspelled_word_helper(candidate, dictionary):
         # print "replacing ", candidate, " with ", dictionary[candidate]
         return dictionary[candidate]
     return candidate
+
 
 def replace_misspelled_words_in_sentence(sentence, misspelllings_path):
     dictionary = read_words_from_misspelling_file(misspelllings_path) #get the misspelled words as a dictionary
@@ -47,13 +49,14 @@ def check_for_needed_files_and_create(vocab_size):
         print('\t ./generate.sh')
 
     if not os.path.isfile(paths_from_model['train_path']):
-        start_preprocessing(vocab_size)
+        start_preprocessing()
     if not os.path.isfile(paths_from_model['dev_path']):
-        start_preprocessing(vocab_size)
+        start_preprocessing()
     if not os.path.isfile(paths_from_model['test_path']):
-        start_preprocessing(vocab_size)
+        start_preprocessing()
     if not os.path.isfile(paths_from_model['vocab_path']):
-        start_preprocessing(vocab_size)
+        start_preprocessing()
+
 
 def preprocess_input(sentence, fast_text_model, vocab):
     emoji_token = " " + tokens['emoji'] + " "
