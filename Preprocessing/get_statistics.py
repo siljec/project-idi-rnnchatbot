@@ -6,6 +6,16 @@ import numpy as np
 from preprocessing3 import distance
 from create_vocabulary import find_dictionary
 
+
+# Create histogram
+import numpy as np
+import matplotlib.mlab as mlab
+import matplotlib.pyplot as plt
+import plotly.plotly as py  # tools to communicate with Plotly's server
+import plotly
+plotly.tools.set_credentials_file(username='siljech', api_key='eUYFnzxp2LySOfqBJLmy')
+from plotly.graph_objs import *
+
 def get_stats(path, num_longest=20, more_than_words=50, less_than_words=5):
 
     print("\n############## Stats for " + path + " ##############")
@@ -291,6 +301,24 @@ def get_all_words(x_path, y_path):
                 all_words += 1
     print(str(all_words) + " words in " + x_path + " and " + y_path)
 
+
+def get_word_histogram(x_path, y_path):
+    vocab = find_dictionary(x_path, y_path)
+    vocab = vocab[5000:50000]
+    occurences = []
+    for _, occurence in vocab:
+        occurences.append(occurence)
+    trace1 = {
+
+        "y": occurences,
+        "marker": {"color": "rgb(127,205,187)"},
+        "orientation": "v",
+        "type": "bar"
+    }
+    data = Data([trace1])
+    fig = Figure(data=data)
+    plot_url = py.plot(fig)
+
 def get_number_of_urls(path):
     urls = []
     with open(path) as file_object:
@@ -358,5 +386,6 @@ def find_percentage_of_vocab_size(x_path, y_path, percentage):
 # get_emojis('./spell_checked_data_x.txt')
 #find_percentage_of_vocab_size("./datafiles/spell_checked_data_x.txt", "./datafiles/spell_checked_data_y.txt", 0.95)
 #get_unique_words('./datafiles/bucket_data_x.txt','./datafiles/bucket_data_y.txt')
-get_number_of_turns('./datafiles/raw_data_x.txt', './datafiles/raw_data_y.txt')
-get_all_words('./datafiles/raw_data_x.txt', './datafiles/raw_data_y.txt')
+#get_number_of_turns('./datafiles/raw_data_x.txt', './datafiles/raw_data_y.txt')
+#get_all_words('./datafiles/raw_data_x.txt', './datafiles/raw_data_y.txt')
+get_word_histogram('./datafiles/raw_data_x.txt', './datafiles/raw_data_y.txt')
