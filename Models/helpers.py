@@ -43,11 +43,11 @@ def check_for_needed_files_and_create(vocab_size):
         print('4')
         print('\t ./generate.sh')
 
-    if not os.path.isfile("./../Preprocessing/shuffled_test_merged.txt"):
+    if not os.path.isfile("./../Preprocessing/datafiles/training_data.txt"):
         generate_all_files(vocab_size)
-    if not os.path.isfile("./../Preprocessing/shuffled_val_merged.txt"):
+    if not os.path.isfile("./../Preprocessing/datafiles/validation_data.txt"):
         generate_all_files(vocab_size)
-    if not os.path.isfile("./../Preprocessing/shuffled_train_merged.txt"):
+    if not os.path.isfile("./../Preprocessing/datafiles/test_data.txt"):
         generate_all_files(vocab_size)
-    if not os.path.isfile("./../Preprocessing/vocabulary.txt"):
+    if not os.path.isfile("./../Preprocessing/datafiles/vocabulary.txt"):
         generate_all_files(vocab_size)

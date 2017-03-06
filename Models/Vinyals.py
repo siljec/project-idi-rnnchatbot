@@ -55,7 +55,7 @@ tf.app.flags.DEFINE_float("max_gradient_norm", 5.0, "Clip gradients to this norm
 tf.app.flags.DEFINE_integer("batch_size", 64, "Batch size to use during training.")
 tf.app.flags.DEFINE_integer("size", 512, "Size of each model layer.")
 tf.app.flags.DEFINE_integer("num_layers", 2, "Number of layers in the model.")
-tf.app.flags.DEFINE_integer("vocab_size", 100000, "English vocabulary size.")
+tf.app.flags.DEFINE_integer("vocab_size", 30000, "English vocabulary size.")
 tf.app.flags.DEFINE_integer("print_frequency", 100, "How many training steps to do per print.")
 tf.app.flags.DEFINE_integer("max_train_steps", 75010, "How many training steps to do.")
 tf.app.flags.DEFINE_string("data_dir", "./Vinyals_data", "Data directory")
@@ -71,14 +71,18 @@ FLAGS = tf.app.flags.FLAGS
 
 # We use a number of buckets and pad to the closest one for efficiency.
 # See seq2seq_model.Seq2SeqModel for details of how they work.
-_buckets = [(45, 40), (65, 60), (90, 85), (140, 135)]
+_buckets = [(10, 10), (20, 20), (35, 35), (50, 50)]
 
 # Paths
-vocab_path = '../Preprocessing/vocabulary.txt'
-# Not in use, should preferably convert to use these
-train_path = '../Preprocessing/train_merged.txt'
-dev_path = '../Preprocessing/val_merged.txt'
-test_path = '../Preprocessing/test_merged.txt'
+preprocess_root_files = '../Preprocessing/datafiles'
+vocab_path = '../Preprocessing/datafiles/vocabulary.txt'
+train_path = '../Preprocessing/datafiles/training_data.txt'
+train_file = 'training_data.txt'
+dev_path = '../Preprocessing/datafiles/validation_data.txt'
+dev_file = 'validation_data.txt'
+test_path = '../Preprocessing/datafiles/test_data.txt'
+test_file = 'test_data.txt'
+misspellings_path = '../Preprocessing/datafiles/misspellings.txt'
 
 _PAD = b"_PAD"
 _GO = b"_GO"
@@ -93,7 +97,7 @@ EOT_ID = 3
 UNK_ID = 4
 
 
-def input_pipeline(root='../Preprocessing/', start_name='train_merged.txt'):
+def input_pipeline(root=preprocess_root_files, start_name=train_file):
 
     # Finds all filenames that match the root and start_name
     filenames = [root + filename for filename in os.listdir(root) if filename.startswith(start_name)]
@@ -168,8 +172,8 @@ def train():
     check_for_needed_files_and_create(FLAGS.vocab_size)
 
     print("Creating file queue")
-    filename_queue = input_pipeline()
-    filename_queue_dev = input_pipeline(start_name='val_merged.txt')
+    filename_queue = input_pipeline(start_name=train_file)
+    filename_queue_dev = input_pipeline(start_name=dev_file)
 
     # Avoid allocating all of the GPU memory
     config = get_session_configs()
@@ -298,7 +302,7 @@ def preprocess_input(sentence):
     sentence = sentence.strip().lower()
     sentence = re.sub(' +', ' ', sentence)  # Will remove multiple spaces
     sentence = re.sub('(?<=[a-z])([!?,.])', r' \1', sentence)  # Add space before special characters [!?,.]
-    sentence = replace_misspelled_words_in_sentence(sentence, '../Preprocessing/misspellings.txt')
+    sentence = replace_misspelled_words_in_sentence(sentence, misspellings_path)
     return sentence
 
 
