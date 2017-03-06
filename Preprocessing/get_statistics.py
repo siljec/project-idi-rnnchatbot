@@ -3,7 +3,7 @@ import re
 import time
 import random
 import numpy as np
-from preprocess_helpers import distance
+from preprocessing3 import distance
 from create_vocabulary import find_dictionary
 
 def get_stats(path, num_longest=20, more_than_words=50, less_than_words=5):
@@ -252,6 +252,21 @@ def get_unknown_words_stats(vocab_size=100000, occurrence=10000):
     print("UNK-token is represented as " + str("{0:.2f}".format(words_not_represented/(words_represented + words_not_represented))) +
           "% of all words")
 
+def get_unique_words(x_path, y_path):
+    words_set = set()
+
+    with open(x_path) as file_object:
+        for line in file_object:
+            words = line.split()
+            for word in words:
+                words_set.add(word)
+    with open(y_path) as file_object:
+        for line in file_object:
+            words = line.split()
+            for word in words:
+                words.add(word)
+    print("Unique words in " + x_path + " and " + y_path + " is %i" %(len(words_set)))
+
 
 def get_number_of_urls(path):
     urls = []
@@ -318,4 +333,5 @@ def find_percentage_of_vocab_size(x_path, y_path, percentage):
 # get_number_of_urls('./spell_checked_data_x.txt')
 # get_number_of_urls('./spell_checked_data_y.txt')
 # get_emojis('./spell_checked_data_x.txt')
-find_percentage_of_vocab_size("./datafiles/spell_checked_data_x.txt", "./datafiles/spell_checked_data_y.txt", 0.95)
+#find_percentage_of_vocab_size("./datafiles/spell_checked_data_x.txt", "./datafiles/spell_checked_data_y.txt", 0.95)
+get_unique_words('./datafiles/bucket_data_x.txt','./datafiles/bucket_data_y.txt')
