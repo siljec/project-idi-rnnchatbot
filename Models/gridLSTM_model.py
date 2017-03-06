@@ -26,12 +26,15 @@ import sys
 from six.moves import xrange  # pylint: disable=redefined-builtin
 import tensorflow as tf
 
-from tensorflow.models.rnn.translate import data_utils
-
-
 sys.path.insert(0, './Cells')
 from grid_rnn_cell import Grid2LSTMCell
 from bidirectional_grid import Bidirectional
+
+sys.path.insert(0, '../')
+from variables import tokens
+
+_PAD, PAD_ID = tokens['padding']
+_GO, GO_ID = tokens['go']
 
 
 class GridLSTM_model(object):
@@ -285,13 +288,13 @@ class GridLSTM_model(object):
       encoder_input, decoder_input = pair
 
       # Encoder inputs are padded and then reversed.
-      encoder_pad = [data_utils.PAD_ID] * (encoder_size - len(encoder_input))
+      encoder_pad = [PAD_ID] * (encoder_size - len(encoder_input))
       encoder_inputs.append(list(reversed(encoder_input + encoder_pad)))
 
       # Decoder inputs get an extra "GO" symbol, and are padded then.
       decoder_pad_size = decoder_size - len(decoder_input) - 1
-      decoder_inputs.append([data_utils.GO_ID] + decoder_input +
-                            [data_utils.PAD_ID] * decoder_pad_size)
+      decoder_inputs.append([GO_ID] + decoder_input +
+                            [PAD_ID] * decoder_pad_size)
 
     # Now we create batch-major vectors from the data selected above.
     batch_encoder_inputs, batch_decoder_inputs, batch_weights = [], [], []
@@ -315,7 +318,7 @@ class GridLSTM_model(object):
         # The corresponding target is decoder_input shifted by 1 forward.
         if length_idx < decoder_size - 1:
           target = decoder_inputs[batch_idx][length_idx + 1]
-        if length_idx == decoder_size - 1 or target == data_utils.PAD_ID:
+        if length_idx == decoder_size - 1 or target == PAD_ID:
           batch_weight[batch_idx] = 0.0
       batch_weights.append(batch_weight)
     return batch_encoder_inputs, batch_decoder_inputs, batch_weights
