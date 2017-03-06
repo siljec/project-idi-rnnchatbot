@@ -267,6 +267,29 @@ def get_unique_words(x_path, y_path):
                 words_set.add(word)
     print("Unique words in " + x_path + " and " + y_path + " is %i" %(len(words_set)))
 
+def get_number_of_turns(x_path, y_path):
+    turns = 0
+    with open(x_path) as file_object:
+        for _ in file_object:
+            turns += 1
+    with open(y_path) as file_object:
+        for _ in file_object:
+            turns += 1
+    print(str(turns) + " number of turns in " + x_path + " and " + y_path)
+
+def get_all_words(x_path, y_path):
+    all_words = 0
+    with open(x_path) as file_object:
+        for line in file_object:
+            words = line.split()
+            for word in words:
+                all_words += 1
+    with open(y_path) as file_object:
+        for line in file_object:
+            words = line.split()
+            for word in words:
+                all_words += 1
+    print(str(all_words) + " words in " + x_path + " and " + y_path)
 
 def get_number_of_urls(path):
     urls = []
@@ -334,4 +357,6 @@ def find_percentage_of_vocab_size(x_path, y_path, percentage):
 # get_number_of_urls('./spell_checked_data_y.txt')
 # get_emojis('./spell_checked_data_x.txt')
 #find_percentage_of_vocab_size("./datafiles/spell_checked_data_x.txt", "./datafiles/spell_checked_data_y.txt", 0.95)
-get_unique_words('./datafiles/bucket_data_x.txt','./datafiles/bucket_data_y.txt')
+#get_unique_words('./datafiles/bucket_data_x.txt','./datafiles/bucket_data_y.txt')
+get_number_of_turns('./datafiles/raw_data_x.txt', './datafiles/raw_data_y.txt')
+get_all_words('./datafiles/raw_data_x.txt', './datafiles/raw_data_y.txt')
