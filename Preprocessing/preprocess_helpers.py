@@ -6,7 +6,6 @@ import operator
 import pickle
 import time
 
-
 # Code beautify helpers
 
 def path_exists(path):
@@ -266,3 +265,20 @@ def create_vocabulary_and_return_unknown_words(sorted_dict, vocab_path, vocab_si
     vocabulary.close()
 
     return unknown_dict
+
+def from_index_to_words(vocab_path, source_file_path, new_file_path):
+    vocab, rev_vocab = read_vocabulary_from_file(vocab_path)
+    with open(source_file_path) as source_object, open(new_file_path, 'w') as new_file:
+        for line in source_object:
+            x, y = line.split(', ')
+            sentence = ""
+            words = [rev_vocab[int(word.strip())] for word in x.split(' ')]
+            for word in words:
+                sentence += word + " "
+            words = [rev_vocab[int(word.strip())] for word in y.split(' ')]
+            sentence += " ##### "
+            for word in words:
+                sentence += word + " "
+            sentence += "\n"
+            new_file.write(sentence)
+    print("File converted from integers to words in vocabulary.")

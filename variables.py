@@ -60,7 +60,8 @@ paths_from_preprocessing = {
     'vocab_vectors_path': "./datafiles/vocab_vectors_path.pickle",
     'unk_vectors_path': "./datafiles/unk_vectors_path.pickle",
     'unk_to_vocab_pickle_path': "./datafiles/unk_to_vocab.pickle",
-    'unk_to_vocab_txt_path': "./datafiles/unk_to_vocab.txt"
+    'unk_to_vocab_txt_path': "./datafiles/unk_to_vocab.txt",
+    'test_file_words_path': "./datafiles/test_file_words_path.txt"
 }
 
 paths_from_preprocessing_context = {
@@ -97,7 +98,10 @@ paths_from_preprocessing_context = {
     'vocab_vectors_path': "./context/vocab_vectors_path.pickle",
     'unk_vectors_path': "./context/unk_vectors_path.pickle",
     'unk_to_vocab_pickle_path': "./context/unk_to_vocab.pickle",
-    'unk_to_vocab_txt_path': "./context/unk_to_vocab.txt"
+    'unk_to_vocab_txt_path': "./context/unk_to_vocab.txt",
+
+    'test_file_words_path': "./context/test_file_words_path.txt"
+
 }
 
 tokens = {
