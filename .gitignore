@@ -87,3 +87,10 @@ ENV/
 
 # Rope project settings
 .ropeproject
+
+#Trainig_files
+model.bin
+model.vec
+*.pickle
+*.txt
+!misspellings.txt

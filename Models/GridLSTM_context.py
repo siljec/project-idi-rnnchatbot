@@ -38,11 +38,12 @@ from math import exp
 from random import choice
 import time
 
+sys.path.insert(0, '../') # To access methods from another file from another folder
+from variables import paths_from_model as paths, tokens, _buckets, vocabulary_size, steps_per_checkpoint, print_frequency, max_training_steps
 sys.path.insert(0, '../Preprocessing') # To access methods from another file from another folder
 from create_vocabulary import read_vocabulary_from_file
 from tokenize import sentence_to_token_ids
-from helpers import replace_misspelled_words_in_sentence, check_for_needed_files_and_create
-from preprocess_helpers import distance
+from helpers import check_for_needed_files_and_create, preprocess_input
 
 import numpy as np
 import tensorflow as tf
@@ -58,50 +59,32 @@ tf.app.flags.DEFINE_float("max_gradient_norm", 5.0, "Clip gradients to this norm
 tf.app.flags.DEFINE_integer("batch_size", 8, "Batch size to use during training.")
 tf.app.flags.DEFINE_integer("size", 64, "Size of each model layer.")
 tf.app.flags.DEFINE_integer("num_layers", 2, "Number of layers in the model.")
-tf.app.flags.DEFINE_integer("vocab_size", 30000, "English vocabulary size.")
-tf.app.flags.DEFINE_integer("print_frequency", 100, "How many training steps to do per print.")
-tf.app.flags.DEFINE_string("data_dir", "./Ola_data", "Data directory")
-tf.app.flags.DEFINE_string("train_dir", "./Ola_data", "Training directory.")
-tf.app.flags.DEFINE_string("log_dir", "./Ola_data/log_dir", "Logging directory.")
+tf.app.flags.DEFINE_integer("vocab_size", vocabulary_size, "English vocabulary size.")
+tf.app.flags.DEFINE_integer("print_frequency", print_frequency, "How many training steps to do per print.")
+tf.app.flags.DEFINE_integer("max_train_steps", max_training_steps, "How many training steps to do.")
+tf.app.flags.DEFINE_string("data_dir", "./GridContext_data", "Data directory")
+tf.app.flags.DEFINE_string("train_dir", "./GridContext_data", "Training directory.")
+tf.app.flags.DEFINE_string("log_dir", "./GridContext_data/log_dir", "Logging directory.")
 tf.app.flags.DEFINE_integer("max_train_data_size", 0, "Limit on the size of training data (0: no limit).")
-tf.app.flags.DEFINE_integer("steps_per_checkpoint", 100, "How many training steps to do per checkpoint.")
+tf.app.flags.DEFINE_integer("steps_per_checkpoint", steps_per_checkpoint, "How many training steps to do per checkpoint.")
 tf.app.flags.DEFINE_boolean("decode", False, "Set to True for interactive decoding.")
 tf.app.flags.DEFINE_boolean("self_test", False, "Run a self-test if this is set to True.")
 tf.app.flags.DEFINE_boolean("use_fp16", False, "Train using fp16 instead of fp32.")
 
 FLAGS = tf.app.flags.FLAGS
 
+_PAD, PAD_ID = tokens['padding']
+_GO, GO_ID = tokens['go']
+_EOS, EOS_ID = tokens['eos']
+_EOT, EOT_ID = tokens['eot']
+_UNK, UNK_ID = tokens['unk']
+
+
 # We use a number of buckets and pad to the closest one for efficiency.
 # See seq2seq_model.Seq2SeqModel for details of how they work.
-_buckets = [(10, 10), (20, 20), (35, 35), (50, 50)]
-
-# Paths
-preprocess_root_files = '../Preprocessing/datafiles'
-vocab_path = '../Preprocessing/datafiles/vocabulary.txt'
-train_path = '../Preprocessing/datafiles/training_data.txt'
-train_file = 'training_data.txt'
-dev_path = '../Preprocessing/datafiles/validation_data.txt'
-dev_file = 'validation_data.txt'
-test_path = '../Preprocessing/datafiles/test_data.txt'
-test_file = 'test_data.txt'
-misspellings_path = '../Preprocessing/datafiles/misspellings.txt'
-fast_text_model_path = './../Preprocessing/datafiles/model.bin'
 
 
-_PAD = b"_PAD"
-_GO = b"_GO"
-_EOS = b"_EOS"
-_EOT = b"_EOT"
-_UNK = b"_UNK"
-
-PAD_ID = 0
-GO_ID = 1
-EOS_ID = 2
-EOT_ID = 3
-UNK_ID = 4
-
-
-def input_pipeline(root=preprocess_root_files, start_name=train_file):
+def input_pipeline(root=paths['preprocess_root_files_context'], start_name=paths['train_file_context']):
     # Finds all filenames that match the root and start_name
     filenames = [root + filename for filename in os.listdir(root) if filename.startswith(start_name)]
 
@@ -177,8 +160,8 @@ def train():
     check_for_needed_files_and_create(FLAGS.vocab_size)
 
     print("Creating file queue")
-    filename_queue = input_pipeline(start_name=train_file)
-    filename_queue_dev = input_pipeline(start_name=dev_file)
+    filename_queue = input_pipeline(start_name=paths['train_file_context'])
+    filename_queue_dev = input_pipeline(start_name=paths['dev_file_context'])
 
     # Avoid allocating all of the GPU memory
     config = get_session_configs()
@@ -222,7 +205,7 @@ def train():
 
         print("Starting training loop")
         try:
-            while True:  # not coord.should_stop():
+            while current_step < FLAGS.max_train_steps:  # not coord.should_stop():
                 if current_step % FLAGS.print_frequency == 0:
                     print("Step number: " + str(current_step))
 
@@ -230,6 +213,7 @@ def train():
                 train_set, bucket_id = get_batch(txt_row_train_data, train_set)
                 start_time = time.time()
                 encoder_inputs, decoder_inputs, target_weights = model.get_batch(train_set, bucket_id)
+
 
                 # Clean out trained bucket
                 train_set[bucket_id] = []
@@ -306,47 +290,6 @@ def train():
         coord.join(threads)
 
 
-def preprocess_input(sentence, fast_text_model, vocab):
-    emoji_token = " _EMJ "
-    dir_token = "_DIR"
-    url_token = " _URL "
-
-    sentence = sentence.strip().lower()
-    sentence = re.sub(' +', ' ', sentence)  # Will remove multiple spaces
-    sentence = re.sub('(?<=[a-z])([!?,.])', r' \1', sentence)  # Add space before special characters [!?,.]
-    sentence = re.sub(r'(https?://[^\s]+)', url_token, sentence)  # Exchange urls with URL token
-    sentence = re.sub(r'((?:^|\s)(?::|;|=)(?:-)?(?:\)|\(|D|P|\|)(?=$|\s))', emoji_token,
-                  sentence)  # Exchange smiles with EMJ token NB: Will neither take :) from /:) nor from :)D
-    sentence = re.sub('(?<=[a-z])([!?,.])', r' \1', sentence)  # Add space before special characters [!?,.]
-    sentence = re.sub('"', '', sentence)  # Remove "
-    sentence = re.sub('((\/\w+)|(\.\/\w+)|(\w+(?=(\/))))()((\/)|(\w+)|(\.\w+)|(\w+|\-|\~))+', dir_token,
-                  sentence)  # Replace directory-paths
-    sentence = re.sub("(?!(')([a-z]{1})(\s))(')(?=\w|\s)", "", sentence)  # Remove ', unless it is like "banana's"
-    sentence = replace_misspelled_words_in_sentence(sentence, misspellings_path)
-
-    # Must replace OOV with most similar vocab-words:
-    unk_words = {}
-    for word in sentence.split(' '):
-        if word not in vocab:
-            unk_words[word] = fast_text_model[word]
-
-    # Find most similar words
-    similar_words = {}
-    for unk_word, unk_vector in unk_words.iteritems():
-        for key, value in vocab:
-            cur_dist = distance(unk_vector, value[0], dis[1])
-            # Save the word that is most similar
-            if cur_dist < min_dist:
-                min_dist = cur_dist
-                word = key
-        similar_words[unk_word] = word
-
-    # Replace words
-    for word, similar_word in unk_words.iteritems():
-        sentence.replace(word, similar_word)
-
-    return sentence
-
 
 def swap_eos(sentence):
     sentence_holder = []
@@ -365,10 +308,10 @@ def decode():
         model.batch_size = 1  # We decode one sentence at a time.
 
         # Load trained FastText model
-        fast_text_model = model = fasttext.load_model(fast_text_model_path, encoding='utf-8')
+        fast_text_model = model = fasttext.load_model(paths['fast_text_model_path_context'], encoding='utf-8')
 
         # Load vocabularies.
-        vocab, rev_vocab = read_vocabulary_from_file(vocab_path)
+        vocab, rev_vocab = read_vocabulary_from_file(paths['vocab_path_context'])
 
         # Get vocab_word vectors TODO: Should be a file to load
         vocab_vectors = {}
