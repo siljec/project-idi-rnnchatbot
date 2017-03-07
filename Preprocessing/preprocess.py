@@ -1,4 +1,5 @@
 import time
+import sys
 from preprocessing1 import preprocess1
 from preprocessing2 import preprocessing2
 from preprocessing3 import preprocessing3
@@ -6,58 +7,23 @@ from preprocessing1_context import preprocess1_context
 
 from preprocess_helpers import path_exists, shuffle_file, create_final_merged_files
 
+sys.path.insert(0, '../')
+from variables import tokens_init_list, _buckets, paths_from_preprocessing as paths, vocabulary_size
+
 # All paths
 force_create_new_files = False
 force_train_fast_model_all_over = False
 context = False
 dir = "datafiles"
 if context:
-    dir = "context"
+    from variables import paths_from_preprocessing_context as paths
 
-tokens = ['_PAD', '_GO', '_EOS', '_EOT', '_UNK', '_URL', '_EMJ', '_DIR']
-init_tokens = ['_PAD', '_GO', '_EOS', '_EOT', '_UNK']
-buckets = [(50, 50)]
+buckets = [_buckets[-1]]  # Only need the biggest bucket
 
-vocab_size = 30000 - len(init_tokens)  # Minus number of init tokens
+vocab_size = vocabulary_size - len(tokens_init_list)  # Minus number of init tokens
 save_frequency_unk_words = 50000
 val_size_fraction = 0.1
 test_size_fraction = 0.1
-
-source_folder_root = "../../ubuntu-ranking-dataset-creator/src/dialogs/"
-raw_data_x_path = "./" + dir + "/raw_data_x.txt"
-raw_data_y_path = "./" + dir + "/raw_data_y.txt"
-
-regex_x_path = "./" + dir + "/regex_x.txt"
-regex_y_path = "./" + dir + "/regex_y.txt"
-
-spell_checked_data_x_path = "./" + dir + "/spell_checked_data_x.txt"
-spell_checked_data_y_path = "./" + dir + "/spell_checked_data_y.txt"
-misspellings_path = "./datafiles/misspellings.txt"
-
-fast_text_train_path = "./" + dir + "/fast_text_train.txt"
-
-bucket_data_x_path = "./" + dir + "/bucket_data_x.txt"
-bucket_data_y_path = "./" + dir + "/bucket_data_y.txt"
-
-final_data_x_path = "./" + dir + "/final_data_x.txt"
-final_data_y_path = "./" + dir + "/final_data_y.txt"
-
-unshuffled_training_data = "./" + dir + "/unshuffled_training_data.txt"
-unshuffled_validation_data = "./" + dir + "/unshuffled_validation_data.txt"
-unshuffled_test_data = "./" + dir + "/unshuffled_test_data.txt"
-
-training_data = "./" + dir + "/training_data.txt"
-validation_data = "./" + dir + "/validation_data.txt"
-test_data = "./" + dir + "/test_data.txt"
-
-vocabulary_txt_path = "./" + dir + "/vocabulary.txt"
-vocabulary_pickle_path = "./" + dir + "/vocabulary.pickle"
-
-vocab_vectors_path = "./" + dir + "/vocab_vectors_path.pickle"
-unk_vectors_path = "./" + dir + "/unk_vectors_path.pickle"
-unk_to_vocab_pickle_path = "./" + dir + "/unk_to_vocab.pickle"
-unk_to_vocab_txt_path = "./" + dir + "/unk_to_vocab.txt"
-
 
 # Folders to loop
 folders = ['30', '356', '195', '142', '555', '43', '50', '36', '46', '85', '41', '118', '166', '104', '471', '37',
@@ -96,35 +62,43 @@ def start_preprocessing():
     time.sleep(4)
 
     print("-------------------- PARAMETERS ---------------------")
-    print("Vocabulary size: %i" % (vocab_size + len(init_tokens)))
+    print("Vocabulary size: %i" % (vocab_size + len(tokens_init_list)))
     print("Read number of folders: %i" % len(folders))
     print("-----------------------------------------------------\n")
 
     # Step 1
     if context:
-        preprocess1_context(folders, force_create_new_files, raw_data_x_path, raw_data_y_path, regex_x_path, regex_y_path, spell_checked_data_x_path, spell_checked_data_y_path, misspellings_path)
+        preprocess1_context(folders, force_create_new_files, paths['raw_data_x_path'], paths['raw_data_y_path'],
+                            paths['regex_x_path'], paths['regex_y_path'], paths['spell_checked_data_x_path'],
+                            paths['spell_checked_data_y_path'], paths['misspellings_path'])
     else:
-        preprocess1(folders, force_create_new_files, raw_data_x_path, raw_data_y_path, regex_x_path, regex_y_path, spell_checked_data_x_path, spell_checked_data_y_path, misspellings_path)
+        preprocess1(folders, force_create_new_files, paths['raw_data_x_path'], paths['raw_data_y_path'],
+                    paths['regex_x_path'], paths['regex_y_path'], paths['spell_checked_data_x_path'],
+                    paths['spell_checked_data_y_path'], paths['misspellings_path'])
 
     # Step 2
-    fast_text_model = preprocessing2(spell_checked_data_x_path, spell_checked_data_y_path, fast_text_train_path, force_train_fast_model_all_over)
+    fast_text_model = preprocessing2(paths['spell_checked_data_x_path'], paths['spell_checked_data_y_path'],
+                                     paths['fast_text_train_path'], force_train_fast_model_all_over)
 
     # Step 3
-    preprocessing3(buckets, spell_checked_data_x_path, spell_checked_data_y_path, bucket_data_x_path, bucket_data_y_path,
-                   vocab_size, vocabulary_txt_path, vocabulary_pickle_path, fast_text_model, vocab_vectors_path,
-                   unk_vectors_path, unk_to_vocab_pickle_path, unk_to_vocab_txt_path, save_frequency_unk_words, final_data_x_path,
-                   final_data_y_path, init_tokens)
+    preprocessing3(buckets, paths['spell_checked_data_x_path'], paths['spell_checked_data_y_path'],
+                   paths['bucket_data_x_path'], paths['bucket_data_y_path'], vocab_size, paths['vocabulary_txt_path'],
+                   paths['vocabulary_pickle_path'], fast_text_model, paths['vocab_vectors_path'],
+                   paths['unk_vectors_path'], paths['unk_to_vocab_pickle_path'], paths['unk_to_vocab_txt_path'],
+                   save_frequency_unk_words, paths['final_data_x_path'], paths['final_data_y_path'], tokens_init_list)
 
 
     # Step 4
     # Creating final files. X and Y are separated with comma (,))
-    if force_create_new_files or not path_exists(unshuffled_training_data):
+    if force_create_new_files or not path_exists(paths['unshuffled_training_data']):
         print('Creating final merged files')
-        create_final_merged_files(final_data_x_path, final_data_y_path, vocabulary_txt_path, unshuffled_training_data,
-                                  unshuffled_validation_data, unshuffled_test_data, val_size_fraction, test_size_fraction)
+        create_final_merged_files(paths['final_data_x_path'], paths['final_data_y_pathpaths'],
+                                  paths['vocabulary_txt_path'], paths['unshuffled_training_datapaths'],
+                                  paths['unshuffled_validation_data'], paths['unshuffled_test_datapaths'],
+                                  val_size_fraction, test_size_fraction)
 
-    if force_create_new_files or not path_exists(training_data):
+    if force_create_new_files or not path_exists(paths['training_data']):
         print('Shuffle files')
-        shuffle_file(unshuffled_training_data, training_data)
-        shuffle_file(unshuffled_validation_data, validation_data)
-        shuffle_file(unshuffled_test_data, test_data)
+        shuffle_file(paths['unshuffled_training_data'], paths['training_data'])
+        shuffle_file(paths['unshuffled_validation_data'], paths['validation_data'])
+        shuffle_file(paths['unshuffled_test_data'], paths['test_data'])

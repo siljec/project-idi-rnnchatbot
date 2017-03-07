@@ -45,8 +45,9 @@ from helpers import replace_misspelled_words_in_sentence, check_for_needed_files
 import numpy as np
 from six.moves import xrange  # pylint: disable=redefined-builtin
 import tensorflow as tf
-
 import seq2seq_model
+sys.path.insert(0, '../')
+from variables import paths_from_model as paths, tokens, _buckets, vocabulary_size, max_training_steps
 
 
 tf.app.flags.DEFINE_float("learning_rate", 0.5, "Learning rate.")
@@ -55,9 +56,9 @@ tf.app.flags.DEFINE_float("max_gradient_norm", 5.0, "Clip gradients to this norm
 tf.app.flags.DEFINE_integer("batch_size", 64, "Batch size to use during training.")
 tf.app.flags.DEFINE_integer("size", 512, "Size of each model layer.")
 tf.app.flags.DEFINE_integer("num_layers", 2, "Number of layers in the model.")
-tf.app.flags.DEFINE_integer("vocab_size", 30000, "English vocabulary size.")
+tf.app.flags.DEFINE_integer("vocab_size", vocabulary_size, "English vocabulary size.")
 tf.app.flags.DEFINE_integer("print_frequency", 100, "How many training steps to do per print.")
-tf.app.flags.DEFINE_integer("max_train_steps", 75010, "How many training steps to do.")
+tf.app.flags.DEFINE_integer("max_train_steps", max_training_steps, "How many training steps to do.")
 tf.app.flags.DEFINE_string("data_dir", "./Vinyals_data", "Data directory")
 tf.app.flags.DEFINE_string("train_dir", "./Vinyals_data", "Training directory.")
 tf.app.flags.DEFINE_string("log_dir", "./Vinyals_data/log_dir", "Logging directory.")
@@ -71,33 +72,15 @@ FLAGS = tf.app.flags.FLAGS
 
 # We use a number of buckets and pad to the closest one for efficiency.
 # See seq2seq_model.Seq2SeqModel for details of how they work.
-_buckets = [(10, 10), (20, 20), (35, 35), (50, 50)]
 
-# Paths
-preprocess_root_files = '../Preprocessing/datafiles'
-vocab_path = '../Preprocessing/datafiles/vocabulary.txt'
-train_path = '../Preprocessing/datafiles/training_data.txt'
-train_file = 'training_data.txt'
-dev_path = '../Preprocessing/datafiles/validation_data.txt'
-dev_file = 'validation_data.txt'
-test_path = '../Preprocessing/datafiles/test_data.txt'
-test_file = 'test_data.txt'
-misspellings_path = '../Preprocessing/datafiles/misspellings.txt'
-
-_PAD = b"_PAD"
-_GO = b"_GO"
-_EOS = b"_EOS"
-_EOT = b"_EOT"
-_UNK = b"_UNK"
-
-PAD_ID = 0
-GO_ID = 1
-EOS_ID = 2
-EOT_ID = 3
-UNK_ID = 4
+_PAD, PAD_ID = tokens['padding']
+_GO, GO_ID = tokens['go']
+_EOS, EOS_ID = tokens['eos']
+_EOT, EOT_ID = tokens['eot']
+_UNK, UNK_ID = tokens['unk']
 
 
-def input_pipeline(root=preprocess_root_files, start_name=train_file):
+def input_pipeline(root=paths['preprocess_root_files'], start_name=paths['train_file']):
 
     # Finds all filenames that match the root and start_name
     filenames = [root + filename for filename in os.listdir(root) if filename.startswith(start_name)]
@@ -172,8 +155,8 @@ def train():
     check_for_needed_files_and_create(FLAGS.vocab_size)
 
     print("Creating file queue")
-    filename_queue = input_pipeline(start_name=train_file)
-    filename_queue_dev = input_pipeline(start_name=dev_file)
+    filename_queue = input_pipeline(start_name=paths['train_file'])
+    filename_queue_dev = input_pipeline(start_name=paths['dev_file'])
 
     # Avoid allocating all of the GPU memory
     config = get_session_configs()
@@ -302,7 +285,7 @@ def preprocess_input(sentence):
     sentence = sentence.strip().lower()
     sentence = re.sub(' +', ' ', sentence)  # Will remove multiple spaces
     sentence = re.sub('(?<=[a-z])([!?,.])', r' \1', sentence)  # Add space before special characters [!?,.]
-    sentence = replace_misspelled_words_in_sentence(sentence, misspellings_path)
+    sentence = replace_misspelled_words_in_sentence(sentence, paths['misspellings_path'])
     return sentence
 
 
@@ -326,7 +309,7 @@ def decode():
         model.batch_size = 1  # We decode one sentence at a time.
 
         # Load vocabularies.
-        vocab, rev_vocab = read_vocabulary_from_file(vocab_path)
+        vocab, rev_vocab = read_vocabulary_from_file(paths['vocab_path'])
 
         # Decode from standard input.
         sys.stdout.write("Human: ")
