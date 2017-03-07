@@ -5,7 +5,7 @@ from preprocessing2 import preprocessing2
 from preprocessing3 import preprocessing3
 from preprocessing1_context import preprocess1_context
 
-from preprocess_helpers import path_exists, shuffle_file, create_final_merged_files
+from preprocess_helpers import path_exists, shuffle_file, create_final_merged_files, from_index_to_words
 
 sys.path.insert(0, '../')
 from variables import tokens_init_list, _buckets, paths_from_preprocessing as paths, vocabulary_size
@@ -102,3 +102,5 @@ def start_preprocessing():
         shuffle_file(paths['unshuffled_training_data'], paths['training_data'])
         shuffle_file(paths['unshuffled_validation_data'], paths['validation_data'])
         shuffle_file(paths['unshuffled_test_data'], paths['test_data'])
+
+        from_index_to_words(paths['vocabulary_txt_path'], paths['test_data'], paths['test_file_words_path'])
