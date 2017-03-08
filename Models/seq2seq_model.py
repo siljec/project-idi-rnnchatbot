@@ -25,7 +25,7 @@ from six.moves import xrange  # pylint: disable=redefined-builtin
 import tensorflow as tf
 
 sys.path.insert(0, '../')
-from variables import tokens
+from variables import tokens, optimizer
 
 _PAD, PAD_ID = tokens['padding']
 _GO, GO_ID = tokens['go']
@@ -179,7 +179,10 @@ class Seq2SeqModel(object):
     if not forward_only:
       self.gradient_norms = []
       self.updates = []
-      opt = tf.train.GradientDescentOptimizer(self.learning_rate)
+      if optimizer == "GradientDescent":
+        opt = tf.train.GradientDescentOptimizer(self.learning_rate)
+      elif optimizer == "Adagrad":
+        opt = tf.train.AdagradOptimizer(self.learning_rate)
       for b in xrange(len(buckets)):
         gradients = tf.gradients(self.losses[b], params)
         clipped_gradients, norm = tf.clip_by_global_norm(gradients,

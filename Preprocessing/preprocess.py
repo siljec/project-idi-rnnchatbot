@@ -92,9 +92,9 @@ def start_preprocessing():
     # Creating final files. X and Y are separated with comma (,))
     if force_create_new_files or not path_exists(paths['unshuffled_training_data']):
         print('Creating final merged files')
-        create_final_merged_files(paths['final_data_x_path'], paths['final_data_y_pathpaths'],
-                                  paths['vocabulary_txt_path'], paths['unshuffled_training_datapaths'],
-                                  paths['unshuffled_validation_data'], paths['unshuffled_test_datapaths'],
+        create_final_merged_files(paths['final_data_x_path'], paths['final_data_y_path'],
+                                  paths['vocabulary_txt_path'], paths['unshuffled_training_data'],
+                                  paths['unshuffled_validation_data'], paths['unshuffled_test_data'],
                                   val_size_fraction, test_size_fraction)
 
     if force_create_new_files or not path_exists(paths['training_data']):

@@ -41,29 +41,29 @@ import time
 sys.path.insert(0, '../Preprocessing') # To access methods from another file from another folder
 from create_vocabulary import read_vocabulary_from_file
 from tokenize import sentence_to_token_ids
-from helpers import replace_misspelled_words_in_sentence, check_for_needed_files_and_create
+from helpers import check_for_needed_files_and_create, preprocess_input
 import numpy as np
 from six.moves import xrange  # pylint: disable=redefined-builtin
 import tensorflow as tf
 import seq2seq_model
 sys.path.insert(0, '../')
-from variables import paths_from_model as paths, tokens, _buckets, vocabulary_size, max_training_steps
+from variables import paths_from_model as paths, tokens, _buckets, vocabulary_size, max_training_steps, steps_per_checkpoint, print_frequency, size, batch_size, num_layers
 
 
 tf.app.flags.DEFINE_float("learning_rate", 0.5, "Learning rate.")
 tf.app.flags.DEFINE_float("learning_rate_decay_factor", 0.99, "Learning rate decays by this much.")
 tf.app.flags.DEFINE_float("max_gradient_norm", 5.0, "Clip gradients to this norm.")
-tf.app.flags.DEFINE_integer("batch_size", 64, "Batch size to use during training.")
-tf.app.flags.DEFINE_integer("size", 512, "Size of each model layer.")
-tf.app.flags.DEFINE_integer("num_layers", 2, "Number of layers in the model.")
+tf.app.flags.DEFINE_integer("batch_size", batch_size, "Batch size to use during training.")
+tf.app.flags.DEFINE_integer("size", size, "Size of each model layer.")
+tf.app.flags.DEFINE_integer("num_layers", num_layers, "Number of layers in the model.")
 tf.app.flags.DEFINE_integer("vocab_size", vocabulary_size, "English vocabulary size.")
-tf.app.flags.DEFINE_integer("print_frequency", 100, "How many training steps to do per print.")
+tf.app.flags.DEFINE_integer("print_frequency", print_frequency, "How many training steps to do per print.")
 tf.app.flags.DEFINE_integer("max_train_steps", max_training_steps, "How many training steps to do.")
 tf.app.flags.DEFINE_string("data_dir", "./Vinyals_data", "Data directory")
 tf.app.flags.DEFINE_string("train_dir", "./Vinyals_data", "Training directory.")
 tf.app.flags.DEFINE_string("log_dir", "./Vinyals_data/log_dir", "Logging directory.")
 tf.app.flags.DEFINE_integer("max_train_data_size", 0, "Limit on the size of training data (0: no limit).")
-tf.app.flags.DEFINE_integer("steps_per_checkpoint", 3000, "How many training steps to do per checkpoint.")
+tf.app.flags.DEFINE_integer("steps_per_checkpoint", steps_per_checkpoint, "How many training steps to do per checkpoint.")
 tf.app.flags.DEFINE_boolean("decode", False, "Set to True for interactive decoding.")
 tf.app.flags.DEFINE_boolean("self_test", False, "Run a self-test if this is set to True.")
 tf.app.flags.DEFINE_boolean("use_fp16", False, "Train using fp16 instead of fp32.")
@@ -279,14 +279,6 @@ def train():
         finally:
             coord.request_stop()
         coord.join(threads)
-
-
-def preprocess_input(sentence):
-    sentence = sentence.strip().lower()
-    sentence = re.sub(' +', ' ', sentence)  # Will remove multiple spaces
-    sentence = re.sub('(?<=[a-z])([!?,.])', r' \1', sentence)  # Add space before special characters [!?,.]
-    sentence = replace_misspelled_words_in_sentence(sentence, paths['misspellings_path'])
-    return sentence
 
 
 def swap_eos(sentence):
