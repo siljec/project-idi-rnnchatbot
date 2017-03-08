@@ -280,14 +280,6 @@ def train():
         coord.join(threads)
 
 
-def preprocess_input(sentence):
-    sentence = sentence.strip().lower()
-    sentence = re.sub(' +', ' ', sentence)  # Will remove multiple spaces
-    sentence = re.sub('(?<=[a-z])([!?,.])', r' \1', sentence)  # Add space before special characters [!?,.]
-    sentence = replace_misspelled_words_in_sentence(sentence, paths['misspellings'])
-    return sentence
-
-
 def swap_eos(sentence):
     sentence_holder = []
     for word in sentence:

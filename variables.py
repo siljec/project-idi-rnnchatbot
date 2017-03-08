@@ -126,5 +126,5 @@ size = 256
 num_layers = 2
 batch_size = 24
 
-optimizer = "Adagrad"
+# optimizer = "Adagrad"
 optimizer = "GradientDescent"
