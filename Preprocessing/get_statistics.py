@@ -58,6 +58,11 @@ def get_stats(path, num_longest=20, more_than_words=50, less_than_words=5):
     print("Turns with less than " + str(less_than_words) + " words: " + str(turns_with_less_than_x_words))
 
     type_length, type_num = max(sentence_lengths.iteritems(), key=operator.itemgetter(1))
+   # for key, item in sentence_lengths.iteritems():
+    #    print(item)
+     #   if key == 50:
+      #      break
+    #print(sentence_lengths)
 
     print("There are most turns with length: " + str(type_length) + ". Num turns: " + str(type_num))
 
@@ -76,8 +81,11 @@ def get_bucket_stats(path, buckets=[(40, 40), (60, 60), (85, 85), (110, 110), (1
             total_lines += 1
             # Find correct bucket
             x, y = line.split(',')
+            x = len(x.split())
+            y = len(y.split())
+
             for bucket_id, (source_size, target_size) in enumerate(buckets):
-                if len(x) < source_size and len(y) < target_size:
+                if x < source_size and y < target_size:
                     bucket_content[bucket_id] += 1
                     break
 
@@ -207,7 +215,7 @@ def get_emojis(path):
 
 
 def get_unknown_words_stats(vocab_size=100000, occurrence=10000):
-    sorted_dict = find_dictionary(x_train='./datafiles/spell_checked_data_x.txt', y_train='./datafiles/spell_checked_data_y.txt')
+    sorted_dict = find_dictionary(x_train='./datafiles/bucket_data_x.txt', y_train='./datafiles/bucket_data_y.txt')
     print("Known and unknown words found")
     known_words = sorted_dict[:vocab_size]
     unknown_words = sorted_dict[vocab_size:]
@@ -370,22 +378,26 @@ def find_percentage_of_vocab_size(x_path, y_path, percentage):
 
     print("Need vocabulary size %i to cover %f of the dataset (%i / %i)" %(vocab_size, percentage, vocab_occurrences, all_words))
 
-# get_stats('x_train.txt', more_than_words=40, less_than_words=6)
-# get_stats('y_train.txt', more_than_words=50, less_than_words=11)
-# get_bucket_stats('train_merged.txt', buckets=[(5, 10), (10, 15), (20, 25), (40, 50)])
+#get_stats('./datafiles/spell_checked_data_x.txt', more_than_words=30, less_than_words=10)
+#get_stats('./datafiles/spell_checked_data_y.txt', more_than_words=30, less_than_words=10)
+get_bucket_stats('./datafiles/training_data.txt', buckets=[(10, 10), (20, 20), (35, 35), (50, 50)])
 # get_dictionary_stats('./datafiles/no_unk_words_x.txt', './datafiles/no_unk_words_y.txt')
 # get_number_of_urls('./datafiles/spell_checked_data_x.txt')
 # get_number_of_urls('./datafiles/spell_checked_data_y.txt')
 # get_emojis('./datafiles/spell_checked_data_x.txt')
 # estimate_vector_similarity_time_dict()
 # estimate_vector_similarity_time_list()
-# get_unknown_words_stats(vocab_size=20000)
+#get_unknown_words_stats(vocab_size=30000)
 # get_dictionary_stats('./spell_checked_data_x.txt', './spell_checked_data_y.txt')
 # get_number_of_urls('./spell_checked_data_x.txt')
 # get_number_of_urls('./spell_checked_data_y.txt')
 # get_emojis('./spell_checked_data_x.txt')
-#find_percentage_of_vocab_size("./datafiles/spell_checked_data_x.txt", "./datafiles/spell_checked_data_y.txt", 0.95)
+#find_percentage_of_vocab_size("./datafiles/bucket_data_x.txt", "./datafiles/bucket_data_y.txt", 0.99)
+#find_percentage_of_vocab_size("./datafiles/bucket_data_x.txt", "./datafiles/bucket_data_y.txt", 0.98)
+#find_percentage_of_vocab_size("./datafiles/bucket_data_x.txt", "./datafiles/bucket_data_y.txt", 0.97)
+#find_percentage_of_vocab_size("./datafiles/bucket_data_x.txt", "./datafiles/bucket_data_y.txt", 0.96)
+#find_percentage_of_vocab_size("./datafiles/bucket_data_x.txt", "./datafiles/bucket_data_y.txt", 0.95)
 #get_unique_words('./datafiles/bucket_data_x.txt','./datafiles/bucket_data_y.txt')
 #get_number_of_turns('./datafiles/raw_data_x.txt', './datafiles/raw_data_y.txt')
 #get_all_words('./datafiles/raw_data_x.txt', './datafiles/raw_data_y.txt')
-get_word_histogram('./datafiles/raw_data_x.txt', './datafiles/raw_data_y.txt')
+#get_word_histogram('./datafiles/raw_data_x.txt', './datafiles/raw_data_y.txt')
