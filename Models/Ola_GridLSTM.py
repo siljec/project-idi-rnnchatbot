@@ -41,7 +41,7 @@ import time
 sys.path.insert(0, '../Preprocessing') # To access methods from another file from another folder
 from create_vocabulary import read_vocabulary_from_file
 from tokenize import sentence_to_token_ids
-from helpers import replace_misspelled_words_in_sentence, check_for_needed_files_and_create
+from helpers import check_for_needed_files_and_create, preprocess_input
 sys.path.insert(0, '../')
 from variables import paths_from_model as paths, tokens, _buckets, vocabulary_size, max_training_steps, print_frequency, steps_per_checkpoint, size, num_layers, batch_size
 
@@ -161,123 +161,123 @@ def train():
 
     # Avoid allocating all of the GPU memory
     config = get_session_configs()
+    with tf.device('/gpu:1'):
+        with tf.Session(config=config) as sess:
+            # Create model.
+            print("Creating %d layers of %d units." % (FLAGS.num_layers, FLAGS.size))
+            model = create_model(sess, False)
 
-    with tf.Session(config=config) as sess:
-        # Create model.
-        print("Creating %d layers of %d units." % (FLAGS.num_layers, FLAGS.size))
-        model = create_model(sess, False)
+            # Stream data
+            print("Setting up coordinator")
+            coord = tf.train.Coordinator()
+            threads = tf.train.start_queue_runners(coord=coord)
 
-        # Stream data
-        print("Setting up coordinator")
-        coord = tf.train.Coordinator()
-        threads = tf.train.start_queue_runners(coord=coord)
+            # This is for the training loop.
+            train_set = [[] for _ in _buckets]
+            dev_set = [[] for _ in _buckets]
+            step_time, loss = 0.0, 0.0
+            current_step = 0
+            previous_losses = []
 
-        # This is for the training loop.
-        train_set = [[] for _ in _buckets]
-        dev_set = [[] for _ in _buckets]
-        step_time, loss = 0.0, 0.0
-        current_step = 0
-        previous_losses = []
+            # Create log writer object
+            print("Create log writer object")
+            summary_writer = tf.train.SummaryWriter(FLAGS.log_dir, graph=tf.get_default_graph())
 
-        # Create log writer object
-        print("Create log writer object")
-        summary_writer = tf.train.SummaryWriter(FLAGS.log_dir, graph=tf.get_default_graph())
+            reader_train_data = tf.TextLineReader()  # skip_header_lines=int, number of lines to skip
+            _, txt_row_train_data = reader_train_data.read(filename_queue)
 
-        reader_train_data = tf.TextLineReader()  # skip_header_lines=int, number of lines to skip
-        _, txt_row_train_data = reader_train_data.read(filename_queue)
+            reader_dev_data = tf.TextLineReader()
+            _, txt_row_dev_data = reader_dev_data.read(filename_queue_dev)
 
-        reader_dev_data = tf.TextLineReader()
-        _, txt_row_dev_data = reader_dev_data.read(filename_queue_dev)
+            coord = tf.train.Coordinator()
+            threads = tf.train.start_queue_runners(coord=coord)
 
-        coord = tf.train.Coordinator()
-        threads = tf.train.start_queue_runners(coord=coord)
+            train_time = time.time()
 
-        train_time = time.time()
+            print("Starting training loop")
+            try:
+                while current_step < FLAGS.max_train_steps:  # not coord.should_stop():
+                    if current_step % FLAGS.print_frequency == 0:
+                        print("Step number: " + str(current_step))
 
-        print("Starting training loop")
-        try:
-            while current_step < FLAGS.max_train_steps:  # not coord.should_stop():
-                if current_step % FLAGS.print_frequency == 0:
-                    print("Step number: " + str(current_step))
+                    # Get a batch
+                    train_set, bucket_id = get_batch(txt_row_train_data, train_set)
+                    start_time = time.time()
+                    encoder_inputs, decoder_inputs, target_weights = model.get_batch(train_set, bucket_id)
 
-                # Get a batch
-                train_set, bucket_id = get_batch(txt_row_train_data, train_set)
-                start_time = time.time()
-                encoder_inputs, decoder_inputs, target_weights = model.get_batch(train_set, bucket_id)
+                    # Clean out trained bucket
+                    train_set[bucket_id] = []
 
-                # Clean out trained bucket
-                train_set[bucket_id] = []
+                    # Make a step
+                    _, step_loss, _ = model.step(sess, encoder_inputs, decoder_inputs, target_weights, bucket_id, False)
 
-                # Make a step
-                _, step_loss, _ = model.step(sess, encoder_inputs, decoder_inputs, target_weights, bucket_id, False)
+                    # Calculating variables
+                    step_time += (time.time() - start_time) / FLAGS.steps_per_checkpoint
+                    loss += step_loss / FLAGS.steps_per_checkpoint
+                    current_step += 1
 
-                # Calculating variables
-                step_time += (time.time() - start_time) / FLAGS.steps_per_checkpoint
-                loss += step_loss / FLAGS.steps_per_checkpoint
-                current_step += 1
+                    # Once in a while, we save checkpoint, print statistics, and run evals.
+                    if current_step % FLAGS.steps_per_checkpoint == 0:
+                        duration = time.time() - train_time
+                        minutes = int(duration / 60)
+                        seconds = duration % 60
+                        check_time = time.time()
+                        print("Time ", minutes, " minutes ", seconds, " seconds to train")
+                        # Print statistics for the previous epoch.
+                        dev_set, bucket_id = get_batch(txt_row_dev_data, dev_set, ac_function=min)
 
-                # Once in a while, we save checkpoint, print statistics, and run evals.
-                if current_step % FLAGS.steps_per_checkpoint == 0:
-                    duration = time.time() - train_time
-                    minutes = int(duration / 60)
-                    seconds = duration % 60
-                    check_time = time.time()
-                    print("Time ", minutes, " minutes ", seconds, " seconds to train")
-                    # Print statistics for the previous epoch.
-                    dev_set, bucket_id = get_batch(txt_row_dev_data, dev_set, ac_function=min)
+                        perplexity = exp(float(loss)) if loss < 300 else float("inf")
+                        print("global step %d learning rate %.4f step-time %.2f perplexity "
+                              "%.2f" % (model.global_step.eval(), model.learning_rate.eval(), step_time, perplexity))
 
-                    perplexity = exp(float(loss)) if loss < 300 else float("inf")
-                    print("global step %d learning rate %.4f step-time %.2f perplexity "
-                          "%.2f" % (model.global_step.eval(), model.learning_rate.eval(), step_time, perplexity))
+                        # Decrease learning rate if no improvement was seen over last 3 times.
+                        if len(previous_losses) > 2 and loss > max(previous_losses[-3:]):
+                            sess.run(model.learning_rate_decay_op)
+                        previous_losses.append(loss)
 
-                    # Decrease learning rate if no improvement was seen over last 3 times.
-                    if len(previous_losses) > 2 and loss > max(previous_losses[-3:]):
-                        sess.run(model.learning_rate_decay_op)
-                    previous_losses.append(loss)
+                        # Save checkpoint and zero timer and loss.
+                        print("Save checkpoint")
+                        checkpoint_path = os.path.join(FLAGS.train_dir, "Ola.ckpt")
+                        model.saver.save(sess, checkpoint_path, global_step=model.global_step)
+                        step_time, loss = 0.0, 0.0
 
-                    # Save checkpoint and zero timer and loss.
-                    print("Save checkpoint")
-                    checkpoint_path = os.path.join(FLAGS.train_dir, "Ola.ckpt")
-                    model.saver.save(sess, checkpoint_path, global_step=model.global_step)
-                    step_time, loss = 0.0, 0.0
+                        # Adding perplexity to tensorboard
+                        perplexity_summary = tf.Summary()
+                        overall_value = perplexity_summary.value.add()
+                        overall_value.tag = "perplexity_overall"
+                        overall_value.simple_value = perplexity
 
-                    # Adding perplexity to tensorboard
-                    perplexity_summary = tf.Summary()
-                    overall_value = perplexity_summary.value.add()
-                    overall_value.tag = "perplexity_overall"
-                    overall_value.simple_value = perplexity
+                        # Run evals on development set and print their perplexity.
+                        print("Run evaluation on development set")
+                        for bucket_id in xrange(len(_buckets)):
+                            if len(dev_set[bucket_id]) == 0:
+                                print("  eval: empty bucket %d" % bucket_id)
+                                continue
+                            encoder_inputs, decoder_inputs, target_weights = model.get_batch(dev_set, bucket_id)
 
-                    # Run evals on development set and print their perplexity.
-                    print("Run evaluation on development set")
-                    for bucket_id in xrange(len(_buckets)):
-                        if len(dev_set[bucket_id]) == 0:
-                            print("  eval: empty bucket %d" % bucket_id)
-                            continue
-                        encoder_inputs, decoder_inputs, target_weights = model.get_batch(dev_set, bucket_id)
+                            # Clean out used bucket
+                            del dev_set[bucket_id][:FLAGS.batch_size]
 
-                        # Clean out used bucket
-                        del dev_set[bucket_id][:FLAGS.batch_size]
+                            _, eval_loss, _ = model.step(sess, encoder_inputs, decoder_inputs, target_weights, bucket_id, True)
+                            eval_ppx = exp(float(eval_loss)) if eval_loss < 300 else float("inf")
+                            print("  eval: bucket %d perplexity %.2f" % (bucket_id, eval_ppx))
 
-                        _, eval_loss, _ = model.step(sess, encoder_inputs, decoder_inputs, target_weights, bucket_id, True)
-                        eval_ppx = exp(float(eval_loss)) if eval_loss < 300 else float("inf")
-                        print("  eval: bucket %d perplexity %.2f" % (bucket_id, eval_ppx))
-
-                        # Adding bucket perplexity to tensorboard
-                        bucket_value = perplexity_summary.value.add()
-                        bucket_value.tag = "perplexity_bucket %d" % bucket_id
-                        bucket_value.simple_value = eval_ppx
-                    summary_writer.add_summary(perplexity_summary, model.global_step.eval())
-                    sys.stdout.flush()
-                    duration = time.time() - check_time
-                    minutes = int(duration / 60)
-                    seconds = duration % 60
-                    print("Time ", minutes, " minutes ", seconds, " seconds to do checkpoint")
-                    train_time = time.time()
-        except tf.errors.OutOfRangeError:
-            print('Done training, epoch reached')
-        finally:
-            coord.request_stop()
-        coord.join(threads)
+                            # Adding bucket perplexity to tensorboard
+                            bucket_value = perplexity_summary.value.add()
+                            bucket_value.tag = "perplexity_bucket %d" % bucket_id
+                            bucket_value.simple_value = eval_ppx
+                        summary_writer.add_summary(perplexity_summary, model.global_step.eval())
+                        sys.stdout.flush()
+                        duration = time.time() - check_time
+                        minutes = int(duration / 60)
+                        seconds = duration % 60
+                        print("Time ", minutes, " minutes ", seconds, " seconds to do checkpoint")
+                        train_time = time.time()
+            except tf.errors.OutOfRangeError:
+                print('Done training, epoch reached')
+            finally:
+                coord.request_stop()
+            coord.join(threads)
 
 
 def swap_eos(sentence):
