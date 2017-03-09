@@ -5,6 +5,7 @@ import random
 import numpy as np
 from preprocessing3 import distance
 from create_vocabulary import find_dictionary
+from itertools import izip
 
 
 # Create histogram
@@ -100,6 +101,23 @@ def get_bucket_stats(path, buckets=[(40, 40), (60, 60), (85, 85), (110, 110), (1
 
     print("Number of turns that did not fit: " + str(no_match) + "/" + str(total_lines) + "\t = " +
           "{0:.2f}".format((100.0*no_match)/total_lines) + "%")
+
+
+def get_size_of_bucket_sizes(max_bucket, x_path, y_path):
+    occurrences_of_pairs_in_buckets = [0]*(max_bucket+1)
+
+    with open(x_path) as sourceObjectX, open(y_path) as sourceObjectY:
+        for x, y in izip(sourceObjectX, sourceObjectY):
+            x_words = x.split()
+            y_words = y.split()
+            x_len = len(x_words)
+            y_len = len(y_words)
+            if (x_len <= max_bucket and y_len <= max_bucket):
+                max_size = max(len(x_words), len(y_words))
+                occurrences_of_pairs_in_buckets[max_size]+=1
+    print('Occurences of pairs in buckets')
+    for i in range(len(occurrences_of_pairs_in_buckets)):
+        print(occurrences_of_pairs_in_buckets[i])
 
 
 def get_number_of_urls(path):
@@ -380,7 +398,7 @@ def find_percentage_of_vocab_size(x_path, y_path, percentage):
 
 #get_stats('./datafiles/spell_checked_data_x.txt', more_than_words=30, less_than_words=10)
 #get_stats('./datafiles/spell_checked_data_y.txt', more_than_words=30, less_than_words=10)
-get_bucket_stats('./datafiles/training_data.txt', buckets=[(10, 10), (20, 20), (35, 35), (50, 50)])
+#get_bucket_stats('./datafiles/training_data.txt', buckets=[(10, 10), (20, 20), (35, 35), (50, 50)])
 # get_dictionary_stats('./datafiles/no_unk_words_x.txt', './datafiles/no_unk_words_y.txt')
 # get_number_of_urls('./datafiles/spell_checked_data_x.txt')
 # get_number_of_urls('./datafiles/spell_checked_data_y.txt')
@@ -401,3 +419,4 @@ get_bucket_stats('./datafiles/training_data.txt', buckets=[(10, 10), (20, 20), (
 #get_number_of_turns('./datafiles/raw_data_x.txt', './datafiles/raw_data_y.txt')
 #get_all_words('./datafiles/raw_data_x.txt', './datafiles/raw_data_y.txt')
 #get_word_histogram('./datafiles/raw_data_x.txt', './datafiles/raw_data_y.txt')
+get_size_of_bucket_sizes(100, './context/bucket_data_x.txt', './context/bucket_data_y.txt')
