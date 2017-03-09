@@ -43,7 +43,7 @@ from create_vocabulary import read_vocabulary_from_file
 from tokenize import sentence_to_token_ids
 from helpers import check_for_needed_files_and_create, preprocess_input
 sys.path.insert(0, '../')
-from variables import paths_from_model as paths, tokens, _buckets, vocabulary_size, max_training_steps, print_frequency, steps_per_checkpoint, size, num_layers, batch_size
+from variables import paths_from_model as paths, tokens, _buckets, vocabulary_size, max_training_steps, print_frequency, steps_per_checkpoint, size, num_layers, batch_size, use_gpu
 
 import numpy as np
 import tensorflow as tf
@@ -162,7 +162,7 @@ def train():
 
     # Avoid allocating all of the GPU memory
     config = get_session_configs()
-    with tf.device('/gpu:1'):
+    with tf.device(use_gpu):
         with tf.Session(config=config) as sess:
             # Create model.
             print("Creating %d layers of %d units." % (FLAGS.num_layers, FLAGS.size))

@@ -29,7 +29,7 @@ from grid_rnn_cell import Grid2LSTMCell
 from bidirectional_grid import Bidirectional
 
 sys.path.insert(0, '../')
-from variables import tokens, optimizer
+from variables import tokens, optimizer, word_embedding_size
 
 _PAD, PAD_ID = tokens['padding']
 _GO, GO_ID = tokens['go']
@@ -142,7 +142,7 @@ class GridLSTM_model(object):
           cell,
           num_encoder_symbols=source_vocab_size,
           num_decoder_symbols=target_vocab_size,
-          embedding_size=1000,
+          embedding_size=word_embedding_size,
           output_projection=output_projection,
           feed_previous=do_decode,
           dtype=dtype)

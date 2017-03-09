@@ -116,10 +116,10 @@ tokens = {
 tokens_list = ['_PAD', '_GO', '_EOS', '_EOT', '_UNK', '_URL', '_EMJ', '_DIR']
 tokens_init_list = ['_PAD', '_GO', '_EOS', '_EOT', '_UNK']
 
-_buckets = [(10, 10), (20, 20), (35, 35), (50, 50)]
+_buckets = [(10, 10), (16, 16), (22, 22), (30, 30)]
 
 vocabulary_size = 30000
-print_frequency = 1000
+print_frequency = 100
 steps_per_checkpoint = 5000
 max_training_steps = 250005
 size = 256
@@ -128,3 +128,6 @@ batch_size = 24
 
 # optimizer = "Adagrad"
 optimizer = "GradientDescent"
+word_embedding_size = 1000
+
+use_gpu = '/gpu:0'
