@@ -49,13 +49,13 @@ def check_for_needed_files_and_create(vocab_size):
         print('\t ./generate.sh')
 
     if not os.path.isfile(paths_from_model['train_path']):
-        start_preprocessing()
+        print("You should start preprocessing")
     if not os.path.isfile(paths_from_model['dev_path']):
-        start_preprocessing()
+        print("You should start preprocessing")
     if not os.path.isfile(paths_from_model['test_path']):
-        start_preprocessing()
+        print("You should start preprocessing")
     if not os.path.isfile(paths_from_model['vocab_path']):
-        start_preprocessing()
+        print("You should start preprocessing")
 
 
 def preprocess_input(sentence, fast_text_model, vocab):

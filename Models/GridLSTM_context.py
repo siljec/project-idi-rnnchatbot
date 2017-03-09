@@ -39,7 +39,7 @@ from random import choice
 import time
 
 sys.path.insert(0, '../') # To access methods from another file from another folder
-from variables import paths_from_model as paths, tokens, _buckets, vocabulary_size, steps_per_checkpoint, print_frequency, max_training_steps
+from variables import paths_from_model as paths, tokens, _buckets, vocabulary_size, steps_per_checkpoint, print_frequency, max_training_steps, size, batch_size, num_layers
 sys.path.insert(0, '../Preprocessing') # To access methods from another file from another folder
 from create_vocabulary import read_vocabulary_from_file
 from tokenize import sentence_to_token_ids
@@ -56,9 +56,9 @@ import fasttext
 tf.app.flags.DEFINE_float("learning_rate", 0.5, "Learning rate.")
 tf.app.flags.DEFINE_float("learning_rate_decay_factor", 0.99, "Learning rate decays by this much.")
 tf.app.flags.DEFINE_float("max_gradient_norm", 5.0, "Clip gradients to this norm.")
-tf.app.flags.DEFINE_integer("batch_size", 8, "Batch size to use during training.")
-tf.app.flags.DEFINE_integer("size", 64, "Size of each model layer.")
-tf.app.flags.DEFINE_integer("num_layers", 2, "Number of layers in the model.")
+tf.app.flags.DEFINE_integer("batch_size", batch_size, "Batch size to use during training.")
+tf.app.flags.DEFINE_integer("size", size, "Size of each model layer.")
+tf.app.flags.DEFINE_integer("num_layers", num_layers, "Number of layers in the model.")
 tf.app.flags.DEFINE_integer("vocab_size", vocabulary_size, "English vocabulary size.")
 tf.app.flags.DEFINE_integer("print_frequency", print_frequency, "How many training steps to do per print.")
 tf.app.flags.DEFINE_integer("max_train_steps", max_training_steps, "How many training steps to do.")

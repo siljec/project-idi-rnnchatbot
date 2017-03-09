@@ -1,5 +1,3 @@
-
-
 # File to hold global variables
 
 paths_from_model = {
@@ -124,3 +122,9 @@ vocabulary_size = 30000
 print_frequency = 1000
 steps_per_checkpoint = 5000
 max_training_steps = 250005
+size = 256
+num_layers = 2
+batch_size = 24
+
+# optimizer = "Adagrad"
+optimizer = "GradientDescent"
