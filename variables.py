@@ -22,8 +22,8 @@ paths_from_model = {
     'test_file_context': 'test_data.txt',
     'misspellings_context': '../Preprocessing/context/misspellings.txt',
     'fast_text_model_context': '../Preprocessing/context/model.bin',
-    'vocab_vectors': '../Preprocessing/datafiles/vocab_vectors_path.txt',
-    'vocab_vectors_context': '../Preprocessing/context/vocab_vectors_path.txt'
+    'vocab_vectors': '../Preprocessing/datafiles/vocab_vectors_path.pickle',
+    'vocab_vectors_context': '../Preprocessing/context/vocab_vectors_path.pickle'
 }
 
 paths_from_preprocessing = {
