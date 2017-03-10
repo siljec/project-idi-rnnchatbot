@@ -161,6 +161,9 @@ def train():
     filename_queue = input_pipeline(start_name=paths['train_file'])
     filename_queue_dev = input_pipeline(start_name=paths['dev_file'])
 
+    with open(os.path.join(FLAGS.train, "perplexity_log.txt"), 'w') as fileObject:
+        fileObject.write("Step \tPerplexity \tBucket perplexity")
+
     # Avoid allocating all of the GPU memory
     config = get_session_configs()
     with tf.device(use_gpu):
@@ -255,6 +258,7 @@ def train():
 
                         # Run evals on development set and print their perplexity.
                         print("Run evaluation on development set")
+                        bucket_perplexity = ""
                         for bucket_id in xrange(len(_buckets)):
                             if len(dev_set[bucket_id]) == 0:
                                 print("  eval: empty bucket %d" % bucket_id)
@@ -268,11 +272,16 @@ def train():
                             eval_ppx = exp(float(eval_loss)) if eval_loss < 300 else float("inf")
                             print("  eval: bucket %d perplexity %.2f" % (bucket_id, eval_ppx))
 
+                            bucket_perplexity += "\t" + str(eval_ppx)
+
                             # Adding bucket perplexity to tensorboard
                             bucket_value = perplexity_summary.value.add()
                             bucket_value.tag = "perplexity_bucket %d" % bucket_id
                             bucket_value.simple_value = eval_ppx
                         summary_writer.add_summary(perplexity_summary, model.global_step.eval())
+
+                        with open(os.path.join(FLAGS.train, "perplexity_log.txt"), 'a') as fileObject:
+                            fileObject.write(str(model.global_step) + " \t" + str(perplexity) + bucket_perplexity)
 
                         # Save model if checkpoint was the best one
                         if perplexity < lowest_perplexity:

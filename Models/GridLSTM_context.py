@@ -166,6 +166,9 @@ def train():
     # Avoid allocating all of the GPU memory
     config = get_session_configs()
 
+    with open(os.path.join(FLAGS.train, "perplexity_log.txt"), 'w') as fileObject:
+        fileObject.write("Step \tPerplexity \tBucket perplexity")
+
     with tf.device(use_gpu):
         with tf.Session(config=config) as sess:
             # Create model.
@@ -263,6 +266,7 @@ def train():
 
                         # Run evals on development set and print their perplexity.
                         print("Run evaluation on development set")
+                        bucket_perplexity = ""
                         for bucket_id in xrange(len(_buckets)):
                             if len(dev_set[bucket_id]) == 0:
                                 print("  eval: empty bucket %d" % bucket_id)
@@ -274,6 +278,7 @@ def train():
 
                             _, eval_loss, _ = model.step(sess, encoder_inputs, decoder_inputs, target_weights, bucket_id, True)
                             eval_ppx = exp(float(eval_loss)) if eval_loss < 300 else float("inf")
+                            bucket_perplexity += "\t" + str(eval_ppx)
                             print("  eval: bucket %d perplexity %.2f" % (bucket_id, eval_ppx))
 
                             # Adding bucket perplexity to tensorboard
@@ -282,12 +287,12 @@ def train():
                             bucket_value.simple_value = eval_ppx
                         summary_writer.add_summary(perplexity_summary, model.global_step.eval())
 
+                        with open(os.path.join(FLAGS.train, "perplexity_log.txt"), 'a') as fileObject:
+                            fileObject.write(str(model.global_step) + " \t" + str(perplexity) + bucket_perplexity)
                         # Save model if checkpoint was the best one
-                        if perplexity < lowest_perplexity:
+                        if perplexity < lowest_perplexity: #and current_step > 400000:
                             lowest_perplexity = perplexity
                             checkpoint_path = os.path.join(FLAGS.train_dir, "Ola_best_.ckpt")
-                            with open(os.path.join(FLAGS.train, "perplexity_log.txt"), 'w') as fileObject:
-                                fileObject.write(str(model.global_step) + " \t perplexity: " + perplexity)
                             model.saver.save(sess, checkpoint_path, global_step=model.global_step)
 
                         sys.stdout.flush()
