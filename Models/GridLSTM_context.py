@@ -166,8 +166,11 @@ def train():
     # Avoid allocating all of the GPU memory
     config = get_session_configs()
 
-    with open(os.path.join(FLAGS.train_dir, "perplexity_log.txt"), 'w') as fileObject:
-        fileObject.write("Step \tPerplexity \tBucket perplexity")
+    perplexity_log_path = os.path.join(FLAGS.train_dir, "perplexity_log.txt")
+
+    if not os.path.exists(perplexity_log_path):
+        with open(os.path.join(FLAGS.train_dir, "perplexity_log.txt"), 'w') as fileObject:
+            fileObject.write("Step \tPerplexity \tBucket perplexity")
 
     with tf.device(use_gpu):
         with tf.Session(config=config) as sess:
@@ -206,7 +209,7 @@ def train():
             minutes = int(boot_time / 60)
             seconds = boot_time % 60
 
-            lowest_perplexity = 500.0
+            lowest_perplexity = 20.0
 
             print("Time ", minutes, " minutes ", seconds, " seconds to boot")
 

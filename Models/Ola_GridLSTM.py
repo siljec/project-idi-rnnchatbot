@@ -162,8 +162,12 @@ def train():
     filename_queue = input_pipeline(start_name=paths['train_file'])
     filename_queue_dev = input_pipeline(start_name=paths['dev_file'])
 
-    with open(os.path.join(FLAGS.train_dir, "perplexity_log.txt"), 'w') as fileObject:
-        fileObject.write("Step \tPerplexity \tBucket perplexity")
+    perplexity_log_path = os.path.join(FLAGS.train_dir, "perplexity_log.txt")
+
+    if not os.path.exists(perplexity_log_path):
+        with open(os.path.join(FLAGS.train_dir, "perplexity_log.txt"), 'w') as fileObject:
+            fileObject.write("Step \tPerplexity \tBucket perplexity")
+
     # Avoid allocating all of the GPU memory
     config = get_session_configs()
     with tf.device(use_gpu):
@@ -197,7 +201,7 @@ def train():
             coord = tf.train.Coordinator()
             threads = tf.train.start_queue_runners(coord=coord)
 
-            lowest_perplexity = 500.0
+            lowest_perplexity = 20.0
 
             train_time = time.time()
 
