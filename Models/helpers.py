@@ -88,7 +88,7 @@ def preprocess_input(sentence, fast_text_model, vocab):
     # Find most similar words
     similar_words = {}
     for unk_word, unk_vector in unk_words.iteritems():
-        for key, value in vocab:
+        for key, value in vocab.iteritems():
             cur_dist = distance(unk_vector, value[0], value[1])
             # Save the word that is most similar
             if cur_dist < min_dist:
