@@ -81,7 +81,7 @@ def preprocess_input(sentence, fast_text_model, vocab):
 
     # Must replace OOV with most similar vocab-words:
     unk_words = {}
-    for word in sentence.split(' '):
+    for word in sentence.split():
         if word not in vocab:
             unk_words[word] = fast_text_model[word]
 
@@ -99,7 +99,7 @@ def preprocess_input(sentence, fast_text_model, vocab):
         similar_words[unk_word] = word
 
     # Replace words
-    for word, similar_word in unk_words.iteritems():
+    for word, similar_word in similar_words.iteritems():
         sentence.replace(word, similar_word)
 
     return sentence
