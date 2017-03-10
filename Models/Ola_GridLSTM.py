@@ -40,7 +40,7 @@ import fasttext
 
 sys.path.insert(0, '../Preprocessing') # To access methods from another file from another folder
 from create_vocabulary import read_vocabulary_from_file
-from preprocess_helpers import load_pickle_file
+from preprocess_helpers import load_pickle_file, get_time
 
 from helpers import check_for_needed_files_and_create, preprocess_input, sentence_to_token_ids, get_batch, input_pipeline, get_session_configs
 sys.path.insert(0, '../')
@@ -184,11 +184,8 @@ def train():
 
                     # Once in a while, we save checkpoint, print statistics, and run evals.
                     if current_step % FLAGS.steps_per_checkpoint == 0:
-                        duration = time.time() - train_time
-                        minutes = int(duration / 60)
-                        seconds = duration % 60
                         check_time = time.time()
-                        print("Time ", minutes, " minutes ", seconds, " seconds to train")
+                        print(get_time(train_time, "to train"))
                         # Print statistics for the previous epoch.
                         dev_set, bucket_id = get_batch(txt_row_dev_data, dev_set, ac_function=min)
 
@@ -246,10 +243,7 @@ def train():
                             model.saver.save(sess, checkpoint_path, global_step=model.global_step)
 
                         sys.stdout.flush()
-                        duration = time.time() - check_time
-                        minutes = int(duration / 60)
-                        seconds = duration % 60
-                        print("Time ", minutes, " minutes ", seconds, " seconds to do checkpoint")
+                        print(get_time(check_time), "to do checkpoint")
                         train_time = time.time()
             except tf.errors.OutOfRangeError:
                 print('Done training, epoch reached')
