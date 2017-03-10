@@ -309,7 +309,7 @@ def decode():
         model.batch_size = 1  # We decode one sentence at a time.
 
         # Load vocabularies.
-        vocab, rev_vocab = read_vocabulary_from_file(paths['vocab_path'])
+        vocab, rev_vocab = read_vocabulary_from_file(paths['vocab_path_context'])
 
         # Load vocabulary vectors
         vocab_vectors = load_pickle_file(paths['vocab_vectors_context'])
