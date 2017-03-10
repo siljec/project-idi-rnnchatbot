@@ -316,7 +316,7 @@ def decode():
 
         # Load FastText model used for preprocessing
         print("Load existing FastText model...")
-        fast_text_model = fasttext.load_model('./datafiles/model.bin', encoding='utf-8')
+        fast_text_model = fasttext.load_model(paths['fast_text_model_context'], encoding='utf-8')
 
         # Decode from standard input.
         sys.stdout.write("Human: ")
