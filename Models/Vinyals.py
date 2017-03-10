@@ -284,14 +284,12 @@ def train():
                         summary_writer.add_summary(perplexity_summary, model.global_step.eval())
 
                         with open(os.path.join(FLAGS.train_dir, "perplexity_log.txt"), 'a') as fileObject:
-                            fileObject.write(str(model.global_step) + " \t" + str(perplexity) + bucket_perplexity)
+                            fileObject.write(str(model.global_step) + " \t" + str(perplexity) + bucket_perplexity + "\n")
 
                         # Save model if checkpoint was the best one
                         if perplexity < lowest_perplexity:
                             lowest_perplexity = perplexity
                             checkpoint_path = os.path.join(FLAGS.train_dir, "Ola_best_.ckpt")
-                            with open(os.path.join(FLAGS.train, "perplexity_log.txt"), 'w') as fileObject:
-                                fileObject.write(str(model.global_step) + " \t perplexity: " + perplexity)
                             model.saver.save(sess, checkpoint_path, global_step=model.global_step)
 
                         sys.stdout.flush()
