@@ -62,9 +62,9 @@ def check_for_needed_files_and_create():
 
 
 def preprocess_input(sentence, fast_text_model, vocab):
-    emoji_token = " " + tokens['emoji'] + " "
-    dir_token = tokens['directory']
-    url_token = " " + tokens['url'] + " "
+    emoji_token = " " + tokens['emoji'][0] + " "
+    dir_token = tokens['directory'][0]
+    url_token = " " + tokens['url'][0] + " "
 
     sentence = sentence.strip().lower()
     sentence = re.sub(' +', ' ', sentence)  # Will remove multiple spaces
