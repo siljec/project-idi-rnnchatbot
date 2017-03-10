@@ -37,11 +37,13 @@ import re
 from math import exp
 from random import choice
 import time
+import fasttext
 
 sys.path.insert(0, '../Preprocessing') # To access methods from another file from another folder
 from create_vocabulary import read_vocabulary_from_file
-from tokenize import sentence_to_token_ids
-from helpers import check_for_needed_files_and_create, preprocess_input
+from preprocess_helpers import load_pickle_file
+
+from helpers import check_for_needed_files_and_create, preprocess_input, sentence_to_token_ids
 import numpy as np
 from six.moves import xrange  # pylint: disable=redefined-builtin
 import tensorflow as tf
@@ -153,7 +155,7 @@ def train():
     """Train a en->fr translation model using WMT data."""
 
     print("Checking for needed files")
-    check_for_needed_files_and_create(FLAGS.vocab_size)
+    check_for_needed_files_and_create()
 
     print("Creating file queue")
     filename_queue = input_pipeline(start_name=paths['train_file'])
@@ -304,16 +306,26 @@ def decode():
         # Load vocabularies.
         vocab, rev_vocab = read_vocabulary_from_file(paths['vocab_path'])
 
+        # Load vocabulary vectors
+        vocab_vectors = load_pickle_file(paths['vocab_vectors'])
+
+        # Load FastText model used for preprocessing
+        print("Load existing FastText model...")
+        fast_text_model = fasttext.load_model(paths['fast_text_model'], encoding='utf-8')
+
         # Decode from standard input.
         sys.stdout.write("Human: ")
         sys.stdout.flush()
         sentence = sys.stdin.readline()
-        sentence = preprocess_input(sentence)
+        sentence = preprocess_input(sentence, fast_text_model, vocab_vectors)
         while sentence:
             # Get token-ids for the input sentence.
             token_ids = sentence_to_token_ids(tf.compat.as_bytes(sentence), vocab)
 
             # Which bucket does it belong to?
+            if len(token_ids) >= _buckets[-1][0]:
+                print("Sentence too long. Slicing it to fit a bucket")
+                token_ids = token_ids[:(_buckets[-1][0]-1)]
             bucket_id = min([b for b in xrange(len(_buckets))
                              if _buckets[b][0] > len(token_ids)])
 
@@ -339,7 +351,7 @@ def decode():
             print("Human: ", end="")
             sys.stdout.flush()
             sentence = sys.stdin.readline()
-            sentence = preprocess_input(sentence)
+            sentence = preprocess_input(sentence, fast_text_model, vocab_vectors)
 
 
 def self_test():

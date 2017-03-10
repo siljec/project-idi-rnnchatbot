@@ -5,6 +5,9 @@ sys.path.insert(0, '../Preprocessing') # To access methods from another file fro
 from preprocess import start_preprocessing
 from variables import paths_from_model, tokens
 from preprocessing3 import distance
+from variables import tokens
+
+_, UNK_ID = tokens['unk']
 
 
 def read_words_from_misspelling_file(path):
@@ -36,7 +39,7 @@ def replace_misspelled_words_in_sentence(sentence, misspelllings_path):
     return final_sentence
 
 
-def check_for_needed_files_and_create(vocab_size):
+def check_for_needed_files_and_create():
     if not os.path.isdir(paths_from_model['ubuntu']):
         print("Ubuntu Dialogue Corpus not found or is not on the right path. ")
         print('1')
@@ -59,9 +62,9 @@ def check_for_needed_files_and_create(vocab_size):
 
 
 def preprocess_input(sentence, fast_text_model, vocab):
-    emoji_token = " " + tokens['emoji'] + " "
-    dir_token = tokens['directory']
-    url_token = " " + tokens['url'] + " "
+    emoji_token = " " + tokens['emoji'][0] + " "
+    dir_token = tokens['directory'][0]
+    url_token = " " + tokens['url'][0] + " "
 
     sentence = sentence.strip().lower()
     sentence = re.sub(' +', ' ', sentence)  # Will remove multiple spaces
@@ -78,14 +81,16 @@ def preprocess_input(sentence, fast_text_model, vocab):
 
     # Must replace OOV with most similar vocab-words:
     unk_words = {}
-    for word in sentence.split(' '):
+    for word in sentence.split():
         if word not in vocab:
             unk_words[word] = fast_text_model[word]
 
     # Find most similar words
     similar_words = {}
     for unk_word, unk_vector in unk_words.iteritems():
-        for key, value in vocab:
+        min_dist = 10
+        word = ""
+        for key, value in vocab.iteritems():
             cur_dist = distance(unk_vector, value[0], value[1])
             # Save the word that is most similar
             if cur_dist < min_dist:
@@ -94,7 +99,29 @@ def preprocess_input(sentence, fast_text_model, vocab):
         similar_words[unk_word] = word
 
     # Replace words
-    for word, similar_word in unk_words.iteritems():
+    for word, similar_word in similar_words.iteritems():
         sentence.replace(word, similar_word)
 
     return sentence
+
+_WORD_SPLIT = re.compile(b"([.,!?\":;)(])")
+_DIGIT_RE = re.compile(br"\d")
+
+def basic_tokenizer(sentence):
+    """Very basic tokenizer: split the sentence into a list of tokens"""
+    words = []
+    for space_separated_fragment in sentence.strip().split():
+        words.extend(re.split(_WORD_SPLIT, space_separated_fragment))
+    return [w for w in words if w]
+
+
+def sentence_to_token_ids(sentence, vocabulary):
+    """Convert a string to list of integers representing token-ids.
+    For example, a sentence "I have a dog" may become tokenized into
+    ["I", "have", "a", "dog"] and with vocabulary {"I": 1, "have": 2,
+    "a": 4, "dog": 7"} this function will return [1, 2, 4, 7].
+    Returns:
+    a list of integers, the token-ids for the sentence.
+    """
+    words = basic_tokenizer(sentence)
+    return [vocabulary.get(w, UNK_ID) for w in words]

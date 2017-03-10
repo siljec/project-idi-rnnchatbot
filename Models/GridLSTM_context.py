@@ -42,9 +42,8 @@ sys.path.insert(0, '../') # To access methods from another file from another fol
 from variables import paths_from_model as paths, tokens, _buckets, vocabulary_size, steps_per_checkpoint, print_frequency, max_training_steps, size, batch_size, num_layers, use_gpu
 sys.path.insert(0, '../Preprocessing') # To access methods from another file from another folder
 from create_vocabulary import read_vocabulary_from_file
-from tokenize import sentence_to_token_ids
-from helpers import check_for_needed_files_and_create, preprocess_input
-
+from preprocess_helpers import load_pickle_file
+from helpers import check_for_needed_files_and_create, preprocess_input, sentence_to_token_ids
 import numpy as np
 import tensorflow as tf
 
@@ -158,7 +157,7 @@ def train():
     """Train a en->fr translation model using WMT data."""
     boot_time = time.time()
     print("Checking for needed files")
-    check_for_needed_files_and_create(FLAGS.vocab_size)
+    check_for_needed_files_and_create()
 
     print("Creating file queue")
     filename_queue = input_pipeline(start_name=paths['train_file_context'])
@@ -309,17 +308,15 @@ def decode():
         model = create_model(sess, True)
         model.batch_size = 1  # We decode one sentence at a time.
 
-        # Load trained FastText model
-        fast_text_model = model = fasttext.load_model(paths['fast_text_model_path_context'], encoding='utf-8')
-
         # Load vocabularies.
         vocab, rev_vocab = read_vocabulary_from_file(paths['vocab_path_context'])
 
-        # Get vocab_word vectors TODO: Should be a file to load
-        vocab_vectors = {}
-        for word, item in vocab.iteritems():
-            vector = fast_text_model[word]
-            vocab_vectors[word] = vector, np.linalg.norm(vector)
+        # Load vocabulary vectors
+        vocab_vectors = load_pickle_file(paths['vocab_vectors_context'])
+
+        # Load FastText model used for preprocessing
+        print("Load existing FastText model...")
+        fast_text_model = fasttext.load_model(paths['fast_text_model_context'], encoding='utf-8')
 
         # Decode from standard input.
         sys.stdout.write("Human: ")
@@ -332,6 +329,9 @@ def decode():
             token_ids = sentence_to_token_ids(tf.compat.as_bytes(context + sentence), vocab)
 
             # Which bucket does it belong to?
+            if len(token_ids) >= _buckets[-1][0]:
+                print("Sentence too long. Slicing it to fit a bucket")
+                token_ids = token_ids[:(_buckets[-1][0]-1)]
             bucket_id = min([b for b in xrange(len(_buckets))
                              if _buckets[b][0] > len(token_ids)])
 
@@ -359,7 +359,7 @@ def decode():
             context = sentence # or context = output
             sys.stdout.flush()
             sentence = sys.stdin.readline()
-            sentence = preprocess_input(sentence)
+            sentence = preprocess_input(sentence, fast_text_model, vocab_vectors)
 
 
 def self_test():
