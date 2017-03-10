@@ -161,7 +161,7 @@ def train():
     filename_queue = input_pipeline(start_name=paths['train_file'])
     filename_queue_dev = input_pipeline(start_name=paths['dev_file'])
 
-    with open(os.path.join(FLAGS.train, "perplexity_log.txt"), 'w') as fileObject:
+    with open(os.path.join(FLAGS.train_dir, "perplexity_log.txt"), 'w') as fileObject:
         fileObject.write("Step \tPerplexity \tBucket perplexity")
 
     # Avoid allocating all of the GPU memory
@@ -280,7 +280,7 @@ def train():
                             bucket_value.simple_value = eval_ppx
                         summary_writer.add_summary(perplexity_summary, model.global_step.eval())
 
-                        with open(os.path.join(FLAGS.train, "perplexity_log.txt"), 'a') as fileObject:
+                        with open(os.path.join(FLAGS.train_dir, "perplexity_log.txt"), 'a') as fileObject:
                             fileObject.write(str(model.global_step) + " \t" + str(perplexity) + bucket_perplexity)
 
                         # Save model if checkpoint was the best one

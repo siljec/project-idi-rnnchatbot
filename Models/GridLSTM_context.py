@@ -166,7 +166,7 @@ def train():
     # Avoid allocating all of the GPU memory
     config = get_session_configs()
 
-    with open(os.path.join(FLAGS.train, "perplexity_log.txt"), 'w') as fileObject:
+    with open(os.path.join(FLAGS.train_dir, "perplexity_log.txt"), 'w') as fileObject:
         fileObject.write("Step \tPerplexity \tBucket perplexity")
 
     with tf.device(use_gpu):
@@ -287,7 +287,7 @@ def train():
                             bucket_value.simple_value = eval_ppx
                         summary_writer.add_summary(perplexity_summary, model.global_step.eval())
 
-                        with open(os.path.join(FLAGS.train, "perplexity_log.txt"), 'a') as fileObject:
+                        with open(os.path.join(FLAGS.train_dir, "perplexity_log.txt"), 'a') as fileObject:
                             fileObject.write(str(model.global_step) + " \t" + str(perplexity) + bucket_perplexity)
                         # Save model if checkpoint was the best one
                         if perplexity < lowest_perplexity: #and current_step > 400000:
