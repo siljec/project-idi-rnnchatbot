@@ -37,10 +37,13 @@ import re
 from math import exp
 from random import choice
 import time
+import fasttext
 
 sys.path.insert(0, '../Preprocessing') # To access methods from another file from another folder
 from create_vocabulary import read_vocabulary_from_file
 from tokenize import sentence_to_token_ids
+from preprocess_helpers import load_pickle_file
+
 from helpers import check_for_needed_files_and_create, preprocess_input
 import numpy as np
 from six.moves import xrange  # pylint: disable=redefined-builtin
@@ -304,11 +307,18 @@ def decode():
         # Load vocabularies.
         vocab, rev_vocab = read_vocabulary_from_file(paths['vocab_path'])
 
+        # Load vocabulary vectors
+        vocab_vectors = load_pickle_file(paths['vocab_vectors'])
+
+        # Load FastText model used for preprocessing
+        print("Load existing FastText model...")
+        fast_text_model = fasttext.load_model('./datafiles/model.bin', encoding='utf-8')
+
         # Decode from standard input.
         sys.stdout.write("Human: ")
         sys.stdout.flush()
         sentence = sys.stdin.readline()
-        sentence = preprocess_input(sentence)
+        sentence = preprocess_input(sentence, fast_text_model, vocab_vectors)
         while sentence:
             # Get token-ids for the input sentence.
             token_ids = sentence_to_token_ids(tf.compat.as_bytes(sentence), vocab)
@@ -339,7 +349,7 @@ def decode():
             print("Human: ", end="")
             sys.stdout.flush()
             sentence = sys.stdin.readline()
-            sentence = preprocess_input(sentence)
+            sentence = preprocess_input(sentence, fast_text_model, vocab_vectors)
 
 
 def self_test():
