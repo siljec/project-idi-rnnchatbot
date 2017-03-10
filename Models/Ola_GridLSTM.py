@@ -277,7 +277,7 @@ def train():
                         if perplexity < lowest_perplexity:
                             lowest_perplexity = perplexity
                             checkpoint_path = os.path.join(FLAGS.train_dir, "Ola_best_.ckpt")
-                            with open(FLAGS.train + "perplexity_log.txt", 'w') as fileObject:
+                            with open(os.path.join(FLAGS.train, "perplexity_log.txt"), 'w') as fileObject:
                                 fileObject.write(str(model.global_step) + " \t perplexity: " + perplexity)
                             model.saver.save(sess, checkpoint_path, global_step=model.global_step)
 
