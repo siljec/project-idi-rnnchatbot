@@ -42,7 +42,7 @@ sys.path.insert(0, '../Preprocessing') # To access methods from another file fro
 from create_vocabulary import read_vocabulary_from_file
 from preprocess_helpers import load_pickle_file, get_time
 
-from helpers import check_for_needed_files_and_create, preprocess_input, sentence_to_token_ids, get_batch, input_pipeline, get_session_configs
+from helpers import check_for_needed_files_and_create, preprocess_input, sentence_to_token_ids, get_batch, input_pipeline, get_session_configs, self_test, decode_sentence
 sys.path.insert(0, '../')
 from variables import paths_from_model as paths, tokens, _buckets, vocabulary_size, max_training_steps, print_frequency, steps_per_checkpoint, size, num_layers, batch_size, use_gpu
 
@@ -152,9 +152,6 @@ def train():
 
             reader_dev_data = tf.TextLineReader()
             _, txt_row_dev_data = reader_dev_data.read(filename_queue_dev)
-
-            coord = tf.train.Coordinator()
-            threads = tf.train.start_queue_runners(coord=coord)
 
             lowest_perplexity = 20.0
 
@@ -274,33 +271,7 @@ def decode():
         sentence = sys.stdin.readline()
         sentence = preprocess_input(sentence, fast_text_model, vocab_vectors)
         while sentence:
-            # Get token-ids for the input sentence.
-            token_ids = sentence_to_token_ids(tf.compat.as_bytes(sentence), vocab)
-
-            # Which bucket does it belong to?
-            if len(token_ids) >= _buckets[-1][0]:
-                print("Sentence too long. Slicing it to fit a bucket")
-                token_ids = token_ids[:(_buckets[-1][0]-1)]
-            bucket_id = min([b for b in xrange(len(_buckets))
-                             if _buckets[b][0] > len(token_ids)])
-
-            # Get a 1-element batch to feed the sentence to the model.
-            encoder_inputs, decoder_inputs, target_weights = model.get_batch(
-                {bucket_id: [(token_ids, [])]}, bucket_id)
-
-            # Get output logits for the sentence.
-            _, _, output_logits = model.step(sess, encoder_inputs, decoder_inputs,
-                                             target_weights, bucket_id, True)
-
-            # This is a greedy decoder - outputs are just argmaxes of output_logits.
-            outputs = [int(np.argmax(logit, axis=1)) for logit in output_logits]
-
-            # If there is an EOT symbol in outputs, cut them at that point.
-            if EOT_ID in outputs:
-              outputs = outputs[:outputs.index(EOT_ID)]
-
-            # Print out sentence corresponding to outputs.
-            output = [tf.compat.as_str(rev_vocab[output]) for output in outputs]
+            output = decode_sentence(sentence, vocab, rev_vocab, model, sess)
             print("Ola: " + " ".join(output))
             print("Human: ", end="")
             sys.stdout.flush()
@@ -308,25 +279,9 @@ def decode():
             sentence = preprocess_input(sentence, fast_text_model, vocab_vectors)
 
 
-def self_test():
-    """Test the model."""
-    with tf.Session(config=get_session_configs()) as sess:
-        print("Self-test for neural translation model.")
-        # Create model with vocabularies of 10, 2 small buckets, 2 layers of 32.
-        model = gridLSTM_model.GridLSTM_model(10, 10, [(3, 3), (6, 6)], 32, 2, 5.0, 32, 0.3, 0.99, num_samples=8)
-        sess.run(tf.initialize_all_variables())
-        # Fake data set for both the (3, 3) and (6, 6) bucket.
-        data_set = ([([1, 1], [2, 2]), ([3, 3], [4]), ([5], [6])],
-                    [([1, 1, 1, 1, 1], [2, 2, 2, 2, 2]), ([3, 3, 3], [5, 6])])
-        for _ in xrange(5):  # Train the fake model for 5 steps.
-            bucket_id = choice([0, 1])
-            encoder_inputs, decoder_inputs, target_weights = model.get_batch(data_set, bucket_id)
-            model.step(sess, encoder_inputs, decoder_inputs, target_weights, bucket_id, False)
-
-
 def main(_):
     if FLAGS.self_test:
-        self_test()
+        self_test(gridLSTM_model.GridLSTM_model)
     elif FLAGS.decode:
         decode()
     else:
