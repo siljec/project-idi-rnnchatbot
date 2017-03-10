@@ -41,10 +41,9 @@ import fasttext
 
 sys.path.insert(0, '../Preprocessing') # To access methods from another file from another folder
 from create_vocabulary import read_vocabulary_from_file
-from tokenize import sentence_to_token_ids
 from preprocess_helpers import load_pickle_file
 
-from helpers import check_for_needed_files_and_create, preprocess_input
+from helpers import check_for_needed_files_and_create, preprocess_input, sentence_to_token_ids
 import numpy as np
 from six.moves import xrange  # pylint: disable=redefined-builtin
 import tensorflow as tf
@@ -156,7 +155,7 @@ def train():
     """Train a en->fr translation model using WMT data."""
 
     print("Checking for needed files")
-    check_for_needed_files_and_create(FLAGS.vocab_size)
+    check_for_needed_files_and_create()
 
     print("Creating file queue")
     filename_queue = input_pipeline(start_name=paths['train_file'])

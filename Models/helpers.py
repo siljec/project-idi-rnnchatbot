@@ -5,6 +5,9 @@ sys.path.insert(0, '../Preprocessing') # To access methods from another file fro
 from preprocess import start_preprocessing
 from variables import paths_from_model, tokens
 from preprocessing3 import distance
+from variables import tokens
+
+_, UNK_ID = tokens['unk']
 
 
 def read_words_from_misspelling_file(path):
@@ -36,7 +39,7 @@ def replace_misspelled_words_in_sentence(sentence, misspelllings_path):
     return final_sentence
 
 
-def check_for_needed_files_and_create(vocab_size):
+def check_for_needed_files_and_create():
     if not os.path.isdir(paths_from_model['ubuntu']):
         print("Ubuntu Dialogue Corpus not found or is not on the right path. ")
         print('1')
@@ -98,3 +101,25 @@ def preprocess_input(sentence, fast_text_model, vocab):
         sentence.replace(word, similar_word)
 
     return sentence
+
+_WORD_SPLIT = re.compile(b"([.,!?\":;)(])")
+_DIGIT_RE = re.compile(br"\d")
+
+def basic_tokenizer(sentence):
+    """Very basic tokenizer: split the sentence into a list of tokens"""
+    words = []
+    for space_separated_fragment in sentence.strip().split():
+        words.extend(re.split(_WORD_SPLIT, space_separated_fragment))
+    return [w for w in words if w]
+
+
+def sentence_to_token_ids(sentence, vocabulary):
+    """Convert a string to list of integers representing token-ids.
+    For example, a sentence "I have a dog" may become tokenized into
+    ["I", "have", "a", "dog"] and with vocabulary {"I": 1, "have": 2,
+    "a": 4, "dog": 7"} this function will return [1, 2, 4, 7].
+    Returns:
+    a list of integers, the token-ids for the sentence.
+    """
+    words = basic_tokenizer(sentence)
+    return [vocabulary.get(w, UNK_ID) for w in words]
