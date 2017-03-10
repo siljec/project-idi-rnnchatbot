@@ -5,7 +5,8 @@ sys.path.insert(0, '../Preprocessing') # To access methods from another file fro
 from preprocess import start_preprocessing
 from variables import paths_from_model, tokens
 from preprocessing3 import distance
-from variables import tokens
+from variables import tokens, paths_from_model as paths
+import tensorflow as tf
 
 _, UNK_ID = tokens['unk']
 
@@ -125,3 +126,45 @@ def sentence_to_token_ids(sentence, vocabulary):
     """
     words = basic_tokenizer(sentence)
     return [vocabulary.get(w, UNK_ID) for w in words]
+
+
+def get_batch(source, train_set, batch_size, ac_function=max):
+    # Feed buckets until one of them reach the batch_size
+    while ac_function([len(x) for x in train_set]) < batch_size:
+
+        # Convert tensor to array
+        holder = source.eval()
+        holder = holder.split(',')
+
+        # x_data is on the left side of the comma, while y_data is on the right. Also casting to integers.
+        x = [int(i) for i in holder[0].split()]
+        y = [int(i) for i in holder[1].split()]
+
+        # Feed the correct bucket to input the read line. Lines longer than the largest bucket is excluded.
+        for bucket_id, (source_size, target_size) in enumerate(_buckets):
+            if len(x) < source_size and len(y) < target_size:
+                train_set[bucket_id].append([x, y])
+                break
+
+    # Find the largest bucket (that made the while loop terminate)
+    _, largest_bucket_index = max([(len(x), i) for i, x in enumerate(train_set)])
+
+    return train_set, largest_bucket_index
+
+def input_pipeline(root=paths['preprocess_root_files'], start_name=paths['train_file']):
+    # Finds all filenames that match the root and start_name
+    filenames = [root + filename for filename in os.listdir(root) if filename.startswith(start_name)]
+
+    # Adds the filenames to the queue
+    # Can also add args such as num_epocs and shuffle. shuffle=True will shuffle the files from 'filenames'
+    filename_queue = tf.train.string_input_producer(filenames)
+    print("Files added to queue: ", filenames)
+
+    return filename_queue
+
+
+def get_session_configs():
+    config = tf.ConfigProto()
+    config.gpu_options.allow_growth = True
+    config.allow_soft_placement = True
+    return config

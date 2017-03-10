@@ -23,7 +23,8 @@ paths_from_model = {
     'misspellings_context': '../Preprocessing/context/misspellings.txt',
     'fast_text_model_context': '../Preprocessing/context/model.bin',
     'vocab_vectors': '../Preprocessing/datafiles/vocab_vectors_path.pickle',
-    'vocab_vectors_context': '../Preprocessing/context/vocab_vectors_path.pickle'
+    'vocab_vectors_context': '../Preprocessing/context/vocab_vectors_path.pickle',
+    'perplexity_log': 'perplexity_log.txt'
 }
 
 paths_from_preprocessing = {

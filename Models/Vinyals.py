@@ -33,7 +33,6 @@ from __future__ import print_function
 
 import os
 import sys
-import re
 from math import exp
 from random import choice
 import time
@@ -43,7 +42,7 @@ sys.path.insert(0, '../Preprocessing') # To access methods from another file fro
 from create_vocabulary import read_vocabulary_from_file
 from preprocess_helpers import load_pickle_file
 
-from helpers import check_for_needed_files_and_create, preprocess_input, sentence_to_token_ids
+from helpers import check_for_needed_files_and_create, preprocess_input, sentence_to_token_ids, get_batch, input_pipeline, get_session_configs
 import numpy as np
 from six.moves import xrange  # pylint: disable=redefined-builtin
 import tensorflow as tf
@@ -72,59 +71,11 @@ tf.app.flags.DEFINE_boolean("use_fp16", False, "Train using fp16 instead of fp32
 
 FLAGS = tf.app.flags.FLAGS
 
-# We use a number of buckets and pad to the closest one for efficiency.
-# See seq2seq_model.Seq2SeqModel for details of how they work.
-
 _PAD, PAD_ID = tokens['padding']
 _GO, GO_ID = tokens['go']
 _EOS, EOS_ID = tokens['eos']
 _EOT, EOT_ID = tokens['eot']
 _UNK, UNK_ID = tokens['unk']
-
-
-def input_pipeline(root=paths['preprocess_root_files'], start_name=paths['train_file']):
-
-    # Finds all filenames that match the root and start_name
-    filenames = [root + filename for filename in os.listdir(root) if filename.startswith(start_name)]
-
-    # Adds the filenames to the queue
-    # Can also add args such as num_epocs and shuffle. shuffle=True will shuffle the files from 'filenames'
-    filename_queue = tf.train.string_input_producer(filenames)
-    print("Files added to queue: ", filenames)
-
-    return filename_queue
-
-
-def get_batch(source, train_set, batch_size=FLAGS.batch_size, ac_function=max):
-
-    # Feed buckets until one of them reach the batch_size
-    while ac_function([len(x) for x in train_set]) < batch_size:
-
-        # Convert tensor to array
-        holder = source.eval()
-        holder = holder.split(',')
-
-        # x_data is on the left side of the comma, while y_data is on the right. Also casting to integers.
-        x = [int(i) for i in holder[0].split()]
-        y = [int(i) for i in holder[1].split()]
-
-        # Feed the correct bucket to input the read line. Lines longer than the largest bucket is excluded.
-        for bucket_id, (source_size, target_size) in enumerate(_buckets):
-            if len(x) < source_size and len(y) < target_size:
-                train_set[bucket_id].append([x, y])
-                break
-
-    # Find the largest bucket (that made the while loop terminate)
-    _, largest_bucket_index = max([(len(x), i) for i, x in enumerate(train_set)])
-
-    return train_set, largest_bucket_index
-
-
-def get_session_configs():
-    config = tf.ConfigProto()
-    config.gpu_options.allow_growth = True
-    config.allow_soft_placement = True
-    return config
 
 
 def create_model(session, forward_only):
@@ -161,10 +112,10 @@ def train():
     filename_queue = input_pipeline(start_name=paths['train_file'])
     filename_queue_dev = input_pipeline(start_name=paths['dev_file'])
 
-    perplexity_log_path = os.path.join(FLAGS.train_dir, "perplexity_log.txt")
+    perplexity_log_path = os.path.join(FLAGS.train_dir, paths['perplexity_log'])
 
     if not os.path.exists(perplexity_log_path):
-        with open(os.path.join(FLAGS.train_dir, "perplexity_log.txt"), 'w') as fileObject:
+        with open(perplexity_log_path, 'w') as fileObject:
             fileObject.write("Step \tPerplexity \tBucket perplexity")
 
     # Avoid allocating all of the GPU memory
@@ -214,7 +165,7 @@ def train():
                     # Get a batch
                     train_set, bucket_id = get_batch(txt_row_train_data, train_set)
                     start_time = time.time()
-                    encoder_inputs, decoder_inputs, target_weights = model.get_batch(train_set, bucket_id)
+                    encoder_inputs, decoder_inputs, target_weights = model.get_batch(train_set, bucket_id, FLAGS.batch_size)
 
                     # Clean out trained bucket
                     train_set[bucket_id] = []
@@ -283,7 +234,7 @@ def train():
                             bucket_value.simple_value = eval_ppx
                         summary_writer.add_summary(perplexity_summary, model.global_step.eval())
 
-                        with open(os.path.join(FLAGS.train_dir, "perplexity_log.txt"), 'a') as fileObject:
+                        with open(os.path.join(FLAGS.train_dir, paths['perplexity_log']), 'a') as fileObject:
                             fileObject.write(str(model.global_step) + " \t" + str(perplexity) + bucket_perplexity + "\n")
 
                         # Save model if checkpoint was the best one
@@ -303,16 +254,6 @@ def train():
             finally:
                 coord.request_stop()
             coord.join(threads)
-
-
-def swap_eos(sentence):
-    sentence_holder = []
-    for word in sentence:
-        if word == '_EOS':
-            sentence_holder.append(' \n')
-        else:
-            sentence_holder.append(word)
-    return sentence_holder
 
 
 def decode():
@@ -367,7 +308,6 @@ def decode():
 
             # Print out sentence corresponding to outputs.
             output = [tf.compat.as_str(rev_vocab[output]) for output in outputs]
-            output = swap_eos(output)
             print("Vinyals: " + " ".join(output))
             print("Human: ", end="")
             sys.stdout.flush()
