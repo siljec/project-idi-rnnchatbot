@@ -2,7 +2,7 @@
 
 paths_from_model = {
     'preprocess_root_files': '../Preprocessing/datafiles/',
-    'vocab_path': '../Preprocessing/datafiles/vocabulary.txt',
+    'vocab_path': '../Preprocessing/datafiles/vocab100000.txt',
     'train_path': '../Preprocessing/datafiles/training_data.txt',
     'train_file': 'training_data.txt',
     'dev_path': '../Preprocessing/datafiles/validation_data.txt',
@@ -55,7 +55,7 @@ paths_from_preprocessing = {
     'validation_data': "./datafiles/validation_data.txt",
     'test_data': "./datafiles/test_data.txt",
 
-    'vocabulary_txt_path': "./datafiles/vocabulary.txt",
+    'vocabulary_txt_path': "./datafiles/vocab100000.txt",
     'vocabulary_pickle_path': "./datafiles/vocabulary.pickle",
 
     'vocab_vectors_path': "./datafiles/vocab_vectors_path.pickle",

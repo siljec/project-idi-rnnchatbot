@@ -177,3 +177,9 @@ def replace_unk_with_most_similar(source_file_path, new_file_path, unk_to_vocab_
             new_word = replace_word_helper(last_word, unk_to_vocab_mapping)
             new_file.write(sentence + new_word + '\n')
     new_file.close()
+
+
+sorted_dict = find_dictionary(x_train="./datafiles/bucket_data_x.txt", y_train="./datafiles/bucket_data_y.txt")
+# Vocab is an array
+vocab = sorted_dict[:100000]
+save_vocabulary("./datafiles/vocab100000.txt", vocab, ['_PAD', '_GO', '_EOS', '_EOT', '_UNK'])
