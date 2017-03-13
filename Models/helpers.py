@@ -5,6 +5,7 @@ sys.path.insert(0, '../Preprocessing') # To access methods from another file fro
 from preprocess import start_preprocessing
 from variables import paths_from_model, tokens
 from preprocessing3 import distance
+from preprocess_helpers import shuffle_file
 from variables import tokens, paths_from_model as paths, _buckets
 import tensorflow as tf
 import numpy as np
@@ -129,6 +130,16 @@ def sentence_to_token_ids(sentence, vocabulary):
     """
     words = basic_tokenizer(sentence)
     return [vocabulary.get(w, UNK_ID) for w in words]
+
+
+def check_and_shuffle_file(key, sess, read_line, file_path):
+    # Check if we should shuffle training file
+    holder = int(sess.run(key).split(":")[1])
+    if holder < read_line:
+        shuffle_file(file_path, file_path)
+        print("Training file shuffled")
+
+    return holder
 
 
 def get_batch(source, train_set, batch_size, ac_function=max):

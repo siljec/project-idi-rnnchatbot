@@ -42,11 +42,10 @@ sys.path.insert(0, '../Preprocessing') # To access methods from another file fro
 from create_vocabulary import read_vocabulary_from_file
 from preprocess_helpers import load_pickle_file, get_time
 
-from helpers import check_for_needed_files_and_create, preprocess_input, sentence_to_token_ids, get_batch, input_pipeline, get_session_configs, self_test, decode_sentence
+from helpers import check_for_needed_files_and_create, preprocess_input, get_batch, input_pipeline, get_session_configs, self_test, decode_sentence, check_and_shuffle_file
 sys.path.insert(0, '../')
 from variables import paths_from_model as paths, tokens, _buckets, vocabulary_size, max_training_steps, print_frequency, steps_per_checkpoint, size, num_layers, batch_size, use_gpu
 
-import numpy as np
 import tensorflow as tf
 from six.moves import xrange  # pylint: disable=redefined-builtin
 
@@ -142,13 +141,14 @@ def train():
             step_time, loss = 0.0, 0.0
             current_step = 0
             previous_losses = []
+            read_line = 0
 
             # Create log writer object
             print("Create log writer object")
             summary_writer = tf.train.SummaryWriter(FLAGS.log_dir, graph=tf.get_default_graph())
 
             reader_train_data = tf.TextLineReader()  # skip_header_lines=int, number of lines to skip
-            _, txt_row_train_data = reader_train_data.read(filename_queue)
+            key, txt_row_train_data = reader_train_data.read(filename_queue)
 
             reader_dev_data = tf.TextLineReader()
             _, txt_row_dev_data = reader_dev_data.read(filename_queue_dev)
@@ -162,6 +162,8 @@ def train():
                 while current_step < FLAGS.max_train_steps:  # not coord.should_stop():
                     if current_step % FLAGS.print_frequency == 0:
                         print("Step number: " + str(current_step))
+
+                    read_line = check_and_shuffle_file(key, sess, read_line, paths['train_path'])
 
                     # Get a batch
                     train_set, bucket_id = get_batch(txt_row_train_data, train_set, FLAGS.batch_size)
@@ -184,7 +186,7 @@ def train():
                         check_time = time.time()
                         print(get_time(train_time, "to train"))
                         # Print statistics for the previous epoch.
-                        dev_set, bucket_id = get_batch(txt_row_dev_data, dev_set, ac_function=min)
+                        dev_set, bucket_id = get_batch(txt_row_dev_data, dev_set, FLAGS.batch_size, ac_function=min)
 
                         perplexity = exp(float(loss)) if loss < 300 else float("inf")
                         print("global step %d learning rate %.4f step-time %.2f perplexity "
