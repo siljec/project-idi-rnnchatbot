@@ -11,11 +11,12 @@ import time
 def path_exists(path):
     return os.path.exists(path)
 
-def get_time(start_time):
+
+def get_time(start_time, sufix=""):
     duration = time.time() - start_time
     m, s = divmod(duration, 60)
     h, m = divmod(m, 60)
-    return "%d hours %d minutes %d seconds" % (h, m, s)
+    return "%d hours %d minutes %d seconds %s" % (h, m, s, sufix)
 
 def file_len(file_name):
     with open(file_name) as f:

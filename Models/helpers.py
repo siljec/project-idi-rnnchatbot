@@ -5,9 +5,13 @@ sys.path.insert(0, '../Preprocessing') # To access methods from another file fro
 from preprocess import start_preprocessing
 from variables import paths_from_model, tokens
 from preprocessing3 import distance
-from variables import tokens
+from variables import tokens, paths_from_model as paths, _buckets
+import tensorflow as tf
+import numpy as np
+from random import choice
 
 _, UNK_ID = tokens['unk']
+_, EOT_ID = tokens['eot']
 
 
 def read_words_from_misspelling_file(path):
@@ -125,3 +129,102 @@ def sentence_to_token_ids(sentence, vocabulary):
     """
     words = basic_tokenizer(sentence)
     return [vocabulary.get(w, UNK_ID) for w in words]
+
+
+def get_batch(source, train_set, batch_size, ac_function=max):
+    # Feed buckets until one of them reach the batch_size
+    while ac_function([len(x) for x in train_set]) < batch_size:
+
+        # Convert tensor to array
+        holder = source.eval()
+        holder = holder.split(',')
+
+        # x_data is on the left side of the comma, while y_data is on the right. Also casting to integers.
+        x = [int(i) for i in holder[0].split()]
+        y = [int(i) for i in holder[1].split()]
+
+        # Feed the correct bucket to input the read line. Lines longer than the largest bucket is excluded.
+        for bucket_id, (source_size, target_size) in enumerate(_buckets):
+            if len(x) < source_size and len(y) < target_size:
+                train_set[bucket_id].append([x, y])
+                break
+
+    # Find the largest bucket (that made the while loop terminate)
+    _, largest_bucket_index = max([(len(x), i) for i, x in enumerate(train_set)])
+
+    return train_set, largest_bucket_index
+
+
+def input_pipeline(root=paths['preprocess_root_files'], start_name=paths['train_file']):
+    # Finds all filenames that match the root and start_name
+    filenames = [root + filename for filename in os.listdir(root) if filename.startswith(start_name)]
+
+    # Adds the filenames to the queue
+    # Can also add args such as num_epocs and shuffle. shuffle=True will shuffle the files from 'filenames'
+    filename_queue = tf.train.string_input_producer(filenames)
+    print("Files added to queue: ", filenames)
+
+    return filename_queue
+
+
+def get_session_configs():
+    config = tf.ConfigProto()
+    config.gpu_options.allow_growth = True
+    config.allow_soft_placement = True
+    return config
+
+
+def self_test(test_model):
+    """Test the model."""
+
+    # Avoid allocating all of the GPU memory
+    config = get_session_configs()
+
+    with tf.Session(config=config) as sess:
+          print("Self-test for neural translation model.")
+          # Create model with vocabularies of 10, 2 small buckets, 2 layers of 32.
+          model = test_model(10, 10, [(3, 3), (6, 6)], 32, 2,
+                                             5.0, 32, 0.3, 0.99, num_samples=8)
+          sess.run(tf.initialize_all_variables())
+
+          # Fake data set for both the (3, 3) and (6, 6) bucket.
+          data_set = ([([1, 1], [2, 2]), ([3, 3], [4]), ([5], [6])],
+                      [([1, 1, 1, 1, 1], [2, 2, 2, 2, 2]), ([3, 3, 3], [5, 6])])
+          for _ in xrange(5):  # Train the fake model for 5 steps.
+            bucket_id = choice([0, 1])
+            encoder_inputs, decoder_inputs, target_weights = model.get_batch(
+                data_set, bucket_id)
+            model.step(sess, encoder_inputs, decoder_inputs, target_weights,
+                       bucket_id, False)
+
+
+def decode_sentence(sentence, vocab, rev_vocab, model, sess):
+
+        # Get token-ids for the input sentence.
+        token_ids = sentence_to_token_ids(tf.compat.as_bytes(sentence), vocab)
+
+        # Which bucket does it belong to?
+        if len(token_ids) >= _buckets[-1][0]:
+            print("Sentence too long. Slicing it to fit a bucket")
+            token_ids = token_ids[:(_buckets[-1][0] - 1)]
+        bucket_id = min([b for b in xrange(len(_buckets))
+                         if _buckets[b][0] > len(token_ids)])
+
+        # Get a 1-element batch to feed the sentence to the model.
+        encoder_inputs, decoder_inputs, target_weights = model.get_batch(
+            {bucket_id: [(token_ids, [])]}, bucket_id)
+
+        # Get output logits for the sentence.
+        _, _, output_logits = model.step(sess, encoder_inputs, decoder_inputs,
+                                         target_weights, bucket_id, True)
+
+        # This is a greedy decoder - outputs are just argmaxes of output_logits.
+        outputs = [int(np.argmax(logit, axis=1)) for logit in output_logits]
+
+        # If there is an EOS symbol in outputs, cut them at that point.
+        if EOT_ID in outputs:
+            outputs = outputs[:outputs.index(EOT_ID)]
+
+        # Print out sentence corresponding to outputs.
+        output = [tf.compat.as_str(rev_vocab[output]) for output in outputs]
+        return output
