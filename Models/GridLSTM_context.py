@@ -166,6 +166,12 @@ def train():
     # Avoid allocating all of the GPU memory
     config = get_session_configs()
 
+    perplexity_log_path = os.path.join(FLAGS.train_dir, "perplexity_log.txt")
+
+    if not os.path.exists(perplexity_log_path):
+        with open(os.path.join(FLAGS.train_dir, "perplexity_log.txt"), 'w') as fileObject:
+            fileObject.write("Step \tPerplexity \tBucket perplexity")
+
     with tf.device(use_gpu):
         with tf.Session(config=config) as sess:
             # Create model.
@@ -202,6 +208,9 @@ def train():
 
             minutes = int(boot_time / 60)
             seconds = boot_time % 60
+
+            lowest_perplexity = 20.0
+
             print("Time ", minutes, " minutes ", seconds, " seconds to boot")
 
             print("Starting training loop")
@@ -260,6 +269,7 @@ def train():
 
                         # Run evals on development set and print their perplexity.
                         print("Run evaluation on development set")
+                        bucket_perplexity = ""
                         for bucket_id in xrange(len(_buckets)):
                             if len(dev_set[bucket_id]) == 0:
                                 print("  eval: empty bucket %d" % bucket_id)
@@ -271,6 +281,7 @@ def train():
 
                             _, eval_loss, _ = model.step(sess, encoder_inputs, decoder_inputs, target_weights, bucket_id, True)
                             eval_ppx = exp(float(eval_loss)) if eval_loss < 300 else float("inf")
+                            bucket_perplexity += "\t" + str(eval_ppx)
                             print("  eval: bucket %d perplexity %.2f" % (bucket_id, eval_ppx))
 
                             # Adding bucket perplexity to tensorboard
@@ -278,6 +289,15 @@ def train():
                             bucket_value.tag = "perplexity_bucket %d" % bucket_id
                             bucket_value.simple_value = eval_ppx
                         summary_writer.add_summary(perplexity_summary, model.global_step.eval())
+
+                        with open(os.path.join(FLAGS.train_dir, "perplexity_log.txt"), 'a') as fileObject:
+                            fileObject.write(str(model.global_step) + " \t" + str(perplexity) + bucket_perplexity + "\n")
+                        # Save model if checkpoint was the best one
+                        if perplexity < lowest_perplexity:
+                            lowest_perplexity = perplexity
+                            checkpoint_path = os.path.join(FLAGS.train_dir, "Ola_best_.ckpt")
+                            model.saver.save(sess, checkpoint_path, global_step=model.global_step)
+
                         sys.stdout.flush()
                         duration = time.time() - check_time
                         minutes = int(duration / 60)
