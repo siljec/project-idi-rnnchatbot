@@ -1,11 +1,12 @@
 import operator
-import re
+import re, os
 import time
 import random
 import numpy as np
 from preprocessing3 import distance
 from create_vocabulary import find_dictionary
 from itertools import izip
+from preprocess_helpers import split_line, get_time
 
 
 # Create histogram
@@ -396,6 +397,52 @@ def find_percentage_of_vocab_size(x_path, y_path, percentage):
 
     print("Need vocabulary size %i to cover %f of the dataset (%i / %i)" %(vocab_size, percentage, vocab_occurrences, all_words))
 
+
+def get_conversation_turn_stats(folders, max_turns):
+    start_time = time.time()
+    number_of_files_read = 0
+    # Array with occurrences of conversations with i turns. Array[i] get #conversations with i turns
+    turns = [0] * max_turns
+    exceeded_max_turns = 0
+
+    for folder in folders:
+        folder_path = "../../ubuntu-ranking-dataset-creator/src/dialogs/" + folder
+        for filename in os.listdir(folder_path):
+            number_of_files_read += 1
+            file_path = folder_path + "/" + filename
+            num_turns = get_num_turns_in_file(file_path)
+            if num_turns < max_turns:
+                turns[num_turns] +=1
+            else:
+                exceeded_max_turns += 1
+        print("Done with folder: " + str(folder) + ", read " + str(number_of_files_read) + " conversations")
+    print "Number of files read: " + str(number_of_files_read)
+    for occurrence in turns:
+        print(occurrence)
+    print("Exceeded max turns " + str(exceeded_max_turns))
+    print get_time(start_time)
+
+
+def get_num_turns_in_file(path, max_turns=1000):
+    user1_first_line = True
+    num_turns = 0
+    with open(path) as fileobject:
+        for line in fileobject:
+            text, current_user = split_line(line)
+            if text == "":
+                continue
+            if user1_first_line:
+                init_user, previous_user = current_user, current_user
+                user1_first_line = False
+                num_turns = 1
+            if current_user == previous_user:  # The user is still talking
+                pass
+            else:  # A new user responds
+                num_turns += 1
+            previous_user = current_user
+    return num_turns
+
+
 #get_stats('./datafiles/spell_checked_data_x.txt', more_than_words=30, less_than_words=10)
 #get_stats('./datafiles/spell_checked_data_y.txt', more_than_words=30, less_than_words=10)
 #get_bucket_stats('./datafiles/training_data.txt', buckets=[(10, 10), (20, 20), (35, 35), (50, 50)])
@@ -414,9 +461,34 @@ def find_percentage_of_vocab_size(x_path, y_path, percentage):
 #find_percentage_of_vocab_size("./datafiles/bucket_data_x.txt", "./datafiles/bucket_data_y.txt", 0.98)
 #find_percentage_of_vocab_size("./datafiles/bucket_data_x.txt", "./datafiles/bucket_data_y.txt", 0.97)
 #find_percentage_of_vocab_size("./datafiles/bucket_data_x.txt", "./datafiles/bucket_data_y.txt", 0.96)
-#find_percentage_of_vocab_size("./datafiles/bucket_data_x.txt", "./datafiles/bucket_data_y.txt", 0.95)
+#find_percentage_of_vocab_size("./datafil es/bucket_data_x.txt", "./datafiles/bucket_data_y.txt", 0.95)
 #get_unique_words('./datafiles/bucket_data_x.txt','./datafiles/bucket_data_y.txt')
 #get_number_of_turns('./datafiles/raw_data_x.txt', './datafiles/raw_data_y.txt')
 #get_all_words('./datafiles/raw_data_x.txt', './datafiles/raw_data_y.txt')
 #get_word_histogram('./datafiles/raw_data_x.txt', './datafiles/raw_data_y.txt')
-get_size_of_bucket_sizes(100, './context/bucket_data_x.txt', './context/bucket_data_y.txt')
+#get_size_of_bucket_sizes(100, './context/bucket_data_x.txt', './context/bucket_data_y.txt')
+folders = ['30', '356', '195', '142', '555', '43', '50', '36', '46', '85', '41', '118', '166', '104', '471', '37',
+           '115', '47', '290', '308', '191', '457', '32', '231', '45', '133', '222', '213', '89', '92', '374', '98',
+           '219', '25', '21', '182', '140', '129', '264', '132', '258', '243', '42', '456', '301', '9', '269', '88',
+           '211', '123', '112', '23', '149', '105', '145', '39', '287', '249', '66', '51', '305', '241', '136',
+           '57', '174', '245', '407', '17', '281', '205', '235', '383', '38', '183', '2', '521', '408', '18', '347',
+           '74', '392', '334', '56', '156', '278', '230', '14', '265', '194', '187', '77', '163', '479', '82',
+           '320', '147', '178', '373', '172', '113', '75', '564', '224', '214', '71', '151', '226', '237', '167',
+           '52', '12', '128', '84', '342', '64', '102', '165', '91', '107', '97', '242', '44', '532', '336', '76',
+           '180', '130', '155', '393', '229', '94', '33', '13', '146', '73', '8', '958', '62', '125', '359', '6',
+           '198', '255', '49', '302', '154', '260', '313', '103', '263', '294', '196', '335', '170', '11', '152',
+           '19', '126', '596', '95', '29', '86', '210', '16', '204', '181', '349', '527', '386', '5', '223', '68',
+           '65', '201', '288', '28', '251', '364', '285', '343', '171', '274', '325', '247', '150', '449', '169',
+           '199', '283', '157', '368', '252', '282', '26', '176', '234', '232', '338', '22', '108', '168', '240',
+           '134', '418', '273', '441', '277', '248', '179', '186', '80', '188', '184', '238', '53', '93', '207',
+           '109', '233', '425', '79', '122', '27', '444', '24', '54', '208', '162', '111', '153', '90', '236',
+           '159', '138', '135', '266', '250', '256', '110', '148', '318', '67', '341', '346', '293', '225', '189',
+           '59', '217', '433', '760', '321', '330', '117', '315', '738', '594', '48', '322', '297', '100', '63',
+           '34', '304', '58', '228', '55', '120', '516', '3', '124', '192', '202', '119', '286', '221', '141',
+           '137', '398', '139', '354', '216', '96', '327', '259', '177', '299', '20', '31', '7', '197', '121',
+           '206', '69', '257', '15', '185', '291', '72', '144', '212', '366', '4', '116', '78', '175', '326', '365',
+           '577', '367', '160', '35', '87', '81', '61', '271', '314', '161', '200', '101', '127', '190', '173',
+           '303', '99', '209', '106', '164', '40', '215', '483', '254', '114', '143', '193', '203', '261', '70',
+           '60', '465', '218', '83', '131', '239', '227', '10', '220', '272', '158', '384']
+
+get_conversation_turn_stats(folders, 1000)
