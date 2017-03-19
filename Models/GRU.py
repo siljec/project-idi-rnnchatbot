@@ -60,9 +60,9 @@ tf.app.flags.DEFINE_integer("num_layers", num_layers, "Number of layers in the m
 tf.app.flags.DEFINE_integer("vocab_size", vocabulary_size, "English vocabulary size.")
 tf.app.flags.DEFINE_integer("print_frequency", print_frequency, "How many training steps to do per print.")
 tf.app.flags.DEFINE_integer("max_train_steps", max_training_steps, "How many training steps to do.")
-tf.app.flags.DEFINE_string("data_dir", "./Vinyals_data", "Data directory")
-tf.app.flags.DEFINE_string("train_dir", "./Vinyals_data", "Training directory.")
-tf.app.flags.DEFINE_string("log_dir", "./Vinyals_data/log_dir", "Logging directory.")
+tf.app.flags.DEFINE_string("data_dir", "./GRU_data", "Data directory")
+tf.app.flags.DEFINE_string("train_dir", "./GRU_data", "Training directory.")
+tf.app.flags.DEFINE_string("log_dir", "./GRU_data/log_dir", "Logging directory.")
 tf.app.flags.DEFINE_integer("max_train_data_size", 0, "Limit on the size of training data (0: no limit).")
 tf.app.flags.DEFINE_integer("steps_per_checkpoint", steps_per_checkpoint, "How many training steps to do per checkpoint.")
 tf.app.flags.DEFINE_boolean("decode", False, "Set to True for interactive decoding.")
@@ -91,7 +91,7 @@ def create_model(session, forward_only):
         FLAGS.batch_size,
         FLAGS.learning_rate,
         FLAGS.learning_rate_decay_factor,
-        use_lstm=True,
+        use_lstm=False,
         forward_only=forward_only)
     ckpt = tf.train.get_checkpoint_state(FLAGS.train_dir)
     if ckpt and tf.gfile.Exists(ckpt.model_checkpoint_path):
