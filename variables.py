@@ -160,8 +160,7 @@ tokens = {
 tokens_list = ['_PAD', '_GO', '_EOS', '_EOT', '_UNK', '_URL', '_EMJ', '_DIR']
 tokens_init_list = ['_PAD', '_GO', '_EOS', '_EOT', '_UNK']
 
-#_buckets = [(10, 10), (16, 16), (22, 22), (30, 30)]
-_buckets = [(10, 10), (16, 16), (22, 22), (60, 60)]
+_buckets = [(10, 10), (16, 16), (22, 22), (30, 30)]
 
 vocabulary_size = 30000
 print_frequency = 100
