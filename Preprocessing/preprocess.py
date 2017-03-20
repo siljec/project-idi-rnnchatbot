@@ -4,20 +4,21 @@ from preprocessing1 import preprocess1
 from preprocessing2 import preprocessing2
 from preprocessing3 import preprocessing3
 from preprocessing1_context import preprocess1_context
+from preprocessing1_contextFullTurns import preprocess1_contextFullTurns
 
 from preprocess_helpers import path_exists, shuffle_file, create_final_merged_files, from_index_to_words
 
 sys.path.insert(0, '../')
 from variables import tokens_init_list, _buckets, paths_from_preprocessing as paths, vocabulary_size
-
+from variables import contextFullTurns, context
 # All paths
 force_create_new_files = False
 force_train_fast_model_all_over = False
-context = False
-dir = "datafiles"
+
 if context:
     from variables import paths_from_preprocessing_context as paths
-
+if contextFullTurns:
+    from variables import paths_from_preprocessing_contextFullTurns as paths
 buckets = [_buckets[-1]]  # Only need the biggest bucket
 
 vocab_size = vocabulary_size - len(tokens_init_list)  # Minus number of init tokens
@@ -57,7 +58,7 @@ def start_preprocessing():
     print("Force create new files: " + str(force_create_new_files))
     print("Force train fast model: " + str(force_train_fast_model_all_over))
     print("Context: " + str(context))
-    print("Files will be saved to: " + str(dir))
+    print("ContextFullTurns: " + str(contextFullTurns))
     print("Will start preprocessing in 4 seconds")
     time.sleep(4)
 
@@ -69,6 +70,10 @@ def start_preprocessing():
     # Step 1
     if context:
         preprocess1_context(folders, force_create_new_files, paths['raw_data_x_path'], paths['raw_data_y_path'],
+                            paths['regex_x_path'], paths['regex_y_path'], paths['spell_checked_data_x_path'],
+                            paths['spell_checked_data_y_path'], paths['misspellings_path'])
+    elif contextFullTurns:
+        preprocess1_contextFullTurns(folders, force_create_new_files, paths['raw_data_x_path'], paths['raw_data_y_path'],
                             paths['regex_x_path'], paths['regex_y_path'], paths['spell_checked_data_x_path'],
                             paths['spell_checked_data_y_path'], paths['misspellings_path'])
     else:
@@ -104,3 +109,8 @@ def start_preprocessing():
         shuffle_file(paths['unshuffled_test_data'], paths['test_data'])
 
         from_index_to_words(paths['vocabulary_txt_path'], paths['test_data'], paths['test_file_words_path'])
+
+
+
+
+#start_preprocessing()

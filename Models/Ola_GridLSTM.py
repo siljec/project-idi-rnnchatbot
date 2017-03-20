@@ -45,12 +45,17 @@ from preprocess_helpers import load_pickle_file, get_time
 from helpers import check_for_needed_files_and_create, preprocess_input, get_batch, input_pipeline, get_session_configs, self_test, decode_sentence, check_and_shuffle_file
 sys.path.insert(0, '../')
 from variables import paths_from_model as paths, tokens, _buckets, vocabulary_size, max_training_steps, print_frequency, steps_per_checkpoint, size, num_layers, batch_size, use_gpu
+from variables import contextFullTurns, context
 
 import tensorflow as tf
 from six.moves import xrange  # pylint: disable=redefined-builtin
 
 import gridLSTM_model
 
+if context:
+    from variables import paths_from_preprocessing_context as paths
+if contextFullTurns:
+    from variables import paths_from_preprocessing_contextFullTurns as paths
 
 tf.app.flags.DEFINE_float("learning_rate", 0.5, "Learning rate.")
 tf.app.flags.DEFINE_float("learning_rate_decay_factor", 0.99, "Learning rate decays by this much.")
