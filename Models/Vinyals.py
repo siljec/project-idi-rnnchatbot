@@ -49,7 +49,12 @@ import tensorflow as tf
 import seq2seq_model
 sys.path.insert(0, '../')
 from variables import paths_from_model as paths, tokens, _buckets, vocabulary_size, max_training_steps, steps_per_checkpoint, print_frequency, size, batch_size, num_layers, use_gpu
+from variables import contextFullTurns, context
 
+if context:
+    from variables import paths_from_preprocessing_context as paths
+if contextFullTurns:
+    from variables import paths_from_preprocessing_contextFullTurns as paths
 
 tf.app.flags.DEFINE_float("learning_rate", 0.5, "Learning rate.")
 tf.app.flags.DEFINE_float("learning_rate_decay_factor", 0.99, "Learning rate decays by this much.")
@@ -164,9 +169,9 @@ def train():
                     read_line = check_and_shuffle_file(key, sess, read_line, paths['train_path'])
 
                     # Get a batch
-                    train_set, bucket_id = get_batch(txt_row_train_data, train_set)
+                    train_set, bucket_id = get_batch(txt_row_train_data, train_set, FLAGS.batch_size)
                     start_time = time.time()
-                    encoder_inputs, decoder_inputs, target_weights = model.get_batch(train_set, bucket_id, FLAGS.batch_size)
+                    encoder_inputs, decoder_inputs, target_weights = model.get_batch(train_set, bucket_id)
 
                     # Clean out trained bucket
                     train_set[bucket_id] = []
@@ -285,8 +290,6 @@ def decode():
             sys.stdout.flush()
             sentence = sys.stdin.readline()
             sentence = preprocess_input(sentence, fast_text_model, vocab_vectors)
-
-
 
 
 def main(_):
