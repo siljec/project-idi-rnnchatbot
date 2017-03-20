@@ -56,7 +56,7 @@ class Seq2SeqModel(object):
                batch_size,
                learning_rate,
                learning_rate_decay_factor,
-               use_lstm=False,
+               use_lstm=True,
                num_samples=512,
                forward_only=False,
                dtype=tf.float32):
@@ -183,6 +183,8 @@ class Seq2SeqModel(object):
         opt = tf.train.GradientDescentOptimizer(self.learning_rate)
       elif optimizer == "Adagrad":
         opt = tf.train.AdagradOptimizer(self.learning_rate)
+      elif optimizer == "Adam":
+        opt = tf.train.AdamOptimizer(self.learning_rate)
       for b in xrange(len(buckets)):
         gradients = tf.gradients(self.losses[b], params)
         clipped_gradients, norm = tf.clip_by_global_norm(gradients,
