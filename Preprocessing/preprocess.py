@@ -16,7 +16,6 @@ force_create_new_files = False
 force_train_fast_model_all_over = False
 context = False
 contextFullTurns = True
-#dir = "datafiles"
 if context:
     from variables import paths_from_preprocessing_context as paths
 if contextFullTurns:
@@ -61,8 +60,6 @@ def start_preprocessing():
     print("Force train fast model: " + str(force_train_fast_model_all_over))
     print("Context: " + str(context))
     print("ContextFullTurns: " + str(contextFullTurns))
-
-    #print("Files will be saved to: " + str(dir))
     print("Will start preprocessing in 4 seconds")
     time.sleep(4)
 

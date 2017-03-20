@@ -50,6 +50,13 @@ import seq2seq_model
 sys.path.insert(0, '../')
 from variables import paths_from_model as paths, tokens, _buckets, vocabulary_size, max_training_steps, steps_per_checkpoint, print_frequency, size, batch_size, num_layers, use_gpu
 
+context = False
+contextFullTurns = False
+
+if context:
+    from variables import paths_from_preprocessing_context as paths
+if contextFullTurns:
+    from variables import paths_from_preprocessing_contextFullTurns as paths
 
 tf.app.flags.DEFINE_float("learning_rate", 0.5, "Learning rate.")
 tf.app.flags.DEFINE_float("learning_rate_decay_factor", 0.99, "Learning rate decays by this much.")
