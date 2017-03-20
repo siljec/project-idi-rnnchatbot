@@ -10,12 +10,11 @@ from preprocess_helpers import path_exists, shuffle_file, create_final_merged_fi
 
 sys.path.insert(0, '../')
 from variables import tokens_init_list, _buckets, paths_from_preprocessing as paths, vocabulary_size
-
+from variables import contextFullTurns, context
 # All paths
 force_create_new_files = False
 force_train_fast_model_all_over = False
-context = False
-contextFullTurns = True
+
 if context:
     from variables import paths_from_preprocessing_context as paths
 if contextFullTurns:
@@ -112,3 +111,6 @@ def start_preprocessing():
         from_index_to_words(paths['vocabulary_txt_path'], paths['test_data'], paths['test_file_words_path'])
 
 
+
+
+#start_preprocessing()

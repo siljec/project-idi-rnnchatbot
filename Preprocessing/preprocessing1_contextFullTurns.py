@@ -128,7 +128,6 @@ def replace_mispelled_words_in_file(source_file_path, new_file_path, misspelled_
 
 
 def preprocess1_contextFullTurns(folders, force_create_new_files, raw_data_x_path, raw_data_y_path, regex_x_path, regex_y_path, spell_checked_data_x_path, spell_checked_data_y_path, misspellings_path):
-    print("PREPROCESS CONTEXT FULL TURSN")
     # Step 1: Extract dialogs from UDC all source files to x and y
     if force_create_new_files and path_exists(raw_data_x_path) and path_exists(raw_data_y_path):
         os.remove(raw_data_x_path)

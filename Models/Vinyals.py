@@ -49,9 +49,7 @@ import tensorflow as tf
 import seq2seq_model
 sys.path.insert(0, '../')
 from variables import paths_from_model as paths, tokens, _buckets, vocabulary_size, max_training_steps, steps_per_checkpoint, print_frequency, size, batch_size, num_layers, use_gpu
-
-context = False
-contextFullTurns = False
+from variables import contextFullTurns, context
 
 if context:
     from variables import paths_from_preprocessing_context as paths
@@ -291,8 +289,6 @@ def decode():
             sys.stdout.flush()
             sentence = sys.stdin.readline()
             sentence = preprocess_input(sentence, fast_text_model, vocab_vectors)
-
-
 
 
 def main(_):

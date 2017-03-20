@@ -45,14 +45,12 @@ from preprocess_helpers import load_pickle_file, get_time
 from helpers import check_for_needed_files_and_create, preprocess_input, get_batch, input_pipeline, get_session_configs, self_test, decode_sentence, check_and_shuffle_file
 sys.path.insert(0, '../')
 from variables import paths_from_model as paths, tokens, _buckets, vocabulary_size, max_training_steps, print_frequency, steps_per_checkpoint, size, num_layers, batch_size, use_gpu
+from variables import contextFullTurns, context
 
 import tensorflow as tf
 from six.moves import xrange  # pylint: disable=redefined-builtin
 
 import gridLSTM_model
-
-context = False
-contextFullTurns = False
 
 if context:
     from variables import paths_from_preprocessing_context as paths
