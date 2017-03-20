@@ -168,9 +168,9 @@ def train():
                     read_line = check_and_shuffle_file(key, sess, read_line, paths['train_path'])
 
                     # Get a batch
-                    train_set, bucket_id = get_batch(txt_row_train_data, train_set)
+                    train_set, bucket_id = get_batch(txt_row_train_data, train_set, FLAGS.batch_size)
                     start_time = time.time()
-                    encoder_inputs, decoder_inputs, target_weights = model.get_batch(train_set, bucket_id, FLAGS.batch_size)
+                    encoder_inputs, decoder_inputs, target_weights = model.get_batch(train_set, bucket_id)
 
                     # Clean out trained bucket
                     train_set[bucket_id] = []
