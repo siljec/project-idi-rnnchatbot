@@ -280,7 +280,7 @@ def decode():
 
             output = decode_sentence(sentence, vocab, rev_vocab, model, sess)
 
-            print("Vinyals: " + " ".join(output))
+            print("GRU: " + " ".join(output))
             print("Human: ", end="")
             sys.stdout.flush()
             sentence = sys.stdin.readline()
