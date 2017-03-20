@@ -105,6 +105,47 @@ paths_from_preprocessing_context = {
 
 }
 
+
+paths_from_preprocessing_contextFullTurns = {
+    'source_folder_root': "../../ubuntu-ranking-dataset-creator/src/dialogs/",
+    'raw_data_x_path': "./contextFullTurns/raw_data_x.txt",
+    'raw_data_y_path': "./contextFullTurns/raw_data_y.txt",
+
+    'regex_x_path': "./contextFullTurns/regex_x.txt",
+    'regex_y_path': "./contextFullTurns/regex_y.txt",
+
+    'spell_checked_data_x_path': "./contextFullTurns/spell_checked_data_x.txt",
+    'spell_checked_data_y_path': "./contextFullTurns/spell_checked_data_y.txt",
+    'misspellings_path': "./datafiles/misspellings.txt",
+
+    'fast_text_train_path': "./contextFullTurns/fast_text_train.txt",
+
+    'bucket_data_x_path': "./contextFullTurns/bucket_data_x.txt",
+    'bucket_data_y_path': "./contextFullTurns/bucket_data_y.txt",
+
+    'final_data_x_path': "./contextFullTurns/final_data_x.txt",
+    'final_data_y_path': "./contextFullTurns/final_data_y.txt",
+
+    'unshuffled_training_data': "./contextFullTurns/unshuffled_training_data.txt",
+    'unshuffled_validation_data': "./contextFullTurns/unshuffled_validation_data.txt",
+    'unshuffled_test_data': "./contextFullTurns/unshuffled_test_data.txt",
+
+    'training_data': "./contextFullTurns/training_data.txt",
+    'validation_data': "./contextFullTurns/validation_data.txt",
+    'test_data': "./contextFullTurns/test_data.txt",
+
+    'vocabulary_txt_path': "./contextFullTurns/vocabulary.txt",
+    'vocabulary_pickle_path': "./contextFullTurns/vocabulary.pickle",
+
+    'vocab_vectors_path': "./contextFullTurns/vocab_vectors_path.pickle",
+    'unk_vectors_path': "./contextFullTurns/unk_vectors_path.pickle",
+    'unk_to_vocab_pickle_path': "./contextFullTurns/unk_to_vocab.pickle",
+    'unk_to_vocab_txt_path': "./contextFullTurns/unk_to_vocab.txt",
+
+    'test_file_words_path': "./contextFullTurns/test_file_words_path.txt"
+
+}
+
 tokens = {
     'padding': ('_PAD', 0),
     'go': ('_GO', 1),
@@ -119,7 +160,8 @@ tokens = {
 tokens_list = ['_PAD', '_GO', '_EOS', '_EOT', '_UNK', '_URL', '_EMJ', '_DIR']
 tokens_init_list = ['_PAD', '_GO', '_EOS', '_EOT', '_UNK']
 
-_buckets = [(10, 10), (16, 16), (22, 22), (30, 30)]
+#_buckets = [(10, 10), (16, 16), (22, 22), (30, 30)]
+_buckets = [(10, 10), (16, 16), (22, 22), (60, 60)]
 
 vocabulary_size = 30000
 print_frequency = 100
