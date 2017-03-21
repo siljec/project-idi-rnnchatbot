@@ -5,26 +5,40 @@ from preprocessing2 import preprocessing2
 from preprocessing3 import preprocessing3
 from preprocessing1_context import preprocess1_context
 from preprocessing1_contextFullTurns import preprocess1_contextFullTurns
+from preprocessing1_opensubtitles import preprocess1_opensubtitles
+
 
 from preprocess_helpers import path_exists, shuffle_file, create_final_merged_files, from_index_to_words
 
 sys.path.insert(0, '../')
 from variables import tokens_init_list, _buckets, paths_from_preprocessing as paths, vocabulary_size
 from variables import contextFullTurns, context
-# All paths
+
+""" FILL IN CORRECT INFO """
 force_create_new_files = False
 force_train_fast_model_all_over = False
+dataset = "opensubtitles"
+dataset = "UDC"
+""" ------------------- """
 
+# Find correct path
 if context:
     from variables import paths_from_preprocessing_context as paths
 if contextFullTurns:
     from variables import paths_from_preprocessing_contextFullTurns as paths
 buckets = [_buckets[-1]]  # Only need the biggest bucket
+if dataset == "opensubtitles":
+    from variables import paths_from_preprocessing_opensubtitles as paths
+
+
+
 
 vocab_size = vocabulary_size - len(tokens_init_list)  # Minus number of init tokens
 save_frequency_unk_words = 50000
 val_size_fraction = 0.1
 test_size_fraction = 0.1
+
+
 
 # Folders to loop
 folders = ['30', '356', '195', '142', '555', '43', '50', '36', '46', '85', '41', '118', '166', '104', '471', '37',
@@ -52,6 +66,8 @@ folders = ['30', '356', '195', '142', '555', '43', '50', '36', '46', '85', '41',
            '60', '465', '218', '83', '131', '239', '227', '10', '220', '272', '158', '384']
 #folders = ['test']
 
+files = ["1081raw.txt", "11raw.txt"]
+
 
 def start_preprocessing():
     print("-------------------- INFORMATION --------------------")
@@ -59,6 +75,7 @@ def start_preprocessing():
     print("Force train fast model: " + str(force_train_fast_model_all_over))
     print("Context: " + str(context))
     print("ContextFullTurns: " + str(contextFullTurns))
+    print("Dataset: " + str(dataset))
     print("Will start preprocessing in 4 seconds")
     time.sleep(4)
 
@@ -75,6 +92,9 @@ def start_preprocessing():
     elif contextFullTurns:
         preprocess1_contextFullTurns(folders, force_create_new_files, paths['raw_data_x_path'], paths['raw_data_y_path'],
                             paths['regex_x_path'], paths['regex_y_path'], paths['spell_checked_data_x_path'],
+                            paths['spell_checked_data_y_path'], paths['misspellings_path'])
+    elif dataset == "opensubtitles":
+        preprocess1_opensubtitles(files, paths['spell_checked_data_x_path'],
                             paths['spell_checked_data_y_path'], paths['misspellings_path'])
     else:
         preprocess1(folders, force_create_new_files, paths['raw_data_x_path'], paths['raw_data_y_path'],

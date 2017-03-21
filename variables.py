@@ -146,6 +146,47 @@ paths_from_preprocessing_contextFullTurns = {
 
 }
 
+paths_from_preprocessing_opensubtitles = {
+    'source_folder_root': "../../opensubtitles-parser/data/",
+    'raw_data_x_path': "./opensubtitles/raw_data_x.txt",
+    'raw_data_y_path': "./opensubtitles/raw_data_y.txt",
+
+    'regex_x_path': "./opensubtitles/regex_x.txt",
+    'regex_y_path': "./opensubtitles/regex_y.txt",
+
+    'spell_checked_data_x_path': "./opensubtitles/spell_checked_data_x.txt",
+    'spell_checked_data_y_path': "./opensubtitles/spell_checked_data_y.txt",
+    'misspellings_path': "./datafiles/misspellings.txt",
+
+    'fast_text_train_path': "./opensubtitles/fast_text_train.txt",
+
+    'bucket_data_x_path': "./opensubtitles/bucket_data_x.txt",
+    'bucket_data_y_path': "./opensubtitles/bucket_data_y.txt",
+
+    'final_data_x_path': "./opensubtitles/final_data_x.txt",
+    'final_data_y_path': "./opensubtitles/final_data_y.txt",
+
+    'unshuffled_training_data': "./opensubtitles/unshuffled_training_data.txt",
+    'unshuffled_validation_data': "./opensubtitles/unshuffled_validation_data.txt",
+    'unshuffled_test_data': "./opensubtitles/unshuffled_test_data.txt",
+
+    'training_data': "./opensubtitles/training_data.txt",
+    'validation_data': "./opensubtitles/validation_data.txt",
+    'test_data': "./opensubtitles/test_data.txt",
+
+    'vocabulary_txt_path': "./opensubtitles/vocabulary.txt",
+    'vocabulary_pickle_path': "./opensubtitles/vocabulary.pickle",
+
+    'vocab_vectors_path': "./opensubtitles/vocab_vectors_path.pickle",
+    'unk_vectors_path': "./opensubtitles/unk_vectors_path.pickle",
+    'unk_to_vocab_pickle_path': "./opensubtitles/unk_to_vocab.pickle",
+    'unk_to_vocab_txt_path': "./opensubtitles/unk_to_vocab.txt",
+
+    'test_file_words_path': "./opensubtitles/test_file_words_path.txt"
+
+}
+
+
 tokens = {
     'padding': ('_PAD', 0),
     'go': ('_GO', 1),
@@ -171,8 +212,8 @@ num_layers = 2
 batch_size = 24
 
 # optimizer = "Adagrad" # LR = 0.5
-#optimizer = "GradientDescent" # LR = 0.1
-optimizer = "Adam" # LR = 0.0001
+optimizer = "GradientDescent" # LR = 0.1
+#optimizer = "Adam" # LR = 0.0001
 word_embedding_size = 1000
 
 use_gpu = '/gpu:0'

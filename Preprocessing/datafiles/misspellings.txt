@@ -4696,6 +4696,7 @@ we're we are
 weren't were not
 what's what is
 whats what is
+where'd where did
 won't will not
 wouldn't would not
 wouldnt would not
