@@ -152,7 +152,7 @@ class Seq2SeqModel(object):
       self.target_weights.append(tf.placeholder(dtype, shape=[None],
                                                 name="weight{0}".format(i)))
     for i in xrange(len(buckets)):
-      self.stateful_rnn.append(tf.placeholder(dtype, shape=[None, batch_size],
+      self.stateful_rnn.append(tf.placeholder(dtype, shape=[None, size],
                                                 name="state{0}".format(i)))
 
     # Our targets are decoder inputs shifted by one.
@@ -237,7 +237,7 @@ class Seq2SeqModel(object):
     for l in xrange(decoder_size):
       input_feed[self.decoder_inputs[l].name] = decoder_inputs[l]
       input_feed[self.target_weights[l].name] = target_weights[l]
-    input_feed[self.stateful_rnn[bucket_id]] = np.zeros([self.batch_size, s] for s in (8, 8))
+    input_feed[self.stateful_rnn[bucket_id]] = np.zeros([self.batch_size, 8])
 
     # Since our targets are decoder inputs shifted by one, we need one more.
     last_target = self.decoder_inputs[decoder_size].name

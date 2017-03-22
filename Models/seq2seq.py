@@ -73,7 +73,7 @@ from tensorflow.python.ops import rnn
 from tensorflow.python.ops import rnn_cell
 from tensorflow.python.ops import variable_scope
 from tensorflow.python.util import nest
-
+import tensorflow as tf
 # TODO(ebrevdo): Remove once _linear is fully deprecated.
 linear = rnn_cell._linear  # pylint: disable=protected-access
 
@@ -92,6 +92,7 @@ def _extract_argmax_and_embed(embedding, output_projection=None,
   Returns:
     A loop function.
   """
+
   def loop_function(prev, _):
     if output_projection is not None:
       prev = nn_ops.xw_plus_b(
@@ -756,6 +757,7 @@ def embedding_attention_seq2seq(encoder_inputs,
                                 num_encoder_symbols,
                                 num_decoder_symbols,
                                 embedding_size,
+                                initial_state=None,
                                 num_heads=1,
                                 output_projection=None,
                                 feed_previous=False,
@@ -814,12 +816,15 @@ def embedding_attention_seq2seq(encoder_inputs,
         cell, embedding_classes=num_encoder_symbols,
         embedding_size=embedding_size)
     encoder_outputs, encoder_state = rnn.rnn(
-        encoder_cell, encoder_inputs, dtype=dtype)
+        encoder_cell, encoder_inputs, initial_state=initial_state, dtype=dtype)
+
+    print(encoder_state)
 
     # First calculate a concatenation of encoder outputs to put attention on.
     top_states = [array_ops.reshape(e, [-1, 1, cell.output_size])
                   for e in encoder_outputs]
     attention_states = array_ops.concat(1, top_states)
+
 
     # Decoder.
     output_size = None
