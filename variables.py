@@ -9,7 +9,7 @@ paths_from_model = {
     'dev_file': 'validation_data.txt',
     'test_path': '../Preprocessing/datafiles/test_data.txt',
     'test_file': 'test_data.txt',
-    'misspellings': '../Preprocessing/datafiles/misspellings.txt',
+    'misspellings': '../misspellings.txt',
     'fast_text_model': '../Preprocessing/datafiles/model.bin',
     'ubuntu': './../../ubuntu-ranking-dataset-creator',
     'preprocess_root_files_context': '../Preprocessing/context/',
@@ -37,7 +37,7 @@ paths_from_preprocessing = {
 
     'spell_checked_data_x_path': "./datafiles/spell_checked_data_x.txt",
     'spell_checked_data_y_path': "./datafiles/spell_checked_data_y.txt",
-    'misspellings_path': "./datafiles/misspellings.txt",
+    'misspellings_path': "../misspellings.txt",
 
     'fast_text_train_path': "./datafiles/fast_text_train.txt",
 
@@ -116,7 +116,7 @@ paths_from_preprocessing_contextFullTurns = {
 
     'spell_checked_data_x_path': "./contextFullTurns/spell_checked_data_x.txt",
     'spell_checked_data_y_path': "./contextFullTurns/spell_checked_data_y.txt",
-    'misspellings_path': "./datafiles/misspellings.txt",
+    'misspellings_path': "../misspellings.txt",
 
     'fast_text_train_path': "./contextFullTurns/fast_text_train.txt",
 
@@ -156,7 +156,7 @@ paths_from_preprocessing_opensubtitles = {
 
     'spell_checked_data_x_path': "./opensubtitles/spell_checked_data_x.txt",
     'spell_checked_data_y_path': "./opensubtitles/spell_checked_data_y.txt",
-    'misspellings_path': "./datafiles/misspellings.txt",
+    'misspellings_path': "../misspellings.txt",
 
     'fast_text_train_path': "./opensubtitles/fast_text_train.txt",
 
@@ -246,3 +246,4 @@ folders = ['30', '356', '195', '142', '555', '43', '50', '36', '46', '85', '41',
            '577', '367', '160', '35', '87', '81', '61', '271', '314', '161', '200', '101', '127', '190', '173',
            '303', '99', '209', '106', '164', '40', '215', '483', '254', '114', '143', '193', '203', '261', '70',
            '60', '465', '218', '83', '131', '239', '227', '10', '220', '272', '158', '384']
+

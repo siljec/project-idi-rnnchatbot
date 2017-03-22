@@ -18,7 +18,7 @@ from variables import contextFullTurns, context
 force_create_new_files = False
 force_train_fast_model_all_over = False
 dataset = "opensubtitles"
-dataset = "UDC"
+#dataset = "UDC"
 """ ------------------- """
 
 # Find correct path
@@ -94,7 +94,7 @@ def start_preprocessing():
                             paths['regex_x_path'], paths['regex_y_path'], paths['spell_checked_data_x_path'],
                             paths['spell_checked_data_y_path'], paths['misspellings_path'])
     elif dataset == "opensubtitles":
-        preprocess1_opensubtitles(files, paths['spell_checked_data_x_path'],
+        preprocess1_opensubtitles(paths['spell_checked_data_x_path'],
                             paths['spell_checked_data_y_path'], paths['misspellings_path'])
     else:
         preprocess1(folders, force_create_new_files, paths['raw_data_x_path'], paths['raw_data_y_path'],

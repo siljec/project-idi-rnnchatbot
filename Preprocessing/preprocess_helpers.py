@@ -75,6 +75,9 @@ def do_regex_on_line_opensubtitles(text):
 
     text = re.sub('\'\s[m]', ' am', text)       # i' m - i am
     text = re.sub('\'\s[i][l]|\'\s[l][l]', ' will', text)  # you' ll/il - you will
+    text = re.sub('\'\s[i][l]|\'\s[i][i]', ' will', text)  # you' ll/il - you will
+    text = re.sub('\'\s[i][l]|\'\s[i][l]', ' will', text)  # you' ll/il - you will
+    text = re.sub('[i][i]\b', 'll', text)  # caii - call
     text = re.sub('\'\s[s]', "'s", text) # remove space between <word>' s
     text = re.sub('\'\s[t]', "'t", text) # remove space between <word>' t
     text = re.sub('\'\s[d]', "'d", text) # remove space between <word>' d e.g. where'd you go?
