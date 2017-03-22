@@ -40,7 +40,7 @@ import fasttext
 
 sys.path.insert(0, '../Preprocessing') # To access methods from another file from another folder
 from create_vocabulary import read_vocabulary_from_file
-from preprocess_helpers import load_pickle_file, get_time
+from preprocess_helpers import load_pickle_file, get_time, shuffle_file
 
 from helpers import check_for_needed_files_and_create, preprocess_input, get_batch, input_pipeline, get_session_configs, self_test, decode_sentence, check_and_shuffle_file
 sys.path.insert(0, '../')
@@ -116,6 +116,8 @@ def train():
 
     print("Checking for needed files")
     check_for_needed_files_and_create()
+    train_path = paths['train_path']
+    shuffle_file(train_path, train_path)
 
     print("Creating file queue")
     filename_queue = input_pipeline(start_name=paths['train_file'])
