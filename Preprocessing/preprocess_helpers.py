@@ -66,6 +66,28 @@ def do_regex_on_line(line, url_token, emoji_token, dir_token):
     text = re.sub(' +', ' ', text)  # Will remove multiple spaces
     return text
 
+
+def do_regex_on_line_opensubtitles(text):
+    text = re.sub(' +', ' ', text)  # Will remove multiple spaces
+    text = re.sub('\'\s[v][e]', ' have', text)  # i' ve - i have
+    text = re.sub('\'\s[r][e]', ' are', text)   # you' re - you are
+    text = re.sub('\'\s[n][t]', ' not', text)   # are' nt - are not
+
+    text = re.sub('\'\s[m]', ' am', text)       # i' m - i am
+    text = re.sub('\'\s[i][l]|\'\s[l][l]', ' will', text)  # you' ll/il - you will
+    text = re.sub('\'\s[s]', "'s", text) # remove space between <word>' s
+    text = re.sub('\'\s[t]', "'t", text) # remove space between <word>' t
+    text = re.sub('\'\s[d]', "'d", text) # remove space between <word>' d e.g. where'd you go?
+    text = re.sub('^\'|\'$|\'( +)$|(\s+(\'+\s+)+)', ' ', text) # remove ' in the beginning/end of a sentence
+    text = re.sub('\sy\'\s|^y\'', ' you ', text) # y' - you
+    text = re.sub(' +', ' ', text)  # Will remove multiple spaces
+    #text = re.sub('(?<=[a-z])([!?,.])', r' \1', text)  # Add space before special characters [!?,.]
+    return text
+
+
+
+
+
 # Pre-process 1
 def replace_word_helper(candidate, dictionary):
     if candidate in dictionary:
