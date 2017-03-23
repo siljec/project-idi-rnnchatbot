@@ -220,12 +220,13 @@ use_gpu = '/gpu:0'
 
 context = False
 contextFullTurns = False
-opensubtitles = False
+opensubtitles = True
 if opensubtitles:
     vocabulary_size = 20000
 if contextFullTurns:
     _buckets = [(10, 10), (16, 16), (22, 22), (60, 60)]
 
+# For UDC dataset
 folders = ['30', '356', '195', '142', '555', '43', '50', '36', '46', '85', '41', '118', '166', '104', '471', '37',
            '115', '47', '290', '308', '191', '457', '32', '231', '45', '133', '222', '213', '89', '92', '374', '98',
            '219', '25', '21', '182', '140', '129', '264', '132', '258', '243', '42', '456', '301', '9', '269', '88',
