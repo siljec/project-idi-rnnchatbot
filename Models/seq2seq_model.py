@@ -126,7 +126,8 @@ class Seq2SeqModel(object):
       cell = tf.nn.rnn_cell.MultiRNNCell([single_cell] * num_layers)
 
     # The seq2seq function: we use embedding for the input and attention.
-    def seq2seq_f(encoder_inputs, decoder_inputs, do_decode):
+
+    def seq2seq_f(encoder_inputs, decoder_inputs, initial_state, do_decode):
       return seq2seq.embedding_attention_seq2seq(
           encoder_inputs,
           decoder_inputs,
@@ -134,6 +135,7 @@ class Seq2SeqModel(object):
           num_encoder_symbols=source_vocab_size,
           num_decoder_symbols=target_vocab_size,
           embedding_size=word_embedding_size,
+          initial_state=initial_state,
           output_projection=output_projection,
           feed_previous=do_decode,
           dtype=dtype)
@@ -152,8 +154,16 @@ class Seq2SeqModel(object):
       self.target_weights.append(tf.placeholder(dtype, shape=[None],
                                                 name="weight{0}".format(i)))
     for i in xrange(len(buckets)):
-      self.stateful_rnn.append(tf.placeholder(dtype, shape=[None, size],
-                                                name="state{0}".format(i)))
+      self.stateful_rnn.append(tf.placeholder(dtype, shape=None, name="state{0}".format(i)))
+      self.state_placeholder = tf.placeholder(tf.float32, [num_layers, 2, batch_size, size])
+
+    initial_state = np.zeros((num_layers, 2, batch_size, size))
+    l = tf.unpack(self.state_placeholder[-1], axis=0)
+    rnn_tuple_state = tuple(l[layer] for layer in range(num_layers))
+
+
+    print("\nStateful RNN")
+    print(rnn_tuple_state)
 
     # Our targets are decoder inputs shifted by one.
     targets = [self.decoder_inputs[i + 1]
@@ -163,7 +173,7 @@ class Seq2SeqModel(object):
     if forward_only:
       self.outputs, self.losses = seq2seq.model_with_buckets(
           self.encoder_inputs, self.decoder_inputs, targets,
-          self.target_weights, buckets, lambda x, y: seq2seq_f(x, y, True),
+          self.target_weights, buckets, lambda x, y: seq2seq_f(x, y, rnn_tuple_state, True),
           softmax_loss_function=softmax_loss_function)
       # If we use output projection, we need to project outputs for decoding.
       if output_projection is not None:
@@ -176,7 +186,7 @@ class Seq2SeqModel(object):
       self.outputs, self.losses = seq2seq.model_with_buckets(
           self.encoder_inputs, self.decoder_inputs, targets,
           self.target_weights, buckets,
-          lambda x, y: seq2seq_f(x, y, False),
+          lambda x, y: seq2seq_f(x, y, rnn_tuple_state, False),
           softmax_loss_function=softmax_loss_function)
 
     # Gradients and SGD update operation for training the model.
@@ -237,7 +247,10 @@ class Seq2SeqModel(object):
     for l in xrange(decoder_size):
       input_feed[self.decoder_inputs[l].name] = decoder_inputs[l]
       input_feed[self.target_weights[l].name] = target_weights[l]
-    input_feed[self.stateful_rnn[bucket_id]] = np.zeros([self.batch_size, 8])
+
+    print("Before feeding state")
+
+    input_feed[self.stateful_rnn[bucket_id].name] = tf.tuple([np.zeros((self.batch_size, 8)), np.zeros((self.batch_size, 8))])
 
     # Since our targets are decoder inputs shifted by one, we need one more.
     last_target = self.decoder_inputs[decoder_size].name
