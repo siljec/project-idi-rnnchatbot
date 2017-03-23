@@ -93,6 +93,8 @@ class Seq2SeqModel(object):
     self.learning_rate_decay_op = self.learning_rate.assign(
         self.learning_rate * learning_rate_decay_factor)
     self.global_step = tf.Variable(0, trainable=False)
+    self.num_layers = num_layers
+    self.size = size
 
     # If we use sampled softmax, we need an output projection.
     output_projection = None
@@ -250,7 +252,7 @@ class Seq2SeqModel(object):
 
     print("Before feeding state")
 
-    input_feed[self.stateful_rnn[bucket_id].name] = tf.tuple([np.zeros((self.batch_size, 8)), np.zeros((self.batch_size, 8))])
+    input_feed[self.state_placeholder[bucket_id].name] = np.zeros((self.num_layers, 2, self.batch_size, self.size))
 
     # Since our targets are decoder inputs shifted by one, we need one more.
     last_target = self.decoder_inputs[decoder_size].name
