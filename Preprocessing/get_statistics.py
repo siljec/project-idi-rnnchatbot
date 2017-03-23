@@ -234,7 +234,7 @@ def get_emojis(path):
 
 
 def get_unknown_words_stats(vocab_size=100000, occurrence=10000):
-    sorted_dict = find_dictionary(x_train='./datafiles/bucket_data_x.txt', y_train='./datafiles/bucket_data_y.txt')
+    sorted_dict = find_dictionary(x_train='./opensubtitles/spell_checked_data_x.txt', y_train='./opensubtitles/spell_checked_data_y.txt')
     print("Known and unknown words found")
     known_words = sorted_dict[:vocab_size]
     unknown_words = sorted_dict[vocab_size:]
@@ -519,15 +519,17 @@ def get_num_turns_in_file(path, bucket_size, max_turns):
 # get_number_of_urls('./spell_checked_data_x.txt')
 # get_number_of_urls('./spell_checked_data_y.txt')
 # get_emojis('./spell_checked_data_x.txt')
-#find_percentage_of_vocab_size("./datafiles/bucket_data_x.txt", "./datafiles/bucket_data_y.txt", 0.99)
-#find_percentage_of_vocab_size("./datafiles/bucket_data_x.txt", "./datafiles/bucket_data_y.txt", 0.98)
-#find_percentage_of_vocab_size("./datafiles/bucket_data_x.txt", "./datafiles/bucket_data_y.txt", 0.97)
-#find_percentage_of_vocab_size("./datafiles/bucket_data_x.txt", "./datafiles/bucket_data_y.txt", 0.96)
-#find_percentage_of_vocab_size("./datafil es/bucket_data_x.txt", "./datafiles/bucket_data_y.txt", 0.95)
+# find_percentage_of_vocab_size("./opensubtitles/spell_checked_data_x.txt", "./opensubtitles/spell_checked_data_y.txt", 0.99)
+# find_percentage_of_vocab_size("./opensubtitles/spell_checked_data_x.txt", "./opensubtitles/spell_checked_data_y.txt", 0.98)
+# find_percentage_of_vocab_size("./opensubtitles/spell_checked_data_x.txt", "./opensubtitles/spell_checked_data_y.txt", 0.97)
+# find_percentage_of_vocab_size("./opensubtitles/spell_checked_data_x.txt", "./opensubtitles/spell_checked_data_y.txt", 0.96)
+# find_percentage_of_vocab_size("./opensubtitles/spell_checked_data_x.txt", "./opensubtitles/spell_checked_data_y.txt", 0.95)
+get_unknown_words_stats(20000, occurrence=3000)
+
 #get_unique_words('./datafiles/bucket_data_x.txt','./datafiles/bucket_data_y.txt')
 #get_number_of_turns('./datafiles/raw_data_x.txt', './datafiles/raw_data_y.txt')
 #get_all_words('./datafiles/raw_data_x.txt', './datafiles/raw_data_y.txt')
 #get_word_histogram('./datafiles/raw_data_x.txt', './datafiles/raw_data_y.txt')
 #get_size_of_bucket_sizes(100, './context/bucket_data_x.txt', './context/bucket_data_y.txt')
 
-get_conversation_turn_stats(folders, 1000, 1000)
+#get_conversation_turn_stats(folders, 1000, 1000)
