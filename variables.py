@@ -40,6 +40,7 @@ paths_from_preprocessing = {
     'misspellings_path': "../misspellings.txt",
 
     'fast_text_train_path': "./datafiles/fast_text_train.txt",
+    'fasttext_model_path': "./datafiles/model.bin",
 
     'bucket_data_x_path': "./datafiles/bucket_data_x.txt",
     'bucket_data_y_path': "./datafiles/bucket_data_y.txt",
@@ -78,6 +79,7 @@ paths_from_preprocessing_context = {
     'misspellings_path': "./context/misspellings.txt",
 
     'fast_text_train_path': "./context/fast_text_train.txt",
+    'fasttext_model_path': "./context/model.bin",
 
     'bucket_data_x_path': "./context/bucket_data_x.txt",
     'bucket_data_y_path': "./context/bucket_data_y.txt",
@@ -119,6 +121,7 @@ paths_from_preprocessing_contextFullTurns = {
     'misspellings_path': "../misspellings.txt",
 
     'fast_text_train_path': "./contextFullTurns/fast_text_train.txt",
+    'fasttext_model_path': "./contextFullTurns/model.bin",
 
     'bucket_data_x_path': "./contextFullTurns/bucket_data_x.txt",
     'bucket_data_y_path': "./contextFullTurns/bucket_data_y.txt",
@@ -159,6 +162,7 @@ paths_from_preprocessing_opensubtitles = {
     'misspellings_path': "../misspellings.txt",
 
     'fast_text_train_path': "./opensubtitles/fast_text_train.txt",
+    'fasttext_model_path': "./opensubtitles/model.bin",
 
     'bucket_data_x_path': "./opensubtitles/bucket_data_x.txt",
     'bucket_data_y_path': "./opensubtitles/bucket_data_y.txt",
