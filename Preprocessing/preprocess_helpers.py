@@ -63,8 +63,6 @@ def do_regex_on_line(line, url_token, emoji_token, dir_token):
     text = re.sub('((~\/)|(\/\w+)|(\.\/\w+)|(\w+(?=(\/))))((\/)|(\w+)|(\.\w+)|(\w+|\-|\~))+', dir_token, text)  # Replace directory-paths
     text = re.sub('(?<=[a-z])([!?,.])', r' \1', text)  # Add space before special characters [!?,.]
     text = re.sub('(_EMJ \.)', '_EMJ', text)  # Remove period after EMJ token
-    text = re.sub('([t][h][a][t])(?=([^ s]))', 'that ', text)  # Add space after that
-    text = re.sub('([t][h][a][t][s])(?=[^\s])', 'that ', text)  # Add space after thats
     text = re.sub(' +', ' ', text)  # Will remove multiple spaces
     return text
 
