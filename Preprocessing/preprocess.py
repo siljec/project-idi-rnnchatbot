@@ -75,7 +75,7 @@ def start_preprocessing():
     print("Context: " + str(context))
     print("ContextFullTurns: " + str(contextFullTurns))
     print("Opensubtitles: " + str(opensubtitles))
-    print("Vocabulary size: " + vocabulary_size)
+    print("Vocabulary size: " + str(vocabulary_size))
     print("Will start preprocessing in 4 seconds")
     time.sleep(4)
 
@@ -132,5 +132,4 @@ def start_preprocessing():
 
 
 
-
-#start_preprocessing()
+start_preprocessing()
