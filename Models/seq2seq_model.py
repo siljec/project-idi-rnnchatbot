@@ -86,7 +86,7 @@ class Seq2SeqModel(object):
     """
     self.source_vocab_size = source_vocab_size
     self.target_vocab_size = target_vocab_size
-    self.buckets = buckets
+    self.buckets = buckets[-1]  # Will only use the largest bucket
     self.batch_size = batch_size
     self.learning_rate = tf.Variable(
         float(learning_rate), trainable=False, dtype=dtype)
@@ -146,7 +146,6 @@ class Seq2SeqModel(object):
     self.encoder_inputs = []
     self.decoder_inputs = []
     self.target_weights = []
-    self.stateful_rnn = []
     for i in xrange(buckets[-1][0]):  # Last bucket is the biggest one.
       self.encoder_inputs.append(tf.placeholder(tf.int32, shape=[None],
                                                 name="encoder{0}".format(i)))
@@ -155,12 +154,11 @@ class Seq2SeqModel(object):
                                                 name="decoder{0}".format(i)))
       self.target_weights.append(tf.placeholder(dtype, shape=[None],
                                                 name="weight{0}".format(i)))
-    for i in xrange(len(buckets)):
-      self.stateful_rnn.append(tf.placeholder(dtype, shape=None, name="state{0}".format(i)))
-      self.state_placeholder = tf.placeholder(tf.float32, [num_layers, 2, batch_size, size])
+
+    self.state_placeholder = tf.placeholder(tf.float32, [num_layers, 2, batch_size, size])
 
     initial_state = np.zeros((num_layers, 2, batch_size, size))
-    l = tf.unpack(self.state_placeholder[-1], axis=0)
+    l = tf.unpack(self.state_placeholder, axis=0)
     rnn_tuple_state = tuple(l[layer] for layer in range(num_layers))
 
 
@@ -168,8 +166,7 @@ class Seq2SeqModel(object):
     print(rnn_tuple_state)
 
     # Our targets are decoder inputs shifted by one.
-    targets = [self.decoder_inputs[i + 1]
-               for i in xrange(len(self.decoder_inputs) - 1)]
+    targets = [self.decoder_inputs[i + 1] for i in xrange(len(self.decoder_inputs) - 1)]
 
     # Training outputs and losses.
     if forward_only:
@@ -252,7 +249,7 @@ class Seq2SeqModel(object):
 
     print("Before feeding state")
 
-    input_feed[self.state_placeholder[bucket_id].name] = np.zeros((self.num_layers, 2, self.batch_size, self.size))
+    input_feed[self.state_placeholder.name] = np.zeros((self.num_layers, 2, self.batch_size, self.size))
 
     # Since our targets are decoder inputs shifted by one, we need one more.
     last_target = self.decoder_inputs[decoder_size].name
