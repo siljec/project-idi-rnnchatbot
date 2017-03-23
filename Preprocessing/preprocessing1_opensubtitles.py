@@ -1,11 +1,9 @@
 import time
 import sys
 import os
-sys.path.insert(0, '../') # To access methods from another file from another folder
-
 from preprocess_helpers import get_time, do_regex_on_line_opensubtitles, replace_mispelled_words_in_file, replace_word_helper, read_words_from_misspelling_file
+sys.path.insert(0, '../') # To access methods from another file from another folder
 from variables import paths_from_preprocessing_opensubtitles as paths
-
 
 def replace_mispelled_words_in_file(sentences_array, misspelled_vocabulary):
     dictionary = read_words_from_misspelling_file(misspelled_vocabulary)

@@ -63,6 +63,8 @@ def do_regex_on_line(line, url_token, emoji_token, dir_token):
     text = re.sub('((~\/)|(\/\w+)|(\.\/\w+)|(\w+(?=(\/))))((\/)|(\w+)|(\.\w+)|(\w+|\-|\~))+', dir_token, text)  # Replace directory-paths
     text = re.sub('(?<=[a-z])([!?,.])', r' \1', text)  # Add space before special characters [!?,.]
     text = re.sub('(_EMJ \.)', '_EMJ', text)  # Remove period after EMJ token
+    text = re.sub('([t][h][a][t])(?=([^ s]))', 'that ', text)  # Add space after that
+    text = re.sub('([t][h][a][t][s])(?=[^\s])', 'that ', text)  # Add space after thats
     text = re.sub(' +', ' ', text)  # Will remove multiple spaces
     return text
 
@@ -72,17 +74,26 @@ def do_regex_on_line_opensubtitles(text):
     text = re.sub('\'\s[v][e]', ' have', text)  # i' ve - i have
     text = re.sub('\'\s[r][e]', ' are', text)   # you' re - you are
     text = re.sub('\'\s[n][t]', ' not', text)   # are' nt - are not
-
+    text = re.sub('([j][u][s][t])(?=[^\s])', 'just ', text)   # Space after just<a-z>
+    text = re.sub('([y][o][u][r])(?=[^s|\s])', 'your ', text)   # Space after your<a-z>
+    text = re.sub('([y][o][u][r][s])(?=[\s])', 'yours ', text)   # Space after yours<a-z>
+    text = re.sub('([w][h][y])(?=[^s|^\s])', 'why ', text)   # Space after why<a-z>
+    text = re.sub('([w][h][y][s])(?=[^\s])', 'whys ', text)   # Space after whys<a-z>
+    text = re.sub('(^|(?<=\s))([i][v][e])', 'i have ', text)   # ive - i have
+    text = re.sub('\<([i]|\/\s([i]|[i]\s)|[m][u][s][l][c]|\s[i])\>', '', text)   # remove <i> </ i>
+    text = re.sub('(\<)|(\>)', ' ', text)       # remove single <>
+    text = re.sub('\#|\@', '', text)       # remove hashtags and @
+    text = re.sub('\[\s(.+)\s\]', '', text)       # remove [ action ]
     text = re.sub('\'\s[m]', ' am', text)       # i' m - i am
     text = re.sub('\'\s[i][l]|\'\s[l][l]|\'\s[i][i]|\'\s[l][i]', ' will', text)  # you' ll/il - you will
-    text = re.sub('[i][i]\b', 'll', text)  # caii - call
+    text = re.sub('[i][i](\s|$)', 'll ', text)  # caii - call
     text = re.sub('\'\s[s]', "'s", text) # remove space between <word>' s
     text = re.sub('\'\s[t]', "'t", text) # remove space between <word>' t
     text = re.sub('\'\s[d]', "'d", text) # remove space between <word>' d e.g. where'd you go?
     text = re.sub('^\'|\'$|\'( +)$|(\s+(\'+\s+)+)', ' ', text) # remove ' in the beginning/end of a sentence
     text = re.sub('\sy\'\s|^y\'', ' you ', text) # y' - you
+    text = re.sub('\"', ' ', text)  # Will remove single "
     text = re.sub(' +', ' ', text)  # Will remove multiple spaces
-    #text = re.sub('(?<=[a-z])([!?,.])', r' \1', text)  # Add space before special characters [!?,.]
     return text
 
 

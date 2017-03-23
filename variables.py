@@ -220,6 +220,9 @@ use_gpu = '/gpu:0'
 
 context = False
 contextFullTurns = False
+opensubtitles = False
+if opensubtitles:
+    vocabulary_size = 20000
 if contextFullTurns:
     _buckets = [(10, 10), (16, 16), (22, 22), (60, 60)]
 

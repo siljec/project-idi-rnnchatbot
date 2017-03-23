@@ -66,7 +66,6 @@ folders = ['30', '356', '195', '142', '555', '43', '50', '36', '46', '85', '41',
            '60', '465', '218', '83', '131', '239', '227', '10', '220', '272', '158', '384']
 #folders = ['test']
 
-files = ["1081raw.txt", "11raw.txt"]
 
 
 def start_preprocessing():
@@ -76,6 +75,7 @@ def start_preprocessing():
     print("Context: " + str(context))
     print("ContextFullTurns: " + str(contextFullTurns))
     print("Dataset: " + str(dataset))
+    print("Vocabulary size: " + vocabulary_size)
     print("Will start preprocessing in 4 seconds")
     time.sleep(4)
 
