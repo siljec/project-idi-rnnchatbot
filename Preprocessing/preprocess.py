@@ -12,7 +12,7 @@ from preprocess_helpers import path_exists, shuffle_file, create_final_merged_fi
 
 sys.path.insert(0, '../')
 from variables import tokens_init_list, _buckets, paths_from_preprocessing as paths, vocabulary_size
-from variables import contextFullTurns, context
+from variables import contextFullTurns, context, opensubtitles
 
 """ FILL IN CORRECT INFO """
 force_create_new_files = False
@@ -74,7 +74,7 @@ def start_preprocessing():
     print("Force train fast model: " + str(force_train_fast_model_all_over))
     print("Context: " + str(context))
     print("ContextFullTurns: " + str(contextFullTurns))
-    print("Dataset: " + str(dataset))
+    print("Opensubtitles: " + str(opensubtitles))
     print("Vocabulary size: " + vocabulary_size)
     print("Will start preprocessing in 4 seconds")
     time.sleep(4)
@@ -93,7 +93,7 @@ def start_preprocessing():
         preprocess1_contextFullTurns(folders, force_create_new_files, paths['raw_data_x_path'], paths['raw_data_y_path'],
                             paths['regex_x_path'], paths['regex_y_path'], paths['spell_checked_data_x_path'],
                             paths['spell_checked_data_y_path'], paths['misspellings_path'])
-    elif dataset == "opensubtitles":
+    elif opensubtitles:
         preprocess1_opensubtitles(paths['spell_checked_data_x_path'],
                             paths['spell_checked_data_y_path'], paths['misspellings_path'])
     else:
