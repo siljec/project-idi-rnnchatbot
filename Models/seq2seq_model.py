@@ -155,9 +155,9 @@ class Seq2SeqModel(object):
       self.target_weights.append(tf.placeholder(dtype, shape=[None],
                                                 name="weight{0}".format(i)))
 
-    self.state_placeholder = tf.placeholder(tf.float32, [num_layers, 2, batch_size, size])
+    self.state_placeholder = tf.placeholder(tf.float32, [num_layers, batch_size, size])
 
-    initial_state = np.zeros((num_layers, 2, batch_size, size))
+    init_state = np.zeros((num_layers, batch_size, size))
     l = tf.unpack(self.state_placeholder, axis=0)
     rnn_tuple_state = tuple(l[layer] for layer in range(num_layers))
 
@@ -170,7 +170,7 @@ class Seq2SeqModel(object):
 
     # Training outputs and losses.
     if forward_only:
-      self.outputs, self.losses = seq2seq.model_with_buckets(
+      self.outputs, self.losses, states = seq2seq.model_with_buckets(
           self.encoder_inputs, self.decoder_inputs, targets,
           self.target_weights, buckets, lambda x, y: seq2seq_f(x, y, rnn_tuple_state, True),
           softmax_loss_function=softmax_loss_function)
@@ -182,7 +182,7 @@ class Seq2SeqModel(object):
               for output in self.outputs[b]
           ]
     else:
-      self.outputs, self.losses = seq2seq.model_with_buckets(
+      self.outputs, self.losses, states = seq2seq.model_with_buckets(
           self.encoder_inputs, self.decoder_inputs, targets,
           self.target_weights, buckets,
           lambda x, y: seq2seq_f(x, y, rnn_tuple_state, False),
@@ -228,7 +228,7 @@ class Seq2SeqModel(object):
         target_weights disagrees with bucket size for the specified bucket_id.
     """
     # Check if the sizes match.
-    encoder_size, decoder_size = self.buckets[bucket_id]
+    encoder_size, decoder_size = self.buckets
     if len(encoder_inputs) != encoder_size:
       raise ValueError("Encoder length must be equal to the one in bucket,"
                        " %d != %d." % (len(encoder_inputs), encoder_size))
@@ -249,7 +249,7 @@ class Seq2SeqModel(object):
 
     print("Before feeding state")
 
-    input_feed[self.state_placeholder.name] = np.zeros((self.num_layers, 2, self.batch_size, self.size))
+    input_feed[self.state_placeholder.name] = np.zeros((self.num_layers, self.batch_size, self.size))
 
     # Since our targets are decoder inputs shifted by one, we need one more.
     last_target = self.decoder_inputs[decoder_size].name
@@ -267,9 +267,9 @@ class Seq2SeqModel(object):
 
     outputs = session.run(output_feed, input_feed)
     if not forward_only:
-      return outputs[1], outputs[2], None  # Gradient norm, loss, no outputs.
+      return outputs[1], outputs[2], None, outputs[-1]  # Gradient norm, loss, no outputs.
     else:
-      return None, outputs[0], outputs[1:]  # No gradient norm, loss, outputs.
+      return None, outputs[0], outputs[1:], outputs[-1]  # No gradient norm, loss, outputs.
 
 
   # Changed from tensorflows code. The reason for why we need to use our own file.
@@ -289,7 +289,7 @@ class Seq2SeqModel(object):
       The triple (encoder_inputs, decoder_inputs, target_weights) for
       the constructed batch that has the proper format to call step(...) later.
     """
-    encoder_size, decoder_size = self.buckets[bucket_id]
+    encoder_size, decoder_size = self.buckets[0]
     encoder_inputs, decoder_inputs = [], []
 
     # Get a random batch of encoder and decoder inputs from data,

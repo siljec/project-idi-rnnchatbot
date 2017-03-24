@@ -833,18 +833,19 @@ def embedding_attention_seq2seq(encoder_inputs,
       output_size = num_decoder_symbols
 
     if isinstance(feed_previous, bool):
-      return embedding_attention_decoder(
-          decoder_inputs,
-          encoder_state,
-          attention_states,
-          cell,
-          num_decoder_symbols,
-          embedding_size,
-          num_heads=num_heads,
-          output_size=output_size,
-          output_projection=output_projection,
-          feed_previous=feed_previous,
-          initial_state_attention=initial_state_attention)
+      outputs, state = embedding_attention_decoder(
+        decoder_inputs,
+        encoder_state,
+        attention_states,
+        cell,
+        num_decoder_symbols,
+        embedding_size,
+        num_heads=num_heads,
+        output_size=output_size,
+        output_projection=output_projection,
+        feed_previous=feed_previous,
+        initial_state_attention=initial_state_attention)
+      return outputs, state, encoder_state
 
     # If feed_previous is a Tensor, we construct 2 graphs and use cond.
     def decoder(feed_previous_bool):
@@ -1118,13 +1119,15 @@ def model_with_buckets(encoder_inputs, decoder_inputs, targets, weights,
   all_inputs = encoder_inputs + decoder_inputs + targets + weights
   losses = []
   outputs = []
+  states = []
   with ops.name_scope(name, "model_with_buckets", all_inputs):
     for j, bucket in enumerate(buckets):
       with variable_scope.variable_scope(variable_scope.get_variable_scope(),
                                          reuse=True if j > 0 else None):
-        bucket_outputs, _ = seq2seq(encoder_inputs[:bucket[0]],
+        bucket_outputs, _, bucket_states = seq2seq(encoder_inputs[:bucket[0]],
                                     decoder_inputs[:bucket[1]])
         outputs.append(bucket_outputs)
+        states.append(bucket_outputs)
         if per_example_loss:
           losses.append(sequence_loss_by_example(
               outputs[-1], targets[:bucket[1]], weights[:bucket[1]],
@@ -1134,4 +1137,4 @@ def model_with_buckets(encoder_inputs, decoder_inputs, targets, weights,
               outputs[-1], targets[:bucket[1]], weights[:bucket[1]],
               softmax_loss_function=softmax_loss_function))
 
-  return outputs, losses
+  return outputs, losses, states
