@@ -265,8 +265,8 @@ class Seq2SeqModel(object):
       for l in xrange(decoder_size):  # Output logits.
         output_feed.append(self.outputs[bucket_id][l])
 
-    outputs, states = session.run(output_feed, input_feed, self.states)
-    print(states)
+    print(self.states)
+    outputs = session.run(output_feed, input_feed)
     if not forward_only:
       return outputs[1], outputs[2], None, outputs[-1]  # Gradient norm, loss, no outputs.
     else:
@@ -290,7 +290,7 @@ class Seq2SeqModel(object):
       The triple (encoder_inputs, decoder_inputs, target_weights) for
       the constructed batch that has the proper format to call step(...) later.
     """
-    encoder_size, decoder_size = self.buckets[0]
+    encoder_size, decoder_size = self.buckets
     encoder_inputs, decoder_inputs = [], []
 
     # Get a random batch of encoder and decoder inputs from data,
