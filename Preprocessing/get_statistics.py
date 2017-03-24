@@ -505,6 +505,132 @@ def get_num_turns_in_file(path, bucket_size, max_turns):
     return num_turns
 
 
+
+def non_turns_exceed_max_turns_in_conv(file_path, fit_1, fit_2, fit_3, fit_4, fit_5, fit_6):
+    go_token = ""
+    eos_token = " . "
+    eot_token = ""
+
+    ending_symbols = tuple(["!", "?", ".", "_EMJ", "_EMJ "])
+    user1_first_line = True
+
+
+    x_train = []
+    y_train = []
+    num_turns = 0
+    fit_1_bool = True
+    fit_2_bool = True
+    fit_3_bool = True
+    fit_4_bool = True
+    fit_5_bool = True
+    fit_6_bool = True
+
+    sentence_holder = ""
+    with open(file_path) as fileobject:
+        for line in fileobject:
+            text, current_user = split_line(line)
+            if text == "":
+                continue
+            words = text.split()
+            num_words = len(words)
+            if num_words>fit_1:
+                fit_1_bool = False
+            if num_words>fit_2:
+                fit_2_bool = False
+            if num_words>fit_3:
+                fit_3_bool = False
+            if num_words>fit_4:
+                fit_4_bool = False
+            if num_words>fit_5:
+                fit_5_bool = False
+            if num_words>fit_6:
+                fit_6_bool = False
+
+            if user1_first_line:
+                init_user, previous_user = current_user, current_user
+                user1_first_line = False
+                sentence_holder = ""
+
+            if current_user == previous_user:  # The user is still talking
+                if text.endswith(ending_symbols):
+                    sentence_holder += text + " "
+                else:
+                    sentence_holder += text + eos_token
+            else:  # A new user responds
+                sentence_holder += eot_token + "\n"
+
+                if current_user == init_user:  # Init user talks (should add previous sentence to y_train)
+                    y_train.append(sentence_holder)
+                else:
+                    x_train.append(sentence_holder)
+                if text.endswith(ending_symbols):
+                    sentence_holder = go_token + text + " "
+                else:
+                    sentence_holder = go_token + text + eos_token
+
+            previous_user = current_user
+
+    if current_user != init_user:
+        y_train.append(sentence_holder + eot_token + "\n")
+
+    y_len = len(y_train)
+    num_turns = len(x_train) + y_len
+    if (y_len == len(x_train)):
+        return num_turns, fit_1_bool, fit_2_bool, fit_3_bool, fit_4_bool, fit_5_bool, fit_6_bool
+    else:
+        print("different y and x len")
+        return 0, False, False, False, False, False, False
+
+def get_conversation_stats_for_context(folders, fit_1, fit_2, fit_3, fit_4, fit_5, fit_6):
+    start_time = time.time()
+    number_of_files_checked = 0
+    fits_1_conv = 0
+    fits_1_turns= 0
+    fits_2_conv = 0
+    fits_2_turns = 0
+    fits_3_conv = 0
+    fits_3_turns = 0
+    fits_4_conv = 0
+    fits_4_turns = 0
+    fits_5_conv = 0
+    fits_5_turns = 0
+    fits_6_conv = 0
+    fits_6_turns = 0
+    for folder in folders:
+        folder_path = "../../ubuntu-ranking-dataset-creator/src/dialogs/" + folder
+        for filename in os.listdir(folder_path):
+            number_of_files_checked += 1
+            file_path = folder_path + "/" + filename
+            num_turns, fit_1_bool, fit_2_bool, fit_3_bool, fit_4_bool, fit_5_bool, fit_6_bool, = non_turns_exceed_max_turns_in_conv(file_path, fit_1, fit_2, fit_3, fit_4, fit_5, fit_6)
+            if fit_1_bool:
+                fits_1_conv += 1
+                fits_1_turns += num_turns
+            if fit_2_bool:
+                fits_2_conv += 1
+                fits_2_turns += num_turns
+            if fit_3_bool:
+                fits_3_conv += 1
+                fits_3_turns += num_turns
+            if fit_4_bool:
+                fits_4_conv += 1
+                fits_4_turns += num_turns
+            if fit_5_bool:
+                fits_5_conv += 1
+                fits_5_turns += num_turns
+            if fit_6_bool:
+                fits_6_conv += 1
+                fits_6_turns += num_turns
+        print("Done with folder: " + str(folder) + ", read " + str(number_of_files_checked) + " files")
+
+    print "Number of files read: " + str(number_of_files_checked)
+    print(str(fits_1_conv) + " conversations fits with max len " + str(fit_1) + ". Has " + str(fits_1_turns) + " turns")
+    print(str(fits_2_conv) + " conversations fits with max len " + str(fit_2) + ". Has " + str(fits_2_turns) + " turns")
+    print(str(fits_3_conv) + " conversations fits with max len " + str(fit_3) + ". Has " + str(fits_3_turns) + " turns")
+    print(str(fits_4_conv) + " conversations fits with max len " + str(fit_4) + ". Has " + str(fits_4_turns) + " turns")
+    print(str(fits_5_conv) + " conversations fits with max len " + str(fit_5) + ". Has " + str(fits_5_turns) + " turns")
+    print(str(fits_6_conv) + " conversations fits with max len " + str(fit_6) + ". Has " + str(fits_6_turns) + " turns")
+    print get_time(start_time)
+
 #get_stats('./datafiles/spell_checked_data_x.txt', more_than_words=30, less_than_words=10)
 #get_stats('./datafiles/spell_checked_data_y.txt', more_than_words=30, less_than_words=10)
 #get_bucket_stats('./datafiles/training_data.txt', buckets=[(10, 10), (20, 20), (35, 35), (50, 50)])
@@ -524,7 +650,7 @@ def get_num_turns_in_file(path, bucket_size, max_turns):
 # find_percentage_of_vocab_size("./opensubtitles/spell_checked_data_x.txt", "./opensubtitles/spell_checked_data_y.txt", 0.97)
 # find_percentage_of_vocab_size("./opensubtitles/spell_checked_data_x.txt", "./opensubtitles/spell_checked_data_y.txt", 0.96)
 # find_percentage_of_vocab_size("./opensubtitles/spell_checked_data_x.txt", "./opensubtitles/spell_checked_data_y.txt", 0.95)
-get_unknown_words_stats(20000, occurrence=3000)
+#get_unknown_words_stats(20000, occurrence=3000)
 
 #get_unique_words('./datafiles/bucket_data_x.txt','./datafiles/bucket_data_y.txt')
 #get_number_of_turns('./datafiles/raw_data_x.txt', './datafiles/raw_data_y.txt')
@@ -533,3 +659,4 @@ get_unknown_words_stats(20000, occurrence=3000)
 #get_size_of_bucket_sizes(100, './context/bucket_data_x.txt', './context/bucket_data_y.txt')
 
 #get_conversation_turn_stats(folders, 1000, 1000)
+get_conversation_stats_for_context(folders, 30, 40, 50, 60, 70, 80)
