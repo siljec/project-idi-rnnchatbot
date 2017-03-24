@@ -171,7 +171,7 @@ def train():
                     train_set[bucket_id] = []
 
                     # Make a step
-                    _, step_loss, _ = model.step(sess, encoder_inputs, decoder_inputs, target_weights, bucket_id, False)
+                    _, step_loss, _, encoder_states = model.step(sess, encoder_inputs, decoder_inputs, target_weights, bucket_id, False)
 
                     # Calculating variables
                     step_time += (time.time() - start_time) / FLAGS.steps_per_checkpoint

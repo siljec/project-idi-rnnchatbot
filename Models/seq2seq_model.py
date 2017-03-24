@@ -170,7 +170,7 @@ class Seq2SeqModel(object):
 
     # Training outputs and losses.
     if forward_only:
-      self.outputs, self.losses, states = seq2seq.model_with_buckets(
+      self.outputs, self.losses, self.states = seq2seq.model_with_buckets(
           self.encoder_inputs, self.decoder_inputs, targets,
           self.target_weights, buckets, lambda x, y: seq2seq_f(x, y, rnn_tuple_state, True),
           softmax_loss_function=softmax_loss_function)
@@ -182,7 +182,7 @@ class Seq2SeqModel(object):
               for output in self.outputs[b]
           ]
     else:
-      self.outputs, self.losses, states = seq2seq.model_with_buckets(
+      self.outputs, self.losses, self.states = seq2seq.model_with_buckets(
           self.encoder_inputs, self.decoder_inputs, targets,
           self.target_weights, buckets,
           lambda x, y: seq2seq_f(x, y, rnn_tuple_state, False),
@@ -265,7 +265,8 @@ class Seq2SeqModel(object):
       for l in xrange(decoder_size):  # Output logits.
         output_feed.append(self.outputs[bucket_id][l])
 
-    outputs = session.run(output_feed, input_feed)
+    outputs, states = session.run(output_feed, input_feed, self.states)
+    print(states)
     if not forward_only:
       return outputs[1], outputs[2], None, outputs[-1]  # Gradient norm, loss, no outputs.
     else:
