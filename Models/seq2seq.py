@@ -1126,7 +1126,7 @@ def model_with_buckets(encoder_inputs, decoder_inputs, targets, weights,
         bucket_outputs, _, bucket_states = seq2seq(encoder_inputs[:bucket[0]],
                                     decoder_inputs[:bucket[1]])
         outputs.append(bucket_outputs)
-        state = bucket_outputs
+        state = bucket_states
         if per_example_loss:
           losses.append(sequence_loss_by_example(
               outputs[-1], targets[:bucket[1]], weights[:bucket[1]],

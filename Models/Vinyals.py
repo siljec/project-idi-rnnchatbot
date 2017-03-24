@@ -165,13 +165,13 @@ def train():
                     # Get a batch
                     train_set, bucket_id = get_batch(txt_row_train_data, train_set, FLAGS.batch_size)
                     start_time = time.time()
-                    encoder_inputs, decoder_inputs, target_weights = model.get_batch(train_set, bucket_id)
+                    encoder_inputs, decoder_inputs, state = target_weights = model.get_batch(train_set, bucket_id)
 
                     # Clean out trained bucket
                     train_set[bucket_id] = []
 
                     # Make a step
-                    _, step_loss, _, encoder_states = model.step(sess, encoder_inputs, decoder_inputs, target_weights, bucket_id, False)
+                    _, step_loss, _ = model.step(sess, encoder_inputs, decoder_inputs, target_weights, state, bucket_id, False)
 
                     # Calculating variables
                     step_time += (time.time() - start_time) / FLAGS.steps_per_checkpoint
@@ -215,12 +215,12 @@ def train():
                             if len(dev_set[bucket_id]) == 0:
                                 print("  eval: empty bucket %d" % bucket_id)
                                 continue
-                            encoder_inputs, decoder_inputs, target_weights = model.get_batch(dev_set, bucket_id)
+                            encoder_inputs, decoder_inputs, target_weights, state = model.get_batch(dev_set, bucket_id)
 
                             # Clean out used bucket
                             del dev_set[bucket_id][:FLAGS.batch_size]
 
-                            _, eval_loss, _ = model.step(sess, encoder_inputs, decoder_inputs, target_weights, bucket_id, True)
+                            _, eval_loss, _ = model.step(sess, encoder_inputs, decoder_inputs, target_weights, state, bucket_id, True)
                             eval_ppx = exp(float(eval_loss)) if eval_loss < 300 else float("inf")
                             print("  eval: bucket %d perplexity %.2f" % (bucket_id, eval_ppx))
 
