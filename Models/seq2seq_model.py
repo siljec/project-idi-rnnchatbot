@@ -86,7 +86,8 @@ class Seq2SeqModel(object):
     """
     self.source_vocab_size = source_vocab_size
     self.target_vocab_size = target_vocab_size
-    self.buckets = buckets[-1]  # Will only use the largest bucket
+    buckets = buckets[-1]  # Will only use the largest bucket
+    self.buckets = buckets
     self.batch_size = batch_size
     self.learning_rate = tf.Variable(
         float(learning_rate), trainable=False, dtype=dtype)
@@ -146,10 +147,10 @@ class Seq2SeqModel(object):
     self.encoder_inputs = []
     self.decoder_inputs = []
     self.target_weights = []
-    for i in xrange(buckets[-1][0]):  # Last bucket is the biggest one.
+    for i in xrange(buckets[0]):  # Last bucket is the biggest one.
       self.encoder_inputs.append(tf.placeholder(tf.int32, shape=[None],
                                                 name="encoder{0}".format(i)))
-    for i in xrange(buckets[-1][1] + 1):
+    for i in xrange(buckets[1] + 1):
       self.decoder_inputs.append(tf.placeholder(tf.int32, shape=[None],
                                                 name="decoder{0}".format(i)))
       self.target_weights.append(tf.placeholder(dtype, shape=[None],
@@ -172,19 +173,15 @@ class Seq2SeqModel(object):
     if forward_only:
       self.outputs, self.losses, self.states = seq2seq.model_with_buckets(
           self.encoder_inputs, self.decoder_inputs, targets,
-          self.target_weights, buckets, lambda x, y: seq2seq_f(x, y, rnn_tuple_state, True),
+          self.target_weights, [buckets], lambda x, y: seq2seq_f(x, y, rnn_tuple_state, True),
           softmax_loss_function=softmax_loss_function)
       # If we use output projection, we need to project outputs for decoding.
       if output_projection is not None:
-        for b in xrange(len(buckets)):
-          self.outputs[b] = [
-              tf.matmul(output, output_projection[0]) + output_projection[1]
-              for output in self.outputs[b]
-          ]
+        self.outputs[0] = [tf.matmul(output, output_projection[0]) + output_projection[1] for output in self.outputs[0]]
     else:
       self.outputs, self.losses, self.states = seq2seq.model_with_buckets(
           self.encoder_inputs, self.decoder_inputs, targets,
-          self.target_weights, buckets,
+          self.target_weights, [buckets],
           lambda x, y: seq2seq_f(x, y, rnn_tuple_state, False),
           softmax_loss_function=softmax_loss_function)
 
@@ -197,13 +194,10 @@ class Seq2SeqModel(object):
         opt = tf.train.GradientDescentOptimizer(self.learning_rate)
       elif optimizer == "Adagrad":
         opt = tf.train.AdagradOptimizer(self.learning_rate)
-      for b in xrange(len(buckets)):
-        gradients = tf.gradients(self.losses[b], params)
-        clipped_gradients, norm = tf.clip_by_global_norm(gradients,
-                                                         max_gradient_norm)
-        self.gradient_norms.append(norm)
-        self.updates.append(opt.apply_gradients(
-            zip(clipped_gradients, params), global_step=self.global_step))
+      gradients = tf.gradients(self.losses[0], params)
+      clipped_gradients, norm = tf.clip_by_global_norm(gradients, max_gradient_norm)
+      self.gradient_norms.append(norm)
+      self.updates.append(opt.apply_gradients(zip(clipped_gradients, params), global_step=self.global_step))
 
     self.saver = tf.train.Saver(tf.all_variables())
 
