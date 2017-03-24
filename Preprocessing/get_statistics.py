@@ -528,9 +528,10 @@ def non_turns_exceed_max_turns_in_conv(file_path, fit_1, fit_2, fit_3, fit_4, fi
     sentence_holder = ""
     with open(file_path) as fileobject:
         for line in fileobject:
-            text, current_user = split_line(line)
+            text, user = split_line(line)
             if text == "":
                 continue
+            current_user = user
             words = text.split()
             num_words = len(words)
             if num_words>fit_1:
@@ -596,6 +597,9 @@ def get_conversation_stats_for_context(folders, fit_1, fit_2, fit_3, fit_4, fit_
     fits_5_turns = 0
     fits_6_conv = 0
     fits_6_turns = 0
+
+    counter = 0
+    nice_files= []
     for folder in folders:
         folder_path = "../../ubuntu-ranking-dataset-creator/src/dialogs/" + folder
         for filename in os.listdir(folder_path):
@@ -605,6 +609,9 @@ def get_conversation_stats_for_context(folders, fit_1, fit_2, fit_3, fit_4, fit_
             if fit_1_bool:
                 fits_1_conv += 1
                 fits_1_turns += num_turns
+                if counter < 10:
+                    counter +=1
+                    nice_files.append(file_path)
             if fit_2_bool:
                 fits_2_conv += 1
                 fits_2_turns += num_turns
@@ -629,6 +636,8 @@ def get_conversation_stats_for_context(folders, fit_1, fit_2, fit_3, fit_4, fit_
     print(str(fits_4_conv) + " conversations fits with max len " + str(fit_4) + ". Has " + str(fits_4_turns) + " turns")
     print(str(fits_5_conv) + " conversations fits with max len " + str(fit_5) + ". Has " + str(fits_5_turns) + " turns")
     print(str(fits_6_conv) + " conversations fits with max len " + str(fit_6) + ". Has " + str(fits_6_turns) + " turns")
+    for files in nice_files:
+        print(files)
     print get_time(start_time)
 
 #get_stats('./datafiles/spell_checked_data_x.txt', more_than_words=30, less_than_words=10)
