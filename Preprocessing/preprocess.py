@@ -51,12 +51,14 @@ def start_preprocessing():
     print("ContextFullTurns: " + str(contextFullTurns))
     print("Opensubtitles: " + str(opensubtitles))
     print("Vocabulary size: " + str(vocabulary_size))
+    print("Folder: " + str(folder))
     print("Will start preprocessing in 4 seconds")
     time.sleep(4)
 
     print("-------------------- PARAMETERS ---------------------")
     print("Vocabulary size: %i" % (vocab_size + len(tokens_init_list)))
-    print("Read number of folders: %i" % len(folders))
+    if not opensubtitles:
+        print("Read number of folders: %i" % len(folders))
     print("-----------------------------------------------------\n")
 
     # Step 1
