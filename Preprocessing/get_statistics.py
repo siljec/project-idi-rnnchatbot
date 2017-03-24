@@ -532,21 +532,6 @@ def non_turns_exceed_max_turns_in_conv(file_path, fit_1, fit_2, fit_3, fit_4, fi
             if text == "":
                 continue
             current_user = user
-            words = text.split()
-            num_words = len(words)
-            if num_words>fit_1:
-                fit_1_bool = False
-            if num_words>fit_2:
-                fit_2_bool = False
-            if num_words>fit_3:
-                fit_3_bool = False
-            if num_words>fit_4:
-                fit_4_bool = False
-            if num_words>fit_5:
-                fit_5_bool = False
-            if num_words>fit_6:
-                fit_6_bool = False
-
             if user1_first_line:
                 init_user, previous_user = current_user, current_user
                 user1_first_line = False
@@ -562,8 +547,36 @@ def non_turns_exceed_max_turns_in_conv(file_path, fit_1, fit_2, fit_3, fit_4, fi
 
                 if current_user == init_user:  # Init user talks (should add previous sentence to y_train)
                     y_train.append(sentence_holder)
+                    words = sentence_holder.split()
+                    num_words = len(words)
+                    if num_words > fit_1:
+                        fit_1_bool = False
+                    if num_words > fit_2:
+                        fit_2_bool = False
+                    if num_words > fit_3:
+                        fit_3_bool = False
+                    if num_words > fit_4:
+                        fit_4_bool = False
+                    if num_words > fit_5:
+                        fit_5_bool = False
+                    if num_words > fit_6:
+                        fit_6_bool = False
                 else:
                     x_train.append(sentence_holder)
+                    words = sentence_holder.split()
+                    num_words = len(words)
+                    if num_words > fit_1:
+                        fit_1_bool = False
+                    if num_words > fit_2:
+                        fit_2_bool = False
+                    if num_words > fit_3:
+                        fit_3_bool = False
+                    if num_words > fit_4:
+                        fit_4_bool = False
+                    if num_words > fit_5:
+                        fit_5_bool = False
+                    if num_words > fit_6:
+                        fit_6_bool = False
                 if text.endswith(ending_symbols):
                     sentence_holder = go_token + text + " "
                 else:
@@ -573,6 +586,20 @@ def non_turns_exceed_max_turns_in_conv(file_path, fit_1, fit_2, fit_3, fit_4, fi
 
     if current_user != init_user:
         y_train.append(sentence_holder + eot_token + "\n")
+        words = sentence_holder.split()
+        num_words = len(words)
+        if num_words > fit_1:
+            fit_1_bool = False
+        if num_words > fit_2:
+            fit_2_bool = False
+        if num_words > fit_3:
+            fit_3_bool = False
+        if num_words > fit_4:
+            fit_4_bool = False
+        if num_words > fit_5:
+            fit_5_bool = False
+        if num_words > fit_6:
+            fit_6_bool = False
 
     y_len = len(y_train)
     num_turns = len(x_train) + y_len
@@ -609,7 +636,7 @@ def get_conversation_stats_for_context(folders, fit_1, fit_2, fit_3, fit_4, fit_
             if fit_1_bool:
                 fits_1_conv += 1
                 fits_1_turns += num_turns
-                if counter < 10:
+                if counter < 40:
                     counter +=1
                     nice_files.append(file_path)
             if fit_2_bool:
