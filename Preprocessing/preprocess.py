@@ -20,6 +20,8 @@ force_train_fast_model_all_over = False
 """ ------------------- """
 
 # Find correct path
+folder = "datafiles"
+
 if context:
     from variables import paths_from_preprocessing_context as paths
 if contextFullTurns:
@@ -27,6 +29,7 @@ if contextFullTurns:
 buckets = [_buckets[-1]]  # Only need the biggest bucket
 if opensubtitles:
     from variables import paths_from_preprocessing_opensubtitles as paths
+    folder = "opensubtitles"
 
 
 
@@ -48,12 +51,14 @@ def start_preprocessing():
     print("ContextFullTurns: " + str(contextFullTurns))
     print("Opensubtitles: " + str(opensubtitles))
     print("Vocabulary size: " + str(vocabulary_size))
+    print("Folder: " + str(folder))
     print("Will start preprocessing in 4 seconds")
     time.sleep(4)
 
     print("-------------------- PARAMETERS ---------------------")
     print("Vocabulary size: %i" % (vocab_size + len(tokens_init_list)))
-    print("Read number of folders: %i" % len(folders))
+    if not opensubtitles:
+        print("Read number of folders: %i" % len(folders))
     print("-----------------------------------------------------\n")
 
     # Step 1
@@ -75,7 +80,7 @@ def start_preprocessing():
 
     # Step 2
     fast_text_model = preprocessing2(paths['spell_checked_data_x_path'], paths['spell_checked_data_y_path'],
-                                     paths['fast_text_train_path'], force_train_fast_model_all_over)
+                                     paths['fast_text_train_path'], folder, force_train_fast_model_all_over)
 
     # Step 3
     preprocessing3(buckets, paths['spell_checked_data_x_path'], paths['spell_checked_data_y_path'],
