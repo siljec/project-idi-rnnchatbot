@@ -153,6 +153,10 @@ def train():
 
             train_time = time.time()
 
+            # Need a initial state for the encoder rnn
+            initial_state = np.zeros((num_layers, batch_size, size))
+            state = initial_state
+
             print("Starts training loop")
 
             try:
@@ -165,13 +169,14 @@ def train():
                     # Get a batch
                     train_set, bucket_id = get_batch(txt_row_train_data, train_set, FLAGS.batch_size)
                     start_time = time.time()
-                    encoder_inputs, decoder_inputs, target_weights, state = model.get_batch(train_set, bucket_id)
+                    encoder_inputs, decoder_inputs, target_weights, state = model.get_batch(train_set, bucket_id, state)
 
                     # Clean out trained bucket
                     train_set[bucket_id] = []
 
                     # Make a step
-                    _, step_loss, _ = model.step(sess, encoder_inputs, decoder_inputs, target_weights, state, bucket_id, False)
+                    _, step_loss, _, state = model.step(sess, encoder_inputs, decoder_inputs, target_weights, state, bucket_id, False)
+                    print(state)
 
                     # Calculating variables
                     step_time += (time.time() - start_time) / FLAGS.steps_per_checkpoint
@@ -220,7 +225,7 @@ def train():
                             # Clean out used bucket
                             del dev_set[bucket_id][:FLAGS.batch_size]
 
-                            _, eval_loss, _ = model.step(sess, encoder_inputs, decoder_inputs, target_weights, state, bucket_id, True)
+                            _, eval_loss, _, _ = model.step(sess, encoder_inputs, decoder_inputs, target_weights, state, bucket_id, True)
                             eval_ppx = exp(float(eval_loss)) if eval_loss < 300 else float("inf")
                             print("  eval: bucket %d perplexity %.2f" % (bucket_id, eval_ppx))
 

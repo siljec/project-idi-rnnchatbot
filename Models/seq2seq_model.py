@@ -244,7 +244,7 @@ class Seq2SeqModel(object):
     print(initial_state)
     input_feed[self.state_placeholder_layer1] = initial_state[0]
     input_feed[self.state_placeholder_layer2] = initial_state[1]
-    # input_feed[self.state_placeholder.name] = initial_state
+    input_feed[self.state_placeholder.name] = initial_state
 
     # Since our targets are decoder inputs shifted by one, we need one more.
     last_target = self.decoder_inputs[decoder_size].name
@@ -254,7 +254,8 @@ class Seq2SeqModel(object):
     if not forward_only:
       output_feed = [self.updates[bucket_id],  # Update Op that does SGD.
                      self.gradient_norms[bucket_id],  # Gradient norm.
-                     self.losses[bucket_id]]  # Loss for this batch.
+                     self.losses[bucket_id],  # Loss for this batch.
+                     self.state_placeholder]
     else:
       output_feed = [self.losses[bucket_id]]  # Loss for this batch.
       for l in xrange(decoder_size):  # Output logits.
@@ -262,13 +263,13 @@ class Seq2SeqModel(object):
 
     outputs = session.run(output_feed, input_feed)
     if not forward_only:
-      return outputs[1], outputs[2], None  # Gradient norm, loss, no outputs.
+      return outputs[1], outputs[2], None, outputs[3]  # Gradient norm, loss, no outputs, states
     else:
-      return None, outputs[0], outputs[1:]  # No gradient norm, loss, outputs.
+      return None, outputs[0], outputs[1:], _  # No gradient norm, loss, outputs, no states.
 
 
   # Changed from tensorflows code. The reason for why we need to use our own file.
-  def get_batch(self, data, bucket_id):
+  def get_batch(self, data, bucket_id, state):
     """Get a random batch of data from the specified bucket, prepare for step.
 
     To feed data in step(..) it must be a list of batch-major vectors, while
@@ -328,7 +329,7 @@ class Seq2SeqModel(object):
       batch_weights.append(batch_weight)
 
     if True:
-        batch_state = self.states
+        batch_state = state
     else:
         batch_state = np.zeros((self.num_layers, self.batch_size, self.size))
 
