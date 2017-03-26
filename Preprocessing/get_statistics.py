@@ -1,12 +1,13 @@
 import operator
-import re
+import os, sys
 import time
 import random
-import numpy as np
 from preprocessing3 import distance
 from create_vocabulary import find_dictionary
 from itertools import izip
-
+from preprocess_helpers import split_line, get_time
+sys.path.insert(0, '../')
+from variables import folders
 
 # Create histogram
 import numpy as np
@@ -233,7 +234,7 @@ def get_emojis(path):
 
 
 def get_unknown_words_stats(vocab_size=100000, occurrence=10000):
-    sorted_dict = find_dictionary(x_train='./datafiles/bucket_data_x.txt', y_train='./datafiles/bucket_data_y.txt')
+    sorted_dict = find_dictionary(x_train='./opensubtitles/spell_checked_data_x.txt', y_train='./opensubtitles/spell_checked_data_y.txt')
     print("Known and unknown words found")
     known_words = sorted_dict[:vocab_size]
     unknown_words = sorted_dict[vocab_size:]
@@ -396,6 +397,114 @@ def find_percentage_of_vocab_size(x_path, y_path, percentage):
 
     print("Need vocabulary size %i to cover %f of the dataset (%i / %i)" %(vocab_size, percentage, vocab_occurrences, all_words))
 
+
+
+def get_conversation_turn_stats(folders, bucket_size = 30, max_turns=3000):
+    start_time = time.time()
+    number_of_files_read = 0
+    # Array with occurrences of conversations with i turns. Array[i] get #conversations with i turns
+    turns = [0] * max_turns
+    exceeded_max_turns = 0
+    total_turns = 0.0
+    longest_conversation = 0
+
+    more_than_500 = 0
+    more_than_1000 = 0
+    more_than_2000 = 0
+
+    for folder in folders:
+        folder_path = "../../ubuntu-ranking-dataset-creator/src/dialogs/" + folder
+        for filename in os.listdir(folder_path):
+            number_of_files_read += 1
+            file_path = folder_path + "/" + filename
+            num_turns = get_num_turns_in_file(file_path, bucket_size, max_turns)
+            if num_turns > 2000:
+                more_than_2000 += 1
+            elif (num_turns > 1000):
+                more_than_1000 += 1
+            elif num_turns > 500:
+                more_than_500 += 1
+
+            if num_turns < max_turns:
+                turns[num_turns] +=1
+                total_turns += num_turns
+            else:
+                exceeded_max_turns += 1
+        print("Done with folder: " + str(folder) + ", read " + str(number_of_files_read) + " conversations")
+    print "Number of files read: " + str(number_of_files_read)
+
+    # Find stats
+    max_occ = 0
+    max_index = 0
+    for i in range(2,   max_turns):
+        if turns[i] > max_occ:
+            max_occ = turns[i]
+            max_index = i
+    print("Mode is " + str(max_index) + " with " + str(max_occ) + " occurrences")
+
+    print("Average turns per conversation is " + str(total_turns/number_of_files_read))
+    #print("Average turns per conversation without two turns is " + str((total_turns-2*turns[2])/(number_of_files_read-turns[2])))
+
+    for occurrence in turns:
+        print(occurrence)
+    print("Exceeded max turns " + str(exceeded_max_turns))
+    print("More than 2000 " + str(more_than_2000))
+    print("More than 1000 " + str(more_than_1000))
+    print("More than 500 " + str(more_than_500))
+    print get_time(start_time)
+
+
+
+def get_num_turns_in_file(path, bucket_size, max_turns):
+    user1_first_line = True
+    num_turns = 0
+    exceeds_bucket_size = False
+
+    x_len = 0
+    y_len = 0
+    with open(path) as fileobject:
+        for line in fileobject:
+            text, current_user = split_line(line)
+
+            # Which folders has only two turns and fits in our bucket
+            num_words = len(text.split())
+            if num_words > bucket_size:
+                exceeds_bucket_size = True
+
+            if text == "":
+                continue
+            if user1_first_line:
+                init_user, previous_user = current_user, current_user
+                user1_first_line = False
+                num_turns = 0
+            # The user is still talking
+            if current_user == previous_user:
+                if current_user == init_user:
+                    x_len += num_words
+                else:
+                    y_len += num_words
+            # A new user responds
+            else:
+
+                if y_len != 0 and x_len <=bucket_size and y_len <=bucket_size:
+                    num_turns += 2
+                # reset lengths if we are done with user 2, i.e. start of a new training pair
+                if y_len != 0:
+                    x_len = 0
+                    y_len = 0
+                if current_user == init_user:
+                    x_len = num_words
+                else:
+                    y_len = num_words
+            previous_user = current_user
+    # if num_turns < 3:
+    #     if not exceeds_bucket_size:
+    #         print(path)
+    if num_turns > max_turns:
+        print("Path " + path + "exceeds " + str(max_turns) + " turns")
+    return num_turns
+
+
 #get_stats('./datafiles/spell_checked_data_x.txt', more_than_words=30, less_than_words=10)
 #get_stats('./datafiles/spell_checked_data_y.txt', more_than_words=30, less_than_words=10)
 #get_bucket_stats('./datafiles/training_data.txt', buckets=[(10, 10), (20, 20), (35, 35), (50, 50)])
@@ -410,13 +519,17 @@ def find_percentage_of_vocab_size(x_path, y_path, percentage):
 # get_number_of_urls('./spell_checked_data_x.txt')
 # get_number_of_urls('./spell_checked_data_y.txt')
 # get_emojis('./spell_checked_data_x.txt')
-#find_percentage_of_vocab_size("./datafiles/bucket_data_x.txt", "./datafiles/bucket_data_y.txt", 0.99)
-#find_percentage_of_vocab_size("./datafiles/bucket_data_x.txt", "./datafiles/bucket_data_y.txt", 0.98)
-#find_percentage_of_vocab_size("./datafiles/bucket_data_x.txt", "./datafiles/bucket_data_y.txt", 0.97)
-#find_percentage_of_vocab_size("./datafiles/bucket_data_x.txt", "./datafiles/bucket_data_y.txt", 0.96)
-#find_percentage_of_vocab_size("./datafiles/bucket_data_x.txt", "./datafiles/bucket_data_y.txt", 0.95)
+# find_percentage_of_vocab_size("./opensubtitles/spell_checked_data_x.txt", "./opensubtitles/spell_checked_data_y.txt", 0.99)
+# find_percentage_of_vocab_size("./opensubtitles/spell_checked_data_x.txt", "./opensubtitles/spell_checked_data_y.txt", 0.98)
+# find_percentage_of_vocab_size("./opensubtitles/spell_checked_data_x.txt", "./opensubtitles/spell_checked_data_y.txt", 0.97)
+# find_percentage_of_vocab_size("./opensubtitles/spell_checked_data_x.txt", "./opensubtitles/spell_checked_data_y.txt", 0.96)
+# find_percentage_of_vocab_size("./opensubtitles/spell_checked_data_x.txt", "./opensubtitles/spell_checked_data_y.txt", 0.95)
+get_unknown_words_stats(20000, occurrence=3000)
+
 #get_unique_words('./datafiles/bucket_data_x.txt','./datafiles/bucket_data_y.txt')
 #get_number_of_turns('./datafiles/raw_data_x.txt', './datafiles/raw_data_y.txt')
 #get_all_words('./datafiles/raw_data_x.txt', './datafiles/raw_data_y.txt')
 #get_word_histogram('./datafiles/raw_data_x.txt', './datafiles/raw_data_y.txt')
-get_size_of_bucket_sizes(100, './context/bucket_data_x.txt', './context/bucket_data_y.txt')
+#get_size_of_bucket_sizes(100, './context/bucket_data_x.txt', './context/bucket_data_y.txt')
+
+#get_conversation_turn_stats(folders, 1000, 1000)
