@@ -156,6 +156,8 @@ class Seq2SeqModel(object):
       self.target_weights.append(tf.placeholder(dtype, shape=[None],
                                                 name="weight{0}".format(i)))
 
+    self.state_placeholder_layer1 = tf.placeholder(tf.float32, [batch_size, size])
+    self.state_placeholder_layer2 = tf.placeholder(tf.float32, [batch_size, size])
     self.state_placeholder = tf.placeholder(tf.float32, [num_layers, batch_size, size])
 
     l = tf.unpack(self.state_placeholder, axis=0)
@@ -239,8 +241,10 @@ class Seq2SeqModel(object):
       input_feed[self.target_weights[l].name] = target_weights[l]
 
     print("Before feeding state")
-
-    input_feed[self.state_placeholder.name] = initial_state
+    print(initial_state)
+    input_feed[self.state_placeholder_layer1] = initial_state[0]
+    input_feed[self.state_placeholder_layer2] = initial_state[1]
+    # input_feed[self.state_placeholder.name] = initial_state
 
     # Since our targets are decoder inputs shifted by one, we need one more.
     last_target = self.decoder_inputs[decoder_size].name

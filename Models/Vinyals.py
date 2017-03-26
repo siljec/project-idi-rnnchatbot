@@ -165,7 +165,7 @@ def train():
                     # Get a batch
                     train_set, bucket_id = get_batch(txt_row_train_data, train_set, FLAGS.batch_size)
                     start_time = time.time()
-                    encoder_inputs, decoder_inputs, state = target_weights = model.get_batch(train_set, bucket_id)
+                    encoder_inputs, decoder_inputs, target_weights, state = model.get_batch(train_set, bucket_id)
 
                     # Clean out trained bucket
                     train_set[bucket_id] = []
