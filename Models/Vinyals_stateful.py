@@ -46,7 +46,7 @@ from helpers import check_for_needed_files_and_create, preprocess_input, sentenc
 import numpy as np
 from six.moves import xrange  # pylint: disable=redefined-builtin
 import tensorflow as tf
-import seq2seq_stateful_model
+import seq2seq_stateful_model as seq2seq_model
 sys.path.insert(0, '../')
 from variables import paths_from_model as paths, tokens, _buckets, vocabulary_size, max_training_steps, steps_per_checkpoint, print_frequency, size, batch_size, num_layers, use_gpu
 

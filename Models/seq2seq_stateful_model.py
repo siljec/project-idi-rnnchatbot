@@ -326,6 +326,6 @@ class Seq2SeqModel(object):
     if True:
         batch_states = states
     else:
-        batch_state = np.zeros((self.num_layers, self.batch_size, self.size))
+        batch_states = np.zeros((self.num_layers, self.batch_size, self.size))
 
-    return batch_encoder_inputs, batch_decoder_inputs, batch_weights, batch_state
+    return batch_encoder_inputs, batch_decoder_inputs, batch_weights, batch_states
