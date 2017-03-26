@@ -40,21 +40,16 @@ import fasttext
 
 sys.path.insert(0, '../Preprocessing') # To access methods from another file from another folder
 from create_vocabulary import read_vocabulary_from_file
-from preprocess_helpers import shuffle_file, load_pickle_file, get_time
+from preprocess_helpers import load_pickle_file, get_time
 
 from helpers import check_for_needed_files_and_create, preprocess_input, sentence_to_token_ids, get_batch, input_pipeline, get_session_configs, self_test, decode_sentence, check_and_shuffle_file
 import numpy as np
 from six.moves import xrange  # pylint: disable=redefined-builtin
 import tensorflow as tf
-import seq2seq_model
+import seq2seq_stateful_model
 sys.path.insert(0, '../')
 from variables import paths_from_model as paths, tokens, _buckets, vocabulary_size, max_training_steps, steps_per_checkpoint, print_frequency, size, batch_size, num_layers, use_gpu
-from variables import contextFullTurns, context
 
-if context:
-    from variables import paths_from_preprocessing_context as paths
-if contextFullTurns:
-    from variables import paths_from_preprocessing_contextFullTurns as paths
 
 tf.app.flags.DEFINE_float("learning_rate", 0.5, "Learning rate.")
 tf.app.flags.DEFINE_float("learning_rate_decay_factor", 0.99, "Learning rate decays by this much.")
@@ -96,7 +91,6 @@ def create_model(session, forward_only):
         FLAGS.batch_size,
         FLAGS.learning_rate,
         FLAGS.learning_rate_decay_factor,
-        use_lstm = True,
         forward_only=forward_only)
     ckpt = tf.train.get_checkpoint_state(FLAGS.train_dir)
     if ckpt and tf.gfile.Exists(ckpt.model_checkpoint_path):
@@ -113,8 +107,6 @@ def train():
 
     print("Checking for needed files")
     check_for_needed_files_and_create()
-    train_path = paths['train_path']
-    shuffle_file(train_path, train_path)
 
     print("Creating file queue")
     filename_queue = input_pipeline(start_name=paths['train_file'])
@@ -161,6 +153,10 @@ def train():
 
             train_time = time.time()
 
+            # Need a initial state for the encoder rnn
+            initial_state = np.zeros((num_layers, batch_size, size))
+            state = initial_state
+
             print("Starts training loop")
 
             try:
@@ -173,13 +169,14 @@ def train():
                     # Get a batch
                     train_set, bucket_id = get_batch(txt_row_train_data, train_set, FLAGS.batch_size)
                     start_time = time.time()
-                    encoder_inputs, decoder_inputs, target_weights = model.get_batch(train_set, bucket_id)
+                    encoder_inputs, decoder_inputs, target_weights, state = model.get_batch(train_set, bucket_id, state)
 
                     # Clean out trained bucket
                     train_set[bucket_id] = []
 
                     # Make a step
-                    _, step_loss, _ = model.step(sess, encoder_inputs, decoder_inputs, target_weights, bucket_id, False)
+                    _, step_loss, _, state = model.step(sess, encoder_inputs, decoder_inputs, target_weights, state, bucket_id, False)
+                    print(state)
 
                     # Calculating variables
                     step_time += (time.time() - start_time) / FLAGS.steps_per_checkpoint
@@ -223,12 +220,12 @@ def train():
                             if len(dev_set[bucket_id]) == 0:
                                 print("  eval: empty bucket %d" % bucket_id)
                                 continue
-                            encoder_inputs, decoder_inputs, target_weights = model.get_batch(dev_set, bucket_id)
+                            encoder_inputs, decoder_inputs, target_weights, state = model.get_batch(dev_set, bucket_id)
 
                             # Clean out used bucket
                             del dev_set[bucket_id][:FLAGS.batch_size]
 
-                            _, eval_loss, _ = model.step(sess, encoder_inputs, decoder_inputs, target_weights, bucket_id, True)
+                            _, eval_loss, _, _ = model.step(sess, encoder_inputs, decoder_inputs, target_weights, state, bucket_id, True)
                             eval_ppx = exp(float(eval_loss)) if eval_loss < 300 else float("inf")
                             print("  eval: bucket %d perplexity %.2f" % (bucket_id, eval_ppx))
 
@@ -292,6 +289,8 @@ def decode():
             sys.stdout.flush()
             sentence = sys.stdin.readline()
             sentence = preprocess_input(sentence, fast_text_model, vocab_vectors)
+
+
 
 
 def main(_):
