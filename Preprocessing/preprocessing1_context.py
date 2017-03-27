@@ -24,9 +24,10 @@ def preprocess_training_file(path, x_train_path, y_train_path):
     sentence_holder = ""
     with open(path) as fileobject:
         for line in fileobject:
-            text, current_user = split_line(line)
+            text, user = split_line(line)
             if text == "":
                 continue
+            current_user = user
             if user1_first_line:
                 init_user, previous_user = current_user, current_user
                 user1_first_line = False
