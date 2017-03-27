@@ -24,6 +24,7 @@ paths_from_model = {
     'fast_text_model_context': '../Preprocessing/context/model.bin',
     'vocab_vectors': '../Preprocessing/datafiles/vocab_vectors_path.pickle',
     'vocab_vectors_context': '../Preprocessing/context/vocab_vectors_path.pickle',
+    'stateful_datafiles': '../Preprocessing/stateful/datafiles',
     'perplexity_log': 'perplexity_log.txt'
 }
 
