@@ -142,15 +142,15 @@ def check_and_shuffle_file(key, sess, read_line, file_path):
     return holder
 
 
-def get_stateful_batch(source, train_set, state, bucket_size):
+def get_stateful_batch(source, train_set, state, size):
 
     # Find empty lists in
     empty_conversations = [index for index, conversation in enumerate(train_set) if conversation == []]
 
     # Reset state where there are new conversations
     for entry in empty_conversations:
-        state[entry][0] = [0] * bucket_size[0]
-        state[entry][1] = [0] * bucket_size[0]
+        state[0][entry] = [0] * size
+        state[1][entry] = [0] * size
 
 
     # Feed batch
