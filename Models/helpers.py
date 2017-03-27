@@ -149,7 +149,8 @@ def get_stateful_batch(source, train_set, state, bucket_size):
 
     # Reset state where there are new conversations
     for entry in empty_conversations:
-        state[entry] = [0] * bucket_size
+        state[entry][0] = [0] * bucket_size[0]
+        state[entry][1] = [0] * bucket_size[0]
 
 
     # Feed batch

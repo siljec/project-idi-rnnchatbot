@@ -166,7 +166,7 @@ def train():
                         print("Step number" + str(current_step))
 
                     # Get a batch
-                    train_set, batch_train_set, state = get_stateful_batch(txt_row_train_data, train_set, state, _buckets[0])
+                    train_set, batch_train_set, state = get_stateful_batch(txt_row_train_data, train_set, state, size)
                     start_time = time.time()
                     encoder_inputs, decoder_inputs, target_weights = model.get_batch(batch_train_set)
 
@@ -185,7 +185,7 @@ def train():
                         print(get_time(train_time), "to train")
 
                         # Print statistics for the previous epoch.
-                        dev_set, batch_dev_set, _ = get_stateful_batch(txt_row_dev_data, dev_set, initial_state, _buckets[0])
+                        dev_set, batch_dev_set, _ = get_stateful_batch(txt_row_dev_data, dev_set, initial_state, size)
 
                         perplexity = exp(float(loss)) if loss < 300 else float("inf")
                         print("global step %d learning rate %.4f step-time %.2f perplexity "
