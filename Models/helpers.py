@@ -167,7 +167,7 @@ def get_stateful_batch(source, train_set, state, size):
         y = [int(i) for i in holder[1].split()]
 
         # Fill an entire conversation to the list
-        while x != EOT_ID:
+        while x[0] != EOT_ID:
             # Feed the correct bucket to input the read line. Lines longer than the largest bucket is excluded.
             train_set[current_index].append([x, y])
 
