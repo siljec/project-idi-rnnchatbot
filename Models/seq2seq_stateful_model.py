@@ -196,8 +196,7 @@ class Seq2SeqModel(object):
 
     self.saver = tf.train.Saver(tf.all_variables())
 
-  def step(self, session, encoder_inputs, decoder_inputs, target_weights, initial_state,
-           bucket_id, forward_only):
+  def step(self, session, encoder_inputs, decoder_inputs, target_weights, initial_state, forward_only):
     """Run a step of the model feeding the given inputs.
 
     Args:
@@ -206,7 +205,6 @@ class Seq2SeqModel(object):
       decoder_inputs: list of numpy int vectors to feed as decoder inputs.
       target_weights: list of numpy float vectors to feed as target weights.
       initial_state: state to feed the encoder
-      bucket_id: which bucket of the model to use.
       forward_only: whether to do the backward step or only forward.
 
     Returns:
@@ -263,7 +261,7 @@ class Seq2SeqModel(object):
 
 
   # Changed from tensorflows code. The reason for why we need to use our own file.
-  def get_batch(self, data, bucket_id, states):
+  def get_batch(self, data):
     """Get a random batch of data from the specified bucket, prepare for step.
 
     To feed data in step(..) it must be a list of batch-major vectors, while
@@ -285,7 +283,7 @@ class Seq2SeqModel(object):
 
     # Get a random batch of encoder and decoder inputs from data,
     # pad them if needed, reverse encoder inputs and add GO to decoder.
-    for pair in data[bucket_id]:
+    for pair in data:
       encoder_input, decoder_input = pair
 
       # Encoder inputs are padded and then reversed.
@@ -323,9 +321,4 @@ class Seq2SeqModel(object):
           batch_weight[batch_idx] = 0.0
       batch_weights.append(batch_weight)
 
-    if True:
-        batch_states = states
-    else:
-        batch_states = np.zeros((self.num_layers, self.batch_size, self.size))
-
-    return batch_encoder_inputs, batch_decoder_inputs, batch_weights, batch_states
+    return batch_encoder_inputs, batch_decoder_inputs, batch_weights

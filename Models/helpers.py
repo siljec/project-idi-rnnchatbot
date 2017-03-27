@@ -142,6 +142,51 @@ def check_and_shuffle_file(key, sess, read_line, file_path):
     return holder
 
 
+def get_stateful_batch(source, train_set, state, bucket_size):
+
+    # Find empty lists in
+    empty_conversations = [index for index, conversation in enumerate(train_set) if conversation == []]
+
+    # Reset state where there are new conversations
+    for entry in empty_conversations:
+        state[entry] = [0] * bucket_size
+
+
+    # Feed batch
+    while empty_conversations != []:
+
+        current_index = empty_conversations.pop()
+
+        # Convert tensor to array
+        holder = source.eval()
+        holder = holder.split(',')
+
+        # x_data is on the left side of the comma, while y_data is on the right. Also casting to integers.
+        x = [int(i) for i in holder[0].split()]
+        y = [int(i) for i in holder[1].split()]
+
+        # Fill an entire conversation to the list
+        while x != EOT_ID:
+            # Feed the correct bucket to input the read line. Lines longer than the largest bucket is excluded.
+            train_set[current_index].append([x, y])
+
+            # Convert tensor to array
+            holder = source.eval()
+            holder = holder.split(',')
+
+            # x_data is on the left side of the comma, while y_data is on the right. Also casting to integers.
+            x = [int(i) for i in holder[0].split()]
+            y = [int(i) for i in holder[1].split()]
+
+    # Return the first pairs in all of the lists
+    batch_training_set = [pairs[0] for pairs in train_set]
+
+    # Remove the batch_training_set in the train_set
+    train_set = [pairs[1:] for pairs in train_set]
+
+    return train_set, batch_training_set, state
+
+
 def get_batch(source, train_set, batch_size, ac_function=max):
     # Feed buckets until one of them reach the batch_size
     while ac_function([len(x) for x in train_set]) < batch_size:
@@ -166,14 +211,14 @@ def get_batch(source, train_set, batch_size, ac_function=max):
     return train_set, largest_bucket_index
 
 
-def input_pipeline(root=paths['preprocess_root_files'], start_name=paths['train_file']):
+def input_pipeline(root=paths['preprocess_root_files'], start_name=paths['train_file'], shuffle=False):
     # Finds all filenames that match the root and start_name
     filenames = [root + filename for filename in os.listdir(root) if filename.startswith(start_name)]
 
     # Adds the filenames to the queue
     # Can also add args such as num_epocs and shuffle. shuffle=True will shuffle the files from 'filenames'
-    filename_queue = tf.train.string_input_producer(filenames)
-    print("Files added to queue: ", filenames)
+    filename_queue = tf.train.string_input_producer(filenames, shuffle=shuffle)
+    # print("Files added to queue: ", filenames)
 
     return filename_queue
 

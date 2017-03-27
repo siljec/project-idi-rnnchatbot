@@ -205,7 +205,8 @@ paths_from_preprocessing_stateful = {
     'unk_vectors_path': "./datafiles/unk_vectors_path.pickle",
     'unk_to_vocab_pickle_path': "./datafiles/unk_to_vocab.pickle",
     'unk_to_vocab_txt_path': "./datafiles/unk_to_vocab.txt",
-    'test_file_words_path': "./datafiles/test_file_words_path.txt"
+    'test_file_words_path': "./datafiles/test_file_words_path.txt",
+    'perplexity_log': 'perplexity_log.txt'
 }
 
 
@@ -219,6 +220,8 @@ tokens = {
     'emoji': ('_EMJ', None),
     'directory': ('_DIR', None)
 }
+
+number_of_conversations_that_fits_30_30 = 851062
 
 tokens_list = ['_PAD', '_GO', '_EOS', '_EOT', '_UNK', '_URL', '_EMJ', '_DIR']
 tokens_init_list = ['_PAD', '_GO', '_EOS', '_EOT', '_UNK']

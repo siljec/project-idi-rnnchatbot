@@ -42,13 +42,14 @@ sys.path.insert(0, '../Preprocessing') # To access methods from another file fro
 from create_vocabulary import read_vocabulary_from_file
 from preprocess_helpers import load_pickle_file, get_time
 
-from helpers import check_for_needed_files_and_create, preprocess_input, sentence_to_token_ids, get_batch, input_pipeline, get_session_configs, self_test, decode_sentence, check_and_shuffle_file
+from helpers import check_for_needed_files_and_create, preprocess_input, get_stateful_batch, input_pipeline, get_session_configs, self_test, decode_sentence, check_and_shuffle_file
 import numpy as np
 from six.moves import xrange  # pylint: disable=redefined-builtin
 import tensorflow as tf
 import seq2seq_stateful_model as seq2seq_model
 sys.path.insert(0, '../')
-from variables import paths_from_model as paths, tokens, _buckets, vocabulary_size, max_training_steps, steps_per_checkpoint, print_frequency, size, batch_size, num_layers, use_gpu
+from variables import paths_from_model as paths, tokens, _buckets, vocabulary_size, max_training_steps, \
+    steps_per_checkpoint, print_frequency, size, batch_size, num_layers, use_gpu
 
 
 tf.app.flags.DEFINE_float("learning_rate", 0.5, "Learning rate.")
@@ -60,9 +61,9 @@ tf.app.flags.DEFINE_integer("num_layers", num_layers, "Number of layers in the m
 tf.app.flags.DEFINE_integer("vocab_size", vocabulary_size, "English vocabulary size.")
 tf.app.flags.DEFINE_integer("print_frequency", print_frequency, "How many training steps to do per print.")
 tf.app.flags.DEFINE_integer("max_train_steps", max_training_steps, "How many training steps to do.")
-tf.app.flags.DEFINE_string("data_dir", "./Vinyals_data", "Data directory")
-tf.app.flags.DEFINE_string("train_dir", "./Vinyals_data", "Training directory.")
-tf.app.flags.DEFINE_string("log_dir", "./Vinyals_data/log_dir", "Logging directory.")
+tf.app.flags.DEFINE_string("data_dir", "./Stateful_data", "Data directory")
+tf.app.flags.DEFINE_string("train_dir", "./Stateful_data", "Training directory.")
+tf.app.flags.DEFINE_string("log_dir", "./Stateful_data/log_dir", "Logging directory.")
 tf.app.flags.DEFINE_integer("max_train_data_size", 0, "Limit on the size of training data (0: no limit).")
 tf.app.flags.DEFINE_integer("steps_per_checkpoint", steps_per_checkpoint, "How many training steps to do per checkpoint.")
 tf.app.flags.DEFINE_boolean("decode", False, "Set to True for interactive decoding.")
@@ -76,6 +77,8 @@ _GO, GO_ID = tokens['go']
 _EOS, EOS_ID = tokens['eos']
 _EOT, EOT_ID = tokens['eot']
 _UNK, UNK_ID = tokens['unk']
+
+_buckets = [_buckets[-1]]
 
 
 def create_model(session, forward_only):
@@ -108,9 +111,11 @@ def train():
     print("Checking for needed files")
     check_for_needed_files_and_create()
 
-    print("Creating file queue")
-    filename_queue = input_pipeline(start_name=paths['train_file'])
-    filename_queue_dev = input_pipeline(start_name=paths['dev_file'])
+    print("Creating file queues")
+
+    filename_queue = input_pipeline(root=paths['stateful_datafiles'], start_name="train", shuffle=True)
+
+    filename_queue_dev = input_pipeline(root=paths['stateful_datafiles'], start_name="dev", shuffle=True)
 
     perplexity_log_path = os.path.join(FLAGS.train_dir, paths['perplexity_log'])
 
@@ -132,22 +137,18 @@ def train():
             threads = tf.train.start_queue_runners(coord=coord)
 
             # This is for the training loop.
-            train_set = [[] for _ in _buckets]
-            dev_set = [[] for _ in _buckets]
             step_time, loss = 0.0, 0.0
             current_step = 0
+            train_set = [[] for _ in range(batch_size)]
             previous_losses = []
-            read_line = 0
 
             # Create log writer object
             print("Create log writer object")
             summary_writer = tf.train.SummaryWriter(FLAGS.log_dir, graph=tf.get_default_graph())
 
-            reader_train_data = tf.TextLineReader()  # skip_header_lines=int, number of lines to skip
-            key, txt_row_train_data = reader_train_data.read(filename_queue)
+            _, txt_row_train_data = tf.TextLineReader().read(filename_queue)
 
-            reader_dev_data = tf.TextLineReader()
-            _, txt_row_dev_data = reader_dev_data.read(filename_queue_dev)
+            _, txt_row_dev_data = tf.TextLineReader().read(filename_queue_dev)
 
             lowest_perplexity = 20.0
 
@@ -160,23 +161,17 @@ def train():
             print("Starts training loop")
 
             try:
-                while FLAGS.max_train_steps >= current_step:  #not coord.should_stop():
+                while FLAGS.max_train_steps >= current_step:  # not coord.should_stop():
                     if current_step % FLAGS.print_frequency == 0:
                         print("Step number" + str(current_step))
 
-                    read_line = check_and_shuffle_file(key, sess, read_line, paths['train_path'])
-
                     # Get a batch
-                    train_set, bucket_id = get_batch(txt_row_train_data, train_set, FLAGS.batch_size)
+                    train_set, batch_train_set, state = get_stateful_batch(txt_row_train_data, train_set, state, _buckets[0])
                     start_time = time.time()
-                    encoder_inputs, decoder_inputs, target_weights, state = model.get_batch(train_set, bucket_id, state)
-
-                    # Clean out trained bucket
-                    train_set[bucket_id] = []
+                    encoder_inputs, decoder_inputs, target_weights = model.get_batch(batch_train_set)
 
                     # Make a step
-                    _, step_loss, _, state = model.step(sess, encoder_inputs, decoder_inputs, target_weights, state, bucket_id, False)
-                    print(state)
+                    _, step_loss, _, state = model.step(sess, encoder_inputs, decoder_inputs, target_weights, state, False)
 
                     # Calculating variables
                     step_time += (time.time() - start_time) / FLAGS.steps_per_checkpoint
@@ -190,7 +185,7 @@ def train():
                         print(get_time(train_time), "to train")
 
                         # Print statistics for the previous epoch.
-                        dev_set, bucket_id = get_batch(txt_row_dev_data, dev_set, FLAGS.batch_size, ac_function=min)
+                        dev_set, batch_dev_set, _ = get_stateful_batch(txt_row_dev_data, dev_set, initial_state, _buckets[0])
 
                         perplexity = exp(float(loss)) if loss < 300 else float("inf")
                         print("global step %d learning rate %.4f step-time %.2f perplexity "
@@ -220,12 +215,9 @@ def train():
                             if len(dev_set[bucket_id]) == 0:
                                 print("  eval: empty bucket %d" % bucket_id)
                                 continue
-                            encoder_inputs, decoder_inputs, target_weights, state = model.get_batch(dev_set, bucket_id)
+                            encoder_inputs, decoder_inputs, target_weights, state = model.get_batch(batch_dev_set)
 
-                            # Clean out used bucket
-                            del dev_set[bucket_id][:FLAGS.batch_size]
-
-                            _, eval_loss, _, _ = model.step(sess, encoder_inputs, decoder_inputs, target_weights, state, bucket_id, True)
+                            _, eval_loss, _, _ = model.step(sess, encoder_inputs, decoder_inputs, target_weights, initial_state, True)
                             eval_ppx = exp(float(eval_loss)) if eval_loss < 300 else float("inf")
                             print("  eval: bucket %d perplexity %.2f" % (bucket_id, eval_ppx))
 
@@ -243,7 +235,7 @@ def train():
                         # Save model if checkpoint was the best one
                         if perplexity < lowest_perplexity:
                             lowest_perplexity = perplexity
-                            checkpoint_path = os.path.join(FLAGS.train_dir, "Ola_best_.ckpt")
+                            checkpoint_path = os.path.join(FLAGS.train_dir, "Vinyals_stateful_best_.ckpt")
                             model.saver.save(sess, checkpoint_path, global_step=model.global_step)
 
                         sys.stdout.flush()
