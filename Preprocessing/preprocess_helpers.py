@@ -95,9 +95,6 @@ def do_regex_on_line_opensubtitles(text):
     return text
 
 
-
-
-
 # Pre-process 1
 def replace_word_helper(candidate, dictionary):
     if candidate in dictionary:
@@ -131,8 +128,19 @@ def replace_mispelled_words_in_file(source_file_path, new_file_path, misspelled_
 
     new_file.close()
 
-# Pre-process 2
+def do_misspellings_on_line(line, dictionary):
+    sentence = line.split(' ')
+    last_word = sentence.pop().strip()
+    sentence_holder = ''
+    for word in sentence:
+        new_word = replace_word_helper(word, dictionary)
+        sentence_holder += new_word + ' '
+    new_word = replace_word_helper(last_word, dictionary)
+    sentence_holder += new_word
+    return sentence_holder
 
+
+# Pre-process 2
 def save_vocabulary(path, obj, init_tokens):
 
     with open(path, 'w') as fileObject:
@@ -210,7 +218,7 @@ def create_final_merged_files(x_path, y_path, vocabulary_path, train_path, val_p
     with open(x_path) as x_file, open(y_path) as y_file:
         for x, y in izip(x_file, y_file):
             if line_counter < train_size:
-                train_final.write( encode_sentence(x.strip().split(" "), vocabulary) + ", " + encode_sentence(y.strip().split(" "), vocabulary) + '\n')
+                train_final.write(encode_sentence(x.strip().split(" "), vocabulary) + ", " + encode_sentence(y.strip().split(" "), vocabulary) + '\n')
             elif line_counter < val_size:
                 val_final.write(encode_sentence(x.strip().split(" "), vocabulary) + ", " + encode_sentence(y.strip().split(" "), vocabulary) + '\n')
             else:

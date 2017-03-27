@@ -187,7 +187,25 @@ paths_from_preprocessing_opensubtitles = {
     'unk_to_vocab_txt_path': "./opensubtitles/unk_to_vocab.txt",
 
     'test_file_words_path': "./opensubtitles/test_file_words_path.txt"
+}
 
+paths_from_preprocessing_stateful = {
+    'source_folder_root': "../../ubuntu-ranking-dataset-creator/src/dialogs/",
+    'misspellings_path': "../misspellings.txt",
+    'stateful_datafiles': "./stateful/datafiles/",
+    'stateful_raw_files': "./stateful/raw_files/",
+
+    'fast_text_train_path': "./datafiles/fast_text_train.txt",
+    'fasttext_model_path': "./datafiles/model.bin",
+
+    'vocabulary_txt_path': "./datafiles/vocabulary.txt",
+    'vocabulary_pickle_path': "./datafiles/vocabulary.pickle",
+
+    'vocab_vectors_path': "./datafiles/vocab_vectors_path.pickle",
+    'unk_vectors_path': "./datafiles/unk_vectors_path.pickle",
+    'unk_to_vocab_pickle_path': "./datafiles/unk_to_vocab.pickle",
+    'unk_to_vocab_txt_path': "./datafiles/unk_to_vocab.txt",
+    'test_file_words_path': "./datafiles/test_file_words_path.txt"
 }
 
 
