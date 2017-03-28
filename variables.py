@@ -222,8 +222,6 @@ tokens = {
     'directory': ('_DIR', None)
 }
 
-number_of_conversations_that_fits_30_30 = 851062
-
 tokens_list = ['_PAD', '_GO', '_EOS', '_EOT', '_UNK', '_URL', '_EMJ', '_DIR']
 tokens_init_list = ['_PAD', '_GO', '_EOS', '_EOT', '_UNK']
 
@@ -238,16 +236,16 @@ size = 1024
 num_layers = 2
 batch_size = 24
 
-# optimizer = "Adagrad" # LR = 0.5
+optimizer = "Adagrad" # LR = 0.5
 #optimizer = "GradientDescent" # LR = 0.1
-optimizer = "Adam" # LR = 0.0001
+#optimizer = "Adam" # LR = 0.0001
 word_embedding_size = 1000
 
 use_gpu = '/gpu:0'
 
 context = False
 contextFullTurns = False
-opensubtitles = True
+opensubtitles = False
 if opensubtitles:
     vocabulary_size = 20000
 if contextFullTurns:

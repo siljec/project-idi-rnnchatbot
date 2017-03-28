@@ -4,18 +4,11 @@ import fasttext
 from preprocess_helpers import split_line, do_regex_on_line, do_misspellings_on_line, read_words_from_misspelling_file, \
     save_to_file, load_pickle_file, replace_word_helper, path_exists, read_vocabulary_from_file, encode_sentence
 sys.path.insert(0, '../')
-from variables import folders, _buckets, tokens, paths_from_preprocessing_stateful as paths, number_of_conversations_that_fits_30_30 as num_conversations
+from variables import folders, _buckets, tokens, paths_from_preprocessing_stateful as paths
 
 # This script will only work for the stateful preprocessing, as we will use several files for training
 
 # Step 1: Filter out conversations that fits the bucket size (init: (30,30)), then save the file to the stateful folder
-folders = ['30']
-num_conversations = 27
-
-num_dev_files = num_conversations * 0.1
-num_test_files = num_conversations * 0.1
-num_train_files = num_conversations - (num_dev_files + num_test_files)
-
 
 def read_every_source_file_and_save_to_dest(dest_path):
     fasttext_dictionary = load_pickle_file(paths['unk_to_vocab_pickle_path'])
@@ -32,7 +25,8 @@ def read_every_source_file_and_save_to_dest(dest_path):
                 file_name += 1
 
         print("Done with folder: " + str(folder) + ", read " + str(number_of_files_read) + " conversations")
-    print "Number of files read: " + str(number_of_files_read)
+    print "Number of files created: " + str(file_name)
+    return file_name
 
 
 def preprocess_on_stateful(path, bucket_size, file_name_number, misspellings_dictionary, dest_path, fasttext_dictionary):
@@ -115,7 +109,11 @@ def load_fasttext_model(path):
     return model
 
 
-def convert_word_files_to_to_int_words(source_folder, dest_path):
+def convert_word_files_to_to_int_words(source_folder, dest_path, num_conversations):
+    num_dev_files = num_conversations * 0.1
+    num_test_files = num_conversations * 0.1
+    num_train_files = num_conversations - (num_dev_files + num_test_files)
+
     conversations_read = 0
     vocabulary, _ = read_vocabulary_from_file(paths['vocabulary_txt_path'])
     filenames = glob.glob(os.path.join(source_folder, '*'))
@@ -148,5 +146,5 @@ def create_encoded_file(x_path, y_path, vocabulary, train_path):
     train_file.close()
 
 
-read_every_source_file_and_save_to_dest(paths['stateful_raw_files'])
-convert_word_files_to_to_int_words(paths['stateful_raw_files'], paths['stateful_datafiles'])
+num_files_created = read_every_source_file_and_save_to_dest(paths['stateful_raw_files'])
+convert_word_files_to_to_int_words(paths['stateful_raw_files'], paths['stateful_datafiles'], num_files_created)
