@@ -116,19 +116,20 @@ def convert_word_files_to_to_int_words(source_folder, dest_path, num_conversatio
 
     conversations_read = 0
     vocabulary, _ = read_vocabulary_from_file(paths['vocabulary_txt_path'])
-    filenames = glob.glob(os.path.join(source_folder, '*'))
-    for i in range(0, len(filenames), 2):
+    # Find all filenames that ends with x.txt
+    filenames = glob.glob(os.path.join(source_folder, '*x.txt'))
+    for filename in filenames:
         # x_file
-        x_path = filenames[i]
+        x_path = filename
         # y_file
-        y_path = filenames[i].replace('x.', 'y.')
+        y_path = filename.replace('x.', 'y.')
 
         if num_train_files > conversations_read:
-            target_file_path = dest_path + "train" + os.path.basename(filenames[i]).replace('_x', '')
+            target_file_path = dest_path + "train" + os.path.basename(x_path).replace('_x', '')
         elif num_train_files + num_dev_files > conversations_read:
-            target_file_path = dest_path + "dev" + os.path.basename(filenames[i]).replace('_x', '')
+            target_file_path = dest_path + "dev" + os.path.basename(x_path).replace('_x', '')
         else:
-            target_file_path = dest_path + "test" + os.path.basename(filenames[i]).replace('_x', '')
+            target_file_path = dest_path + "test" + os.path.basename(x_path).replace('_x', '')
 
         create_encoded_file(x_path, y_path, vocabulary, target_file_path)
         conversations_read += 1
