@@ -27,6 +27,33 @@ paths_from_model = {
     'perplexity_log': 'perplexity_log.txt'
 }
 
+paths_from_model_gru = {
+    'preprocess_root_files': '../Preprocessing/datafiles_gru/',
+    'vocab_path': '../Preprocessing/datafiles_gru/vocabulary.txt',
+    'train_path': '../Preprocessing/datafiles_gru/training_data.txt',
+    'train_file': 'training_data.txt',
+    'dev_path': '../Preprocessing/datafiles_gru/validation_data.txt',
+    'dev_file': 'validation_data.txt',
+    'test_path': '../Preprocessing/datafiles_gru/test_data.txt',
+    'test_file': 'test_data.txt',
+    'misspellings': '../misspellings.txt',
+    'fast_text_model': '../Preprocessing/datafiles_gru/model.bin',
+    'ubuntu': './../../ubuntu-ranking-dataset-creator',
+    'preprocess_root_files_context': '../Preprocessing/context/',
+    'vocab_path_context': '../Preprocessing/context/vocabulary.txt',
+    'train_path_context': '../Preprocessing/context/training_data.txt',
+    'train_file_context': 'training_data.txt',
+    'dev_path_context': '../Preprocessing/context/validation_data.txt',
+    'dev_file_context': 'validation_data.txt',
+    'test_path_context': '../Preprocessing/context/test_data.txt',
+    'test_file_context': 'test_data.txt',
+    'misspellings_context': '../Preprocessing/context/misspellings.txt',
+    'fast_text_model_context': '../Preprocessing/context/model.bin',
+    'vocab_vectors': '../Preprocessing/datafiles_gru/vocab_vectors_path.pickle',
+    'vocab_vectors_context': '../Preprocessing/context/vocab_vectors_path.pickle',
+    'perplexity_log': 'perplexity_log.txt'
+}
+
 paths_from_preprocessing = {
     'source_folder_root': "../../ubuntu-ranking-dataset-creator/src/dialogs/",
     'raw_data_x_path': "./datafiles/raw_data_x.txt",

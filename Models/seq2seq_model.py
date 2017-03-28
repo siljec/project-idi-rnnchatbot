@@ -56,7 +56,7 @@ class Seq2SeqModel(object):
                batch_size,
                learning_rate,
                learning_rate_decay_factor,
-               use_lstm=True,
+               use_lstm,
                num_samples=512,
                forward_only=False,
                dtype=tf.float32):
