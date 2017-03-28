@@ -52,7 +52,7 @@ from variables import paths_from_model as paths, tokens, _buckets, vocabulary_si
     steps_per_checkpoint, print_frequency, size, batch_size, num_layers, use_gpu
 
 
-tf.app.flags.DEFINE_float("learning_rate", 0.5, "Learning rate.")
+tf.app.flags.DEFINE_float("learning_rate", 0.1, "Learning rate.")
 tf.app.flags.DEFINE_float("learning_rate_decay_factor", 0.99, "Learning rate decays by this much.")
 tf.app.flags.DEFINE_float("max_gradient_norm", 5.0, "Clip gradients to this norm.")
 tf.app.flags.DEFINE_integer("batch_size", batch_size, "Batch size to use during training.")
@@ -94,6 +94,7 @@ def create_model(session, forward_only):
         FLAGS.batch_size,
         FLAGS.learning_rate,
         FLAGS.learning_rate_decay_factor,
+        use_lstm=False,
         forward_only=forward_only)
     ckpt = tf.train.get_checkpoint_state(FLAGS.train_dir)
     if ckpt and tf.gfile.Exists(ckpt.model_checkpoint_path):
@@ -140,6 +141,7 @@ def train():
             step_time, loss = 0.0, 0.0
             current_step = 0
             train_set = [[] for _ in range(batch_size)]
+            dev_set = [[] for _ in range(batch_size)]
             previous_losses = []
 
             # Create log writer object
