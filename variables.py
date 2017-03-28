@@ -244,14 +244,14 @@ batch_size = 24
 
 # optimizer = "Adagrad" # LR = 0.5
 #optimizer = "GradientDescent" # LR = 0.1
-optimizer = "Adam" # LR = 0.0001
+optimizer = "AdaGrad" # LR = 0.0001
 word_embedding_size = 1000
 
 use_gpu = '/gpu:0'
 
 context = False
 contextFullTurns = False
-opensubtitles = True
+opensubtitles = False
 if opensubtitles:
     vocabulary_size = 20000
 if contextFullTurns:
