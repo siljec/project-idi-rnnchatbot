@@ -24,6 +24,7 @@ paths_from_model = {
     'fast_text_model_context': '../Preprocessing/context/model.bin',
     'vocab_vectors': '../Preprocessing/datafiles/vocab_vectors_path.pickle',
     'vocab_vectors_context': '../Preprocessing/context/vocab_vectors_path.pickle',
+    'stateful_datafiles': '../Preprocessing/stateful/datafiles/',
     'perplexity_log': 'perplexity_log.txt'
 }
 
@@ -187,7 +188,26 @@ paths_from_preprocessing_opensubtitles = {
     'unk_to_vocab_txt_path': "./opensubtitles/unk_to_vocab.txt",
 
     'test_file_words_path': "./opensubtitles/test_file_words_path.txt"
+}
 
+paths_from_preprocessing_stateful = {
+    'source_folder_root': "../../ubuntu-ranking-dataset-creator/src/dialogs/",
+    'misspellings_path': "../misspellings.txt",
+    'stateful_datafiles': "./stateful/datafiles/",
+    'stateful_raw_files': "./stateful/raw_files/",
+
+    'fast_text_train_path': "./datafiles/fast_text_train.txt",
+    'fasttext_model_path': "./datafiles/model.bin",
+
+    'vocabulary_txt_path': "./datafiles/vocabulary.txt",
+    'vocabulary_pickle_path': "./datafiles/vocabulary.pickle",
+
+    'vocab_vectors_path': "./datafiles/vocab_vectors_path.pickle",
+    'unk_vectors_path': "./datafiles/unk_vectors_path.pickle",
+    'unk_to_vocab_pickle_path': "./datafiles/unk_to_vocab.pickle",
+    'unk_to_vocab_txt_path': "./datafiles/unk_to_vocab.txt",
+    'test_file_words_path': "./datafiles/test_file_words_path.txt",
+    'perplexity_log': 'perplexity_log.txt'
 }
 
 
@@ -208,6 +228,7 @@ tokens_init_list = ['_PAD', '_GO', '_EOS', '_EOT', '_UNK']
 _buckets = [(10, 10), (16, 16), (22, 22), (30, 30)]
 
 vocabulary_size = 30000
+
 print_frequency = 1000
 steps_per_checkpoint = 10000
 max_training_steps = 300005
@@ -215,16 +236,16 @@ size = 1024
 num_layers = 2
 batch_size = 24
 
-# optimizer = "Adagrad" # LR = 0.5
+optimizer = "Adagrad" # LR = 0.5
 #optimizer = "GradientDescent" # LR = 0.1
-optimizer = "Adam" # LR = 0.0001
+#optimizer = "Adam" # LR = 0.0001
 word_embedding_size = 1000
 
 use_gpu = '/gpu:0'
 
 context = False
 contextFullTurns = False
-opensubtitles = True
+opensubtitles = False
 if opensubtitles:
     vocabulary_size = 20000
 if contextFullTurns:
