@@ -66,6 +66,7 @@ tf.app.flags.DEFINE_string("train_dir", "./Stateful_data", "Training directory."
 tf.app.flags.DEFINE_string("log_dir", "./Stateful_data/log_dir", "Logging directory.")
 tf.app.flags.DEFINE_integer("max_train_data_size", 0, "Limit on the size of training data (0: no limit).")
 tf.app.flags.DEFINE_integer("steps_per_checkpoint", steps_per_checkpoint, "How many training steps to do per checkpoint.")
+tf.app.flags.DEFINE_boolean("use_lstm", True, "Train using fp16 instead of fp32.")
 tf.app.flags.DEFINE_boolean("decode", False, "Set to True for interactive decoding.")
 tf.app.flags.DEFINE_boolean("self_test", False, "Run a self-test if this is set to True.")
 tf.app.flags.DEFINE_boolean("use_fp16", False, "Train using fp16 instead of fp32.")
@@ -94,7 +95,7 @@ def create_model(session, forward_only):
         FLAGS.batch_size,
         FLAGS.learning_rate,
         FLAGS.learning_rate_decay_factor,
-        use_lstm=False,
+        use_lstm=FLAGS.use_lstm,
         forward_only=forward_only)
     ckpt = tf.train.get_checkpoint_state(FLAGS.train_dir)
     if ckpt and tf.gfile.Exists(ckpt.model_checkpoint_path):
@@ -157,7 +158,10 @@ def train():
             train_time = time.time()
 
             # Need a initial state for the encoder rnn
-            initial_state = np.zeros((num_layers, batch_size, size))
+            if FLAGS.use_lstm:
+                initial_state = np.zeros((num_layers, 2, batch_size, size))
+            else:
+                initial_state = np.zeros((num_layers, batch_size, size))
             state = initial_state
 
             print("Starts training loop")
@@ -168,7 +172,7 @@ def train():
                         print("Step number" + str(current_step))
 
                     # Get a batch
-                    train_set, batch_train_set, state = get_stateful_batch(txt_row_train_data, train_set, state, size)
+                    train_set, batch_train_set, state = get_stateful_batch(txt_row_train_data, train_set, state, size, FLAGS.use_lstm)
                     start_time = time.time()
                     encoder_inputs, decoder_inputs, target_weights = model.get_batch(batch_train_set)
 
@@ -187,7 +191,7 @@ def train():
                         print(get_time(train_time), "to train")
 
                         # Print statistics for the previous epoch.
-                        dev_set, batch_dev_set, _ = get_stateful_batch(txt_row_dev_data, dev_set, initial_state, size)
+                        dev_set, batch_dev_set, _ = get_stateful_batch(txt_row_dev_data, dev_set, initial_state, size, FLAGS.use_lstm)
 
                         perplexity = exp(float(loss)) if loss < 300 else float("inf")
                         print("global step %d learning rate %.4f step-time %.2f perplexity "

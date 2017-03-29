@@ -155,11 +155,17 @@ class Seq2SeqModel(object):
                                                 name="decoder{0}".format(i)))
       self.target_weights.append(tf.placeholder(dtype, shape=[None],
                                                 name="weight{0}".format(i)))
-
-    self.state_placeholder = tf.placeholder(tf.float32, [num_layers, batch_size, size])
-
-    l = tf.unpack(self.state_placeholder, axis=0)
-    rnn_tuple_state = tuple(l[layer] for layer in range(num_layers))
+    if use_lstm:
+        self.state_placeholder = tf.placeholder(tf.float32, [num_layers, 2, batch_size, size])
+        l = tf.unpack(self.state_placeholder, axis=0)
+        rnn_tuple_state = tuple(
+            [tf.nn.rnn_cell.LSTMStateTuple(l[idx][0], l[idx][1])
+             for idx in range(num_layers)]
+        )
+    else:
+        self.state_placeholder = tf.placeholder(tf.float32, [num_layers, batch_size, size])
+        l = tf.unpack(self.state_placeholder, axis=0)
+        rnn_tuple_state = tuple(l[layer] for layer in range(num_layers))
 
     # Our targets are decoder inputs shifted by one.
     targets = [self.decoder_inputs[i + 1] for i in xrange(len(self.decoder_inputs) - 1)]
@@ -257,7 +263,7 @@ class Seq2SeqModel(object):
     if not forward_only:
       return outputs[1], outputs[2], None, outputs[3]  # Gradient norm, loss, no outputs, states
     else:
-      return None, outputs[0], outputs[1:], _  # No gradient norm, loss, outputs, no states.
+      return None, outputs[0], outputs[1:], None  # No gradient norm, loss, outputs, no states.
 
 
   # Changed from tensorflows code. The reason for why we need to use our own file.

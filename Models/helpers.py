@@ -142,15 +142,22 @@ def check_and_shuffle_file(key, sess, read_line, file_path):
     return holder
 
 
-def get_stateful_batch(source, train_set, state, size):
+def get_stateful_batch(source, train_set, state, size, use_lstm):
 
     # Find empty lists in
     empty_conversations = [index for index, conversation in enumerate(train_set) if conversation == []]
 
     # Reset state where there are new conversations
-    for entry in empty_conversations:
-        state[0][entry] = [0] * size
-        state[1][entry] = [0] * size
+    if use_lstm:
+        for entry in empty_conversations:
+            state[0][0][entry] = [0] * size
+            state[0][1][entry] = [0] * size
+            state[1][0][entry] = [0] * size
+            state[1][1][entry] = [0] * size
+    else:
+        for entry in empty_conversations:
+            state[0][entry] = [0] * size
+            state[1][entry] = [0] * size
 
 
     # Feed batch
