@@ -7,7 +7,7 @@ sys.path.insert(0, '../')
 from variables import folders, _buckets, tokens, paths_from_preprocessing_stateful as paths
 
 # This script will only work for the stateful preprocessing, as we will use several files for training
-folders = ['30']
+
 # Step 1: Filter out conversations that fits the bucket size (init: (30,30)), then save the file to the stateful folder
 
 def read_every_source_file_and_save_to_dest(dest_path):
