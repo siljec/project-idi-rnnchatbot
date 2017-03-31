@@ -5,11 +5,12 @@ sys.path.insert(0, '../Preprocessing') # To access methods from another file fro
 from preprocess import start_preprocessing
 from variables import paths_from_model, tokens
 from preprocessing3 import distance
-from preprocess_helpers import shuffle_file
+from preprocess_helpers import shuffle_file, merge_files_to_one
 from variables import tokens, paths_from_model as paths, _buckets
 import tensorflow as tf
 import numpy as np
-from random import choice
+import glob
+from random import choice, shuffle
 
 _, UNK_ID = tokens['unk']
 _, EOT_ID = tokens['eot']
@@ -132,14 +133,38 @@ def sentence_to_token_ids(sentence, vocabulary):
     return [vocabulary.get(w, UNK_ID) for w in words]
 
 
-def check_and_shuffle_file(key, sess, read_line, file_path):
-    # Check if we should shuffle training file
-    holder = int(sess.run(key).split(":")[1])
-    if holder < read_line:
-        shuffle_file(file_path, file_path)
-        print("Training file shuffled")
+def shuffle_stateful_files(path):
+    filenames = glob.glob(os.path.join(paths['stateful_datafiles'], 'train*'))
+    half_of_files = len(filenames) / 2
 
-    return holder
+    # Check whether it is the first or the second file that is shuffled:
+    if path == paths['merged_train_stateful_path_file1']:
+        print("File1")
+        train_file = filenames[:half_of_files]
+        shuffle(train_file)
+    else:
+        print("File2")
+        train_file = filenames[half_of_files:]
+        shuffle(train_file)
+    merge_files_to_one(train_file, path)
+
+
+def check_and_shuffle_file(key, sess, prev_line_number, prev_file_path, stateful=False):
+    # Check if we should shuffle training file
+    file_path, line_number = sess.run(key).split(":")
+    line_number_int = int(line_number)
+
+    # If the new line number is smaller than the previous,
+    # this means that the reader started to read a new file
+    # and we should shuffle the previous one
+    if line_number_int < prev_line_number:
+        if stateful:
+            shuffle_stateful_files(prev_file_path)
+        else:
+            shuffle_file(prev_file_path, prev_file_path)
+        print("Training file shuffled: " + prev_file_path)
+
+    return line_number_int, file_path
 
 
 def get_stateful_batch(source, train_set, state, size, use_lstm):
@@ -161,7 +186,7 @@ def get_stateful_batch(source, train_set, state, size, use_lstm):
 
 
     # Feed batch
-    while not empty_conversations:
+    while empty_conversations != []:
 
         current_index = empty_conversations.pop()
 

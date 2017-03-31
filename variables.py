@@ -25,6 +25,8 @@ paths_from_model = {
     'vocab_vectors': '../Preprocessing/datafiles/vocab_vectors_path.pickle',
     'vocab_vectors_context': '../Preprocessing/context/vocab_vectors_path.pickle',
     'stateful_datafiles': '../Preprocessing/stateful/datafiles/',
+    'merged_train_stateful_path_file1': "../Preprocessing/stateful/datafiles/merged_training_file1.txt",
+    'merged_train_stateful_path_file2': "../Preprocessing/stateful/datafiles/merged_training_file2.txt",
     'perplexity_log': 'perplexity_log.txt'
 }
 
@@ -207,7 +209,8 @@ paths_from_preprocessing_stateful = {
     'unk_to_vocab_pickle_path': "./datafiles/unk_to_vocab.pickle",
     'unk_to_vocab_txt_path': "./datafiles/unk_to_vocab.txt",
     'test_file_words_path': "./datafiles/test_file_words_path.txt",
-    'merged_train_path': "./stateful/datafiles/merged_training_file.txt",
+    'merged_train_path_file1': "./stateful/datafiles/merged_training_file1.txt",
+    'merged_train_path_file2': "./stateful/datafiles/merged_training_file2.txt",
     'merged_test_path': "./stateful/datafiles/merged_test_file.txt",
     'merged_dev_path': "./stateful/datafiles/merged_dev_file.txt",
     'perplexity_log': 'perplexity_log.txt'

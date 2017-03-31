@@ -151,6 +151,18 @@ def create_encoded_file(x_path, y_path, vocabulary, train_path):
     train_file.write(str(tokens['eot'][1]) + ", " + str(tokens['eot'][1]))
     train_file.close()
 
+
+def shuffle_and_merge_to_two_files(file_prefix, target_file_path_1, target_file_path_2, root):
+    filenames = glob.glob(os.path.join(root, file_prefix+'*'))
+    half_of_files = len(filenames) / 2
+    file1 = filenames[:half_of_files]
+    shuffle(file1)
+    file2 = filenames[half_of_files:]
+    shuffle(file2)
+    merge_files_to_one(file1, target_file_path_1)
+    merge_files_to_one(file2, target_file_path_2)
+
+
 def shuffle_and_merge_to_one_file(file_prefix, target_file_path, root):
     filenames = glob.glob(os.path.join(root, file_prefix+'*'))
     shuffle(filenames)
@@ -159,6 +171,6 @@ def shuffle_and_merge_to_one_file(file_prefix, target_file_path, root):
 
 num_files_created = read_every_source_file_and_save_to_dest(paths['stateful_raw_files'])
 convert_word_files_to_to_int_words(paths['stateful_raw_files'], paths['stateful_datafiles'], num_files_created)
-shuffle_and_merge_to_one_file("train", paths['merged_train_path'], paths['stateful_datafiles'])
-shuffle_and_merge_to_one_file("test", paths['merged_test_path'], paths['stateful_datafiles'])
+shuffle_and_merge_to_two_files("train", paths['merged_train_path_file1'], paths['merged_train_path_file2'], paths['stateful_datafiles'])
 shuffle_and_merge_to_one_file("dev", paths['merged_dev_path'], paths['stateful_datafiles'])
+shuffle_and_merge_to_one_file("test", paths['merged_test_path'], paths['stateful_datafiles'])
