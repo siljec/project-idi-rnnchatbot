@@ -161,7 +161,7 @@ def get_stateful_batch(source, train_set, state, size, use_lstm):
 
 
     # Feed batch
-    while empty_conversations != []:
+    while not empty_conversations:
 
         current_index = empty_conversations.pop()
 
@@ -187,10 +187,7 @@ def get_stateful_batch(source, train_set, state, size, use_lstm):
             y = [int(i) for i in holder[1].split()]
 
     # Return the first pairs in all of the lists
-    batch_training_set = [pairs[0] for pairs in train_set]
-
-    # Remove the batch_training_set in the train_set
-    train_set = [pairs[1:] for pairs in train_set]
+    batch_training_set = [pairs.pop(0) for pairs in train_set]
 
     return train_set, batch_training_set, state
 

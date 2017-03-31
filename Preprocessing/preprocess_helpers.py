@@ -204,6 +204,20 @@ def merge_files(x_path, y_path, final_file):
             final_file.write(y)
 
 
+def merge_files_to_one(filenames, target_file_path):
+    target = open(target_file_path, "w")
+    for file in filenames:
+        with open(file) as object:
+            for line in object:
+                if line.split(",")[0].split(" ")[0] == '3':
+                    target.write(line + "\n")
+                else:
+                    target.write(line)
+
+    target.close()
+    print("Files merged to one")
+
+
 def create_final_merged_files(x_path, y_path, vocabulary_path, train_path, val_path, test_path, val_size_fraction,
                               test_size_fraction):
     vocabulary, _ = read_vocabulary_from_file(vocabulary_path)

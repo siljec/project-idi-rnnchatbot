@@ -115,9 +115,9 @@ def train():
 
     print("Creating file queues")
 
-    filename_queue = input_pipeline(root=paths['stateful_datafiles'], start_name="train", shuffle=True)
+    filename_queue = input_pipeline(root=paths['stateful_datafiles'], start_name="merged_train", shuffle=True)
 
-    filename_queue_dev = input_pipeline(root=paths['stateful_datafiles'], start_name="dev", shuffle=True)
+    filename_queue_dev = input_pipeline(root=paths['stateful_datafiles'], start_name="merged_dev", shuffle=True)
 
     perplexity_log_path = os.path.join(FLAGS.train_dir, paths['perplexity_log'])
 
@@ -157,7 +157,7 @@ def train():
 
             train_time = time.time()
 
-            # Need a initial state for the encoder rnn
+            # Need an initial state for the encoder rnn
             if FLAGS.use_lstm:
                 initial_state = np.zeros((num_layers, 2, batch_size, size))
             else:
