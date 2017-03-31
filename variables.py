@@ -207,6 +207,9 @@ paths_from_preprocessing_stateful = {
     'unk_to_vocab_pickle_path': "./datafiles/unk_to_vocab.pickle",
     'unk_to_vocab_txt_path': "./datafiles/unk_to_vocab.txt",
     'test_file_words_path': "./datafiles/test_file_words_path.txt",
+    'merged_train_path': "./stateful/datafiles/merged_training_file.txt",
+    'merged_test_path': "./stateful/datafiles/merged_test_file.txt",
+    'merged_dev_path': "./stateful/datafiles/merged_dev_file.txt",
     'perplexity_log': 'perplexity_log.txt'
 }
 
