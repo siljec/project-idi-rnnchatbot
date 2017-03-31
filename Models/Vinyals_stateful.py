@@ -199,6 +199,7 @@ def train():
                         print(get_time(train_time), "to train")
 
                         # Print statistics for the previous epoch.
+                        init_line = txt_row_dev_data.eval()
                         dev_set, batch_dev_set, _ = get_stateful_batch(txt_row_dev_data, dev_set, init_line, initial_state, size, FLAGS.use_lstm)
 
                         perplexity = exp(float(loss)) if loss < 300 else float("inf")
