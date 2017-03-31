@@ -139,11 +139,9 @@ def shuffle_stateful_files(path):
 
     # Check whether it is the first or the second file that is shuffled:
     if path == paths['merged_train_stateful_path_file1']:
-        print("File1")
         train_file = filenames[:half_of_files]
         shuffle(train_file)
     else:
-        print("File2")
         train_file = filenames[half_of_files:]
         shuffle(train_file)
     merge_files_to_one(train_file, path)
