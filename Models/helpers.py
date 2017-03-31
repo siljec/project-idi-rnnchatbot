@@ -149,7 +149,7 @@ def shuffle_stateful_files(path):
 
 def check_and_shuffle_file(key, sess, prev_line_number, prev_file_path, stateful=False):
     # Check if we should shuffle training file
-    file_path, line_number = sess.run(key).split(":")
+    file_path, line_number = key.split(":")
     line_number_int = int(line_number)
 
     # If the new line number is smaller than the previous,
@@ -165,7 +165,7 @@ def check_and_shuffle_file(key, sess, prev_line_number, prev_file_path, stateful
     return line_number_int, file_path
 
 
-def get_stateful_batch(source, train_set, state, size, use_lstm):
+def get_stateful_batch(source, train_set, init_line, state, size, use_lstm):
 
     # Find empty lists in
     empty_conversations = [index for index, conversation in enumerate(train_set) if conversation == []]
@@ -183,13 +183,19 @@ def get_stateful_batch(source, train_set, state, size, use_lstm):
             state[1][entry] = [0] * size
 
 
+    first_line = True
+
     # Feed batch
     while empty_conversations != []:
 
         current_index = empty_conversations.pop()
 
-        # Convert tensor to array
-        holder = source.eval()
+        if first_line:
+            first_line = False
+            holder = init_line
+        else:
+            # Convert tensor to array
+            holder = source.eval()
         holder = holder.split(',')
 
         # x_data is on the left side of the comma, while y_data is on the right. Also casting to integers.

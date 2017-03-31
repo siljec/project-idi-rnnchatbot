@@ -177,9 +177,10 @@ def train():
                         print("Step number" + str(current_step))
 
                     # Get a batch
+                    key, init_line = sess.run(key, txt_row_train_data)
                     read_line, reading_file_path = check_and_shuffle_file(key, sess, read_line, reading_file_path, stateful=True)
 
-                    train_set, batch_train_set, state = get_stateful_batch(txt_row_train_data, train_set, state, size, FLAGS.use_lstm)
+                    train_set, batch_train_set, state = get_stateful_batch(txt_row_train_data, train_set, init_line, state, size, FLAGS.use_lstm)
                     start_time = time.time()
                     encoder_inputs, decoder_inputs, target_weights = model.get_batch(batch_train_set)
 
@@ -198,7 +199,7 @@ def train():
                         print(get_time(train_time), "to train")
 
                         # Print statistics for the previous epoch.
-                        dev_set, batch_dev_set, _ = get_stateful_batch(txt_row_dev_data, dev_set, initial_state, size, FLAGS.use_lstm)
+                        dev_set, batch_dev_set, _ = get_stateful_batch(txt_row_dev_data, dev_set, init_line, initial_state, size, FLAGS.use_lstm)
 
                         perplexity = exp(float(loss)) if loss < 300 else float("inf")
                         print("global step %d learning rate %.4f step-time %.2f perplexity "
