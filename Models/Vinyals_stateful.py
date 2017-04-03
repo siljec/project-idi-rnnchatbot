@@ -42,7 +42,7 @@ sys.path.insert(0, '../Preprocessing') # To access methods from another file fro
 from create_vocabulary import read_vocabulary_from_file
 from preprocess_helpers import load_pickle_file, get_time
 
-from helpers import check_for_needed_files_and_create, preprocess_input, get_stateful_batch, input_pipeline, get_session_configs, self_test, decode_sentence, check_and_shuffle_file
+from helpers import check_for_needed_files_and_create, preprocess_input, get_stateful_batch, input_pipeline, get_session_configs, self_test, decode_stateful_sentence, check_and_shuffle_file
 import numpy as np
 from six.moves import xrange  # pylint: disable=redefined-builtin
 import tensorflow as tf
@@ -82,7 +82,6 @@ _EOT, EOT_ID = tokens['eot']
 _UNK, UNK_ID = tokens['unk']
 
 _buckets = [_buckets[-1]]
-
 
 
 def create_model(session, forward_only):
@@ -177,7 +176,6 @@ def train():
                         print("Step number" + str(current_step))
 
                     # Get a batch
-
                     # Find empty holders in training set
                     empty_conversations = [index for index, conversation in enumerate(train_set) if conversation == []]
                     if empty_conversations != []:
@@ -290,9 +288,17 @@ def decode():
         sys.stdout.flush()
         sentence = sys.stdin.readline()
         sentence = preprocess_input(sentence, fast_text_model, vocab_vectors)
+
+        # Initial state
+        if FLAGS.use_lstm:
+            initial_state = np.zeros((num_layers, 2, batch_size, size))
+        else:
+            initial_state = np.zeros((num_layers, batch_size, size))
+        states = initial_state
+
         while sentence:
 
-            output = decode_sentence(sentence, vocab, rev_vocab, model, sess)
+            output, states = decode_stateful_sentence(sentence, vocab, rev_vocab, model, sess, states)
 
             print("Vinyals: " + " ".join(output))
             print("Human: ", end="")

@@ -255,7 +255,8 @@ class Seq2SeqModel(object):
                      self.losses[bucket_id],  # Loss for this batch.
                      self.states]  # States
     else:
-      output_feed = [self.losses[bucket_id]]  # Loss for this batch.
+      output_feed = [self.losses[bucket_id], # Loss for this batch.
+                     self.states] # States
       for l in xrange(decoder_size):  # Output logits.
         output_feed.append(self.outputs[bucket_id][l])
 
@@ -263,7 +264,7 @@ class Seq2SeqModel(object):
     if not forward_only:
       return outputs[1], outputs[2], None, outputs[3]  # Gradient norm, loss, no outputs, states
     else:
-      return None, outputs[0], outputs[1:], None  # No gradient norm, loss, outputs, no states.
+      return None, outputs[0], outputs[2:], outputs[1]  # No gradient norm, loss, outputs, states.
 
 
   # Changed from tensorflows code. The reason for why we need to use our own file.
