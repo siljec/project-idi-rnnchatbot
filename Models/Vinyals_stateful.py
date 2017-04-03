@@ -177,10 +177,13 @@ def train():
                         print("Step number" + str(current_step))
 
                     # Get a batch
-                    key, init_line = sess.run(key, txt_row_train_data)
-                    read_line, reading_file_path = check_and_shuffle_file(key, sess, read_line, reading_file_path, stateful=True)
 
-                    train_set, batch_train_set, state = get_stateful_batch(txt_row_train_data, train_set, init_line, state, size, FLAGS.use_lstm)
+                    # Find empty holders in training set
+                    empty_conversations = [index for index, conversation in enumerate(train_set) if conversation == []]
+                    if empty_conversations != []:
+                        init_key, init_line = sess.run([key, txt_row_train_data])
+                        read_line, reading_file_path = check_and_shuffle_file(init_key, sess, read_line, reading_file_path, stateful=True)
+                    train_set, batch_train_set, state = get_stateful_batch(txt_row_train_data, train_set, empty_conversations, init_line, state, size, FLAGS.use_lstm)
                     start_time = time.time()
                     encoder_inputs, decoder_inputs, target_weights = model.get_batch(batch_train_set)
 

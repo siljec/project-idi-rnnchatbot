@@ -165,10 +165,7 @@ def check_and_shuffle_file(key, sess, prev_line_number, prev_file_path, stateful
     return line_number_int, file_path
 
 
-def get_stateful_batch(source, train_set, init_line, state, size, use_lstm):
-
-    # Find empty lists in
-    empty_conversations = [index for index, conversation in enumerate(train_set) if conversation == []]
+def get_stateful_batch(source, train_set, empty_conversations, init_line, state, size, use_lstm):
 
     # Reset state where there are new conversations
     if use_lstm:
@@ -196,6 +193,7 @@ def get_stateful_batch(source, train_set, init_line, state, size, use_lstm):
         else:
             # Convert tensor to array
             holder = source.eval()
+
         holder = holder.split(',')
 
         # x_data is on the left side of the comma, while y_data is on the right. Also casting to integers.
@@ -217,7 +215,6 @@ def get_stateful_batch(source, train_set, init_line, state, size, use_lstm):
 
     # Return the first pairs in all of the lists
     batch_training_set = [pairs.pop(0) for pairs in train_set]
-
     return train_set, batch_training_set, state
 
 
