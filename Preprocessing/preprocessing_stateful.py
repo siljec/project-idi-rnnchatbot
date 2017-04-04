@@ -1,8 +1,9 @@
 from itertools import izip
 import os, sys, glob
 import fasttext
+from random import shuffle
 from preprocess_helpers import split_line, do_regex_on_line, do_misspellings_on_line, read_words_from_misspelling_file, \
-    save_to_file, load_pickle_file, replace_word_helper, path_exists, read_vocabulary_from_file, encode_sentence
+    save_to_file, load_pickle_file, replace_word_helper, path_exists, read_vocabulary_from_file, encode_sentence, merge_files_to_one
 sys.path.insert(0, '../')
 from variables import folders, _buckets, tokens, paths_from_preprocessing_stateful as paths
 
@@ -151,5 +152,25 @@ def create_encoded_file(x_path, y_path, vocabulary, train_path):
     train_file.close()
 
 
+def shuffle_and_merge_to_two_files(file_prefix, target_file_path_1, target_file_path_2, root):
+    filenames = glob.glob(os.path.join(root, file_prefix+'*'))
+    half_of_files = len(filenames) / 2
+    file1 = filenames[:half_of_files]
+    shuffle(file1)
+    file2 = filenames[half_of_files:]
+    shuffle(file2)
+    merge_files_to_one(file1, target_file_path_1)
+    merge_files_to_one(file2, target_file_path_2)
+
+
+def shuffle_and_merge_to_one_file(file_prefix, target_file_path, root):
+    filenames = glob.glob(os.path.join(root, file_prefix+'*'))
+    shuffle(filenames)
+    merge_files_to_one(filenames, target_file_path)
+
+
 num_files_created = read_every_source_file_and_save_to_dest(paths['stateful_raw_files'])
 convert_word_files_to_to_int_words(paths['stateful_raw_files'], paths['stateful_datafiles'], num_files_created)
+shuffle_and_merge_to_two_files("train", paths['merged_train_path_file1'], paths['merged_train_path_file2'], paths['stateful_datafiles'])
+shuffle_and_merge_to_one_file("dev", paths['merged_dev_path'], paths['stateful_datafiles'])
+shuffle_and_merge_to_one_file("test", paths['merged_test_path'], paths['stateful_datafiles'])

@@ -5,11 +5,12 @@ sys.path.insert(0, '../Preprocessing') # To access methods from another file fro
 from preprocess import start_preprocessing
 from variables import paths_from_model, tokens
 from preprocessing3 import distance
-from preprocess_helpers import shuffle_file
+from preprocess_helpers import shuffle_file, merge_files_to_one
 from variables import tokens, paths_from_model as paths, _buckets
 import tensorflow as tf
 import numpy as np
-from random import choice
+import glob
+from random import choice, shuffle
 
 _, UNK_ID = tokens['unk']
 _, EOT_ID = tokens['eot']
@@ -132,20 +133,39 @@ def sentence_to_token_ids(sentence, vocabulary):
     return [vocabulary.get(w, UNK_ID) for w in words]
 
 
-def check_and_shuffle_file(key, sess, read_line, file_path):
+def shuffle_stateful_files(path):
+    filenames = glob.glob(os.path.join(paths['stateful_datafiles'], 'train*'))
+    half_of_files = len(filenames) / 2
+
+    # Check whether it is the first or the second file that is shuffled:
+    if path == paths['merged_train_stateful_path_file1']:
+        train_file = filenames[:half_of_files]
+        shuffle(train_file)
+    else:
+        train_file = filenames[half_of_files:]
+        shuffle(train_file)
+    merge_files_to_one(train_file, path)
+
+
+def check_and_shuffle_file(key, sess, prev_line_number, prev_file_path, stateful=False):
     # Check if we should shuffle training file
-    holder = int(sess.run(key).split(":")[1])
-    if holder < read_line:
-        shuffle_file(file_path, file_path)
-        print("Training file shuffled")
+    file_path, line_number = key.split(":")
+    line_number_int = int(line_number)
 
-    return holder
+    # If the new line number is smaller than the previous,
+    # this means that the reader started to read a new file
+    # and we should shuffle the previous one
+    if line_number_int < prev_line_number:
+        if stateful:
+            shuffle_stateful_files(prev_file_path)
+        else:
+            shuffle_file(prev_file_path, prev_file_path)
+        print("Training file shuffled: " + prev_file_path)
+
+    return line_number_int, file_path
 
 
-def get_stateful_batch(source, train_set, state, size, use_lstm):
-
-    # Find empty lists in
-    empty_conversations = [index for index, conversation in enumerate(train_set) if conversation == []]
+def get_stateful_batch(source, train_set, empty_conversations, init_line, state, size, use_lstm):
 
     # Reset state where there are new conversations
     if use_lstm:
@@ -160,13 +180,20 @@ def get_stateful_batch(source, train_set, state, size, use_lstm):
             state[1][entry] = [0] * size
 
 
+    first_line = True
+
     # Feed batch
     while empty_conversations != []:
 
         current_index = empty_conversations.pop()
 
-        # Convert tensor to array
-        holder = source.eval()
+        if first_line:
+            first_line = False
+            holder = init_line
+        else:
+            # Convert tensor to array
+            holder = source.eval()
+
         holder = holder.split(',')
 
         # x_data is on the left side of the comma, while y_data is on the right. Also casting to integers.
@@ -187,11 +214,7 @@ def get_stateful_batch(source, train_set, state, size, use_lstm):
             y = [int(i) for i in holder[1].split()]
 
     # Return the first pairs in all of the lists
-    batch_training_set = [pairs[0] for pairs in train_set]
-
-    # Remove the batch_training_set in the train_set
-    train_set = [pairs[1:] for pairs in train_set]
-
+    batch_training_set = [pairs.pop(0) for pairs in train_set]
     return train_set, batch_training_set, state
 
 
@@ -292,3 +315,25 @@ def decode_sentence(sentence, vocab, rev_vocab, model, sess):
         # Print out sentence corresponding to outputs.
         output = [tf.compat.as_str(rev_vocab[output]) for output in outputs]
         return output
+
+
+def decode_stateful_sentence(sentence, vocab, rev_vocab, model, sess, state):
+
+        # Get token-ids for the input sentence.
+        token_ids = sentence_to_token_ids(tf.compat.as_bytes(sentence), vocab)
+
+        # Get a 1-element batch to feed the sentence to the model.
+        encoder_inputs, decoder_inputs, target_weights = model.get_batch([(token_ids, [])])
+        # Get output logits for the sentence.
+        _, _, output_logits, states = model.step(sess, encoder_inputs, decoder_inputs, target_weights, state, True)
+
+        # This is a greedy decoder - outputs are just argmaxes of output_logits.
+        outputs = [int(np.argmax(logit, axis=1)) for logit in output_logits]
+
+        # If there is an EOS symbol in outputs, cut them at that point.
+        if EOT_ID in outputs:
+            outputs = outputs[:outputs.index(EOT_ID)]
+
+        # Print out sentence corresponding to outputs.
+        output = [tf.compat.as_str(rev_vocab[output]) for output in outputs]
+        return output, states

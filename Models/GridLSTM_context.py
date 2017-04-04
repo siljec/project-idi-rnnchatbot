@@ -146,6 +146,7 @@ def train():
             current_step = 0
             previous_losses = []
             read_line = 0
+            reading_file_path = ""
 
             # Create log writer object
             print("Create log writer object")
@@ -169,7 +170,7 @@ def train():
                     if current_step % FLAGS.print_frequency == 0:
                         print("Step number: " + str(current_step))
 
-                    read_line = check_and_shuffle_file(key, sess, read_line, paths['train_path_context'])
+                    read_line, reading_file_path = check_and_shuffle_file(key, sess, read_line, paths['train_path_context'])
 
                     # Get a batch
                     train_set, bucket_id = get_batch(txt_row_train_data, train_set)

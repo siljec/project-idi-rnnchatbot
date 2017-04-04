@@ -156,14 +156,21 @@ class Seq2SeqModel(object):
       self.target_weights.append(tf.placeholder(dtype, shape=[None],
                                                 name="weight{0}".format(i)))
     if use_lstm:
-        self.state_placeholder = tf.placeholder(tf.float32, [num_layers, 2, batch_size, size])
+        if forward_only:
+            self.state_placeholder = tf.placeholder(tf.float32, [num_layers, 2, 1, size])
+        else:
+            self.state_placeholder = tf.placeholder(tf.float32, [num_layers, 2, self.batch_size, size])
         l = tf.unpack(self.state_placeholder, axis=0)
         rnn_tuple_state = tuple(
             [tf.nn.rnn_cell.LSTMStateTuple(l[idx][0], l[idx][1])
              for idx in range(num_layers)]
         )
     else:
-        self.state_placeholder = tf.placeholder(tf.float32, [num_layers, batch_size, size])
+        if forward_only:
+            self.state_placeholder = tf.placeholder(tf.float32, [num_layers, 1, size])
+        else:
+            self.state_placeholder = tf.placeholder(tf.float32, [num_layers, self.batch_size, size])
+
         l = tf.unpack(self.state_placeholder, axis=0)
         rnn_tuple_state = tuple(l[layer] for layer in range(num_layers))
 
@@ -255,7 +262,8 @@ class Seq2SeqModel(object):
                      self.losses[bucket_id],  # Loss for this batch.
                      self.states]  # States
     else:
-      output_feed = [self.losses[bucket_id]]  # Loss for this batch.
+      output_feed = [self.losses[bucket_id], # Loss for this batch.
+                     self.states] # States
       for l in xrange(decoder_size):  # Output logits.
         output_feed.append(self.outputs[bucket_id][l])
 
@@ -263,7 +271,7 @@ class Seq2SeqModel(object):
     if not forward_only:
       return outputs[1], outputs[2], None, outputs[3]  # Gradient norm, loss, no outputs, states
     else:
-      return None, outputs[0], outputs[1:], None  # No gradient norm, loss, outputs, no states.
+      return None, outputs[0], outputs[2:], outputs[1]  # No gradient norm, loss, outputs, states.
 
 
   # Changed from tensorflows code. The reason for why we need to use our own file.

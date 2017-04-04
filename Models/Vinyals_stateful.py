@@ -42,7 +42,7 @@ sys.path.insert(0, '../Preprocessing') # To access methods from another file fro
 from create_vocabulary import read_vocabulary_from_file
 from preprocess_helpers import load_pickle_file, get_time
 
-from helpers import check_for_needed_files_and_create, preprocess_input, get_stateful_batch, input_pipeline, get_session_configs, self_test, decode_sentence, check_and_shuffle_file
+from helpers import check_for_needed_files_and_create, preprocess_input, get_stateful_batch, input_pipeline, get_session_configs, self_test, decode_stateful_sentence, check_and_shuffle_file
 import numpy as np
 from six.moves import xrange  # pylint: disable=redefined-builtin
 import tensorflow as tf
@@ -50,6 +50,8 @@ import seq2seq_stateful_model as seq2seq_model
 sys.path.insert(0, '../')
 from variables import paths_from_model as paths, tokens, _buckets, vocabulary_size, max_training_steps, \
     steps_per_checkpoint, print_frequency, size, batch_size, num_layers, use_gpu
+sys.path.insert(0, '../Preprocessing/')
+from preprocess_helpers import file_len
 
 
 tf.app.flags.DEFINE_float("learning_rate", 0.1, "Learning rate.")
@@ -115,9 +117,9 @@ def train():
 
     print("Creating file queues")
 
-    filename_queue = input_pipeline(root=paths['stateful_datafiles'], start_name="train", shuffle=True)
+    filename_queue = input_pipeline(root=paths['stateful_datafiles'], start_name="merged_train", shuffle=False)
 
-    filename_queue_dev = input_pipeline(root=paths['stateful_datafiles'], start_name="dev", shuffle=True)
+    filename_queue_dev = input_pipeline(root=paths['stateful_datafiles'], start_name="merged_dev", shuffle=False)
 
     perplexity_log_path = os.path.join(FLAGS.train_dir, paths['perplexity_log'])
 
@@ -144,12 +146,14 @@ def train():
             train_set = [[] for _ in range(batch_size)]
             dev_set = [[] for _ in range(batch_size)]
             previous_losses = []
+            read_line = 0
+            reading_file_path = paths['merged_train_stateful_path_file1']
 
             # Create log writer object
             print("Create log writer object")
             summary_writer = tf.train.SummaryWriter(FLAGS.log_dir, graph=tf.get_default_graph())
 
-            _, txt_row_train_data = tf.TextLineReader().read(filename_queue)
+            key, txt_row_train_data = tf.TextLineReader().read(filename_queue)
 
             _, txt_row_dev_data = tf.TextLineReader().read(filename_queue_dev)
 
@@ -157,7 +161,7 @@ def train():
 
             train_time = time.time()
 
-            # Need a initial state for the encoder rnn
+            # Need an initial state for the encoder rnn
             if FLAGS.use_lstm:
                 initial_state = np.zeros((num_layers, 2, batch_size, size))
             else:
@@ -172,7 +176,12 @@ def train():
                         print("Step number" + str(current_step))
 
                     # Get a batch
-                    train_set, batch_train_set, state = get_stateful_batch(txt_row_train_data, train_set, state, size, FLAGS.use_lstm)
+                    # Find empty holders in training set
+                    empty_conversations = [index for index, conversation in enumerate(train_set) if conversation == []]
+                    if empty_conversations != []:
+                        init_key, init_line = sess.run([key, txt_row_train_data])
+                        read_line, reading_file_path = check_and_shuffle_file(init_key, sess, read_line, reading_file_path, stateful=True)
+                    train_set, batch_train_set, state = get_stateful_batch(txt_row_train_data, train_set, empty_conversations, init_line, state, size, FLAGS.use_lstm)
                     start_time = time.time()
                     encoder_inputs, decoder_inputs, target_weights = model.get_batch(batch_train_set)
 
@@ -191,7 +200,8 @@ def train():
                         print(get_time(train_time), "to train")
 
                         # Print statistics for the previous epoch.
-                        dev_set, batch_dev_set, _ = get_stateful_batch(txt_row_dev_data, dev_set, initial_state, size, FLAGS.use_lstm)
+                        init_line = txt_row_dev_data.eval()
+                        dev_set, batch_dev_set, _ = get_stateful_batch(txt_row_dev_data, dev_set, init_line, initial_state, size, FLAGS.use_lstm)
 
                         perplexity = exp(float(loss)) if loss < 300 else float("inf")
                         print("global step %d learning rate %.4f step-time %.2f perplexity "
@@ -278,9 +288,17 @@ def decode():
         sys.stdout.flush()
         sentence = sys.stdin.readline()
         sentence = preprocess_input(sentence, fast_text_model, vocab_vectors)
+
+        # Initial state
+        if FLAGS.use_lstm:
+            initial_state = np.zeros((num_layers, 2, model.batch_size, size))
+        else:
+            initial_state = np.zeros((num_layers, model.batch_size, size))
+        states = initial_state
+
         while sentence:
 
-            output = decode_sentence(sentence, vocab, rev_vocab, model, sess)
+            output, states = decode_stateful_sentence(sentence, vocab, rev_vocab, model, sess, states)
 
             print("Vinyals: " + " ".join(output))
             print("Human: ", end="")
