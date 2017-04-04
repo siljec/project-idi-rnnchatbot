@@ -336,5 +336,4 @@ def decode_stateful_sentence(sentence, vocab, rev_vocab, model, sess, state):
 
         # Print out sentence corresponding to outputs.
         output = [tf.compat.as_str(rev_vocab[output]) for output in outputs]
-        print(output)
-        return output
+        return output, states

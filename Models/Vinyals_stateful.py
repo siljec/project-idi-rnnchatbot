@@ -291,9 +291,9 @@ def decode():
 
         # Initial state
         if FLAGS.use_lstm:
-            initial_state = np.zeros((num_layers, 2, 1, size))
+            initial_state = np.zeros((num_layers, 2, model.batch_size, size))
         else:
-            initial_state = np.zeros((num_layers, 1, size))
+            initial_state = np.zeros((num_layers, model.batch_size, size))
         states = initial_state
 
         while sentence:
