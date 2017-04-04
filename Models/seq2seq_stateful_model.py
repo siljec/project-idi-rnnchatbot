@@ -156,14 +156,21 @@ class Seq2SeqModel(object):
       self.target_weights.append(tf.placeholder(dtype, shape=[None],
                                                 name="weight{0}".format(i)))
     if use_lstm:
-        self.state_placeholder = tf.placeholder(tf.float32, [num_layers, 2, batch_size, size])
+        if forward_only:
+            self.state_placeholder = tf.placeholder(tf.float32, [num_layers, 2, 1, size])
+        else:
+            self.state_placeholder = tf.placeholder(tf.float32, [num_layers, 2, self.batch_size, size])
         l = tf.unpack(self.state_placeholder, axis=0)
         rnn_tuple_state = tuple(
             [tf.nn.rnn_cell.LSTMStateTuple(l[idx][0], l[idx][1])
              for idx in range(num_layers)]
         )
     else:
-        self.state_placeholder = tf.placeholder(tf.float32, [num_layers, batch_size, size])
+        if forward_only:
+            self.state_placeholder = tf.placeholder(tf.float32, [num_layers, 1, size])
+        else:
+            self.state_placeholder = tf.placeholder(tf.float32, [num_layers, self.batch_size, size])
+
         l = tf.unpack(self.state_placeholder, axis=0)
         rnn_tuple_state = tuple(l[layer] for layer in range(num_layers))
 
