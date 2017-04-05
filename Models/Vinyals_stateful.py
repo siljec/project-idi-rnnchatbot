@@ -49,7 +49,7 @@ import tensorflow as tf
 import seq2seq_stateful_model as seq2seq_model
 sys.path.insert(0, '../')
 from variables import paths_from_model as paths, tokens, _buckets, vocabulary_size, max_training_steps, \
-    steps_per_checkpoint, print_frequency, size, batch_size, num_layers, use_gpu
+    steps_per_checkpoint, print_frequency, size, batch_size, num_layers, use_gpu, beam_size, beam_search
 sys.path.insert(0, '../Preprocessing/')
 from preprocess_helpers import file_len
 
@@ -84,7 +84,7 @@ _UNK, UNK_ID = tokens['unk']
 _buckets = [_buckets[-1]]
 
 
-def create_model(session, forward_only):
+def create_model(session, forward_only, beam_search=False):
     """Create translation model and initialize or load parameters in session."""
     # dtype = tf.float16 if FLAGS.use_fp16 else tf.float32
     model = seq2seq_model.Seq2SeqModel(
@@ -98,7 +98,8 @@ def create_model(session, forward_only):
         FLAGS.learning_rate,
         FLAGS.learning_rate_decay_factor,
         use_lstm=FLAGS.use_lstm,
-        forward_only=forward_only)
+        forward_only=forward_only,
+        beam_search=beam_search)
     ckpt = tf.train.get_checkpoint_state(FLAGS.train_dir)
     if ckpt and tf.gfile.Exists(ckpt.model_checkpoint_path):
         print("Reading model parameters from %s" % ckpt.model_checkpoint_path)
@@ -270,7 +271,7 @@ def decode():
 
     with tf.Session(config=config) as sess:
         # Create model and load parameters.
-        model = create_model(sess, True)
+        model = create_model(sess, forward_only=True, beam_search=beam_search)
         model.batch_size = 1  # We decode one sentence at a time.
 
         # Load vocabularies.
@@ -298,7 +299,7 @@ def decode():
 
         while sentence:
 
-            output, states = decode_stateful_sentence(sentence, vocab, rev_vocab, model, sess, states)
+            output, states = decode_stateful_sentence(sentence, vocab, rev_vocab, model, sess, states, beam_search, beam_size)
 
             print("Vinyals: " + " ".join(output))
             print("Human: ", end="")

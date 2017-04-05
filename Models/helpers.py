@@ -317,7 +317,7 @@ def decode_sentence(sentence, vocab, rev_vocab, model, sess):
         return output
 
 
-def decode_stateful_sentence(sentence, vocab, rev_vocab, model, sess, state):
+def decode_stateful_sentence(sentence, vocab, rev_vocab, model, sess, state, beam_search, beam_size):
 
         # Get token-ids for the input sentence.
         token_ids = sentence_to_token_ids(tf.compat.as_bytes(sentence), vocab)
@@ -325,15 +325,52 @@ def decode_stateful_sentence(sentence, vocab, rev_vocab, model, sess, state):
         # Get a 1-element batch to feed the sentence to the model.
         encoder_inputs, decoder_inputs, target_weights = model.get_batch([(token_ids, [])])
         # Get output logits for the sentence.
-        _, _, output_logits, states = model.step(sess, encoder_inputs, decoder_inputs, target_weights, state, True)
+        path, symbol, output_logits, states = model.step(sess, encoder_inputs, decoder_inputs, target_weights, state, True, beam_search=beam_search)
 
-        # This is a greedy decoder - outputs are just argmaxes of output_logits.
-        outputs = [int(np.argmax(logit, axis=1)) for logit in output_logits]
+        if beam_search:
+            output = beam_search_function(beam_size, path, symbol, output_logits, rev_vocab)
 
-        # If there is an EOS symbol in outputs, cut them at that point.
-        if EOT_ID in outputs:
-            outputs = outputs[:outputs.index(EOT_ID)]
+        else:
+            # This is a greedy decoder - outputs are just argmaxes of output_logits.
+            outputs = [int(np.argmax(logit, axis=1)) for logit in output_logits]
 
-        # Print out sentence corresponding to outputs.
-        output = [tf.compat.as_str(rev_vocab[output]) for output in outputs]
+            # If there is an EOS symbol in outputs, cut them at that point.
+            if EOT_ID in outputs:
+                outputs = outputs[:outputs.index(EOT_ID)]
+
+            # Print out sentence corresponding to outputs.
+            output = [tf.compat.as_str(rev_vocab[output]) for output in outputs]
         return output, states
+
+
+def beam_search_function(beam_size, path, symbol, output_logits, rev_vocab):
+    if beam_search:
+
+            k = output_logits[0]
+            paths = []
+            for kk in range(beam_size):
+                paths.append([])
+            curr = range(beam_size)
+            num_steps = len(path)
+            for i in range(num_steps - 1, -1, -1):
+                for kk in range(beam_size):
+                    paths[kk].append(symbol[i][curr[kk]])
+                    curr[kk] = path[i][curr[kk]]
+            recos = set()
+            print "Replies --------------------------------------->"
+            for kk in range(beam_size):
+                foutputs = [int(logit) for logit in paths[kk][::-1]]
+
+                # If there is an EOS symbol in outputs, cut them at that point.
+                if EOT_ID in foutputs:
+                    #         # print outputs
+                    foutputs = foutputs[:foutputs.index(EOT_ID)]
+                rec = " ".join([tf.compat.as_str(rev_vocab[output]) for output in foutputs])
+                if rec not in recos:
+                    recos.add(rec)
+                    print rec
+
+            print("> ", "")
+            sys.stdout.flush()
+            sentence = sys.stdin.readline()
+            return recos

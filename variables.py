@@ -249,6 +249,9 @@ word_embedding_size = 1000
 
 use_gpu = '/gpu:0'
 
+beam_search = False
+beam_size = 10
+
 context = False
 contextFullTurns = False
 opensubtitles = False
