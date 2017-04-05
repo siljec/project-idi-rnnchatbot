@@ -252,6 +252,8 @@ use_gpu = '/gpu:0'
 context = False
 contextFullTurns = False
 opensubtitles = False
+beam_search = True
+beam_size = 10
 if opensubtitles:
     vocabulary_size = 20000
 if contextFullTurns:

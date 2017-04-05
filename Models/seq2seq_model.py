@@ -23,6 +23,7 @@ import sys
 import numpy as np
 from six.moves import xrange  # pylint: disable=redefined-builtin
 import tensorflow as tf
+import seq2seq_beam_search
 
 sys.path.insert(0, '../')
 from variables import tokens, optimizer, word_embedding_size
@@ -59,6 +60,7 @@ class Seq2SeqModel(object):
                use_lstm=True,
                num_samples=512,
                forward_only=False,
+               beam_search=False,
                dtype=tf.float32):
     """Create the model.
 
@@ -92,6 +94,7 @@ class Seq2SeqModel(object):
     self.learning_rate_decay_op = self.learning_rate.assign(
         self.learning_rate * learning_rate_decay_factor)
     self.global_step = tf.Variable(0, trainable=False)
+    self.beam_search = beam_search
 
     # If we use sampled softmax, we need an output projection.
     output_projection = None
@@ -156,17 +159,23 @@ class Seq2SeqModel(object):
 
     # Training outputs and losses.
     if forward_only:
-      self.outputs, self.losses = tf.nn.seq2seq.model_with_buckets(
-          self.encoder_inputs, self.decoder_inputs, targets,
-          self.target_weights, buckets, lambda x, y: seq2seq_f(x, y, True),
-          softmax_loss_function=softmax_loss_function)
-      # If we use output projection, we need to project outputs for decoding.
-      if output_projection is not None:
-        for b in xrange(len(buckets)):
-          self.outputs[b] = [
-              tf.matmul(output, output_projection[0]) + output_projection[1]
-              for output in self.outputs[b]
-          ]
+        if beam_search:
+            self.outputs, self.beam_path, self.beam_symbol = seq2seq_beam_search.decode_model_with_buckets(
+                self.encoder_inputs, self.decoder_inputs, targets,
+                self.target_weights, buckets, lambda x, y: seq2seq_f(x, y, True),
+                softmax_loss_function=softmax_loss_function)
+        else:
+          self.outputs, self.losses = tf.nn.seq2seq.model_with_buckets(
+              self.encoder_inputs, self.decoder_inputs, targets,
+              self.target_weights, buckets, lambda x, y: seq2seq_f(x, y, True),
+              softmax_loss_function=softmax_loss_function)
+          # If we use output projection, we need to project outputs for decoding.
+          if output_projection is not None:
+            for b in xrange(len(buckets)):
+              self.outputs[b] = [
+                  tf.matmul(output, output_projection[0]) + output_projection[1]
+                  for output in self.outputs[b]
+              ]
     else:
       self.outputs, self.losses = tf.nn.seq2seq.model_with_buckets(
           self.encoder_inputs, self.decoder_inputs, targets,
@@ -196,7 +205,7 @@ class Seq2SeqModel(object):
     self.saver = tf.train.Saver(tf.all_variables())
 
   def step(self, session, encoder_inputs, decoder_inputs, target_weights,
-           bucket_id, forward_only):
+           bucket_id, forward_only, beam_search=False):
     """Run a step of the model feeding the given inputs.
 
     Args:
@@ -245,15 +254,22 @@ class Seq2SeqModel(object):
                      self.gradient_norms[bucket_id],  # Gradient norm.
                      self.losses[bucket_id]]  # Loss for this batch.
     else:
-      output_feed = [self.losses[bucket_id]]  # Loss for this batch.
-      for l in xrange(decoder_size):  # Output logits.
-        output_feed.append(self.outputs[bucket_id][l])
+        if beam_search:
+            output_feed = [self.beam_path[bucket_id]]  # Loss for this batch.
+            output_feed.append(self.beam_symbol[bucket_id])
+        else:
+            output_feed = [self.losses[bucket_id]]  # Loss for this batch.
+        for l in xrange(decoder_size):  # Output logits.
+            output_feed.append(self.outputs[bucket_id][l])
 
     outputs = session.run(output_feed, input_feed)
     if not forward_only:
       return outputs[1], outputs[2], None  # Gradient norm, loss, no outputs.
     else:
-      return None, outputs[0], outputs[1:]  # No gradient norm, loss, outputs.
+        if beam_search:
+            return outputs[0], outputs[1], outputs[2:]  # No gradient norm, loss, outputs.
+        else:
+            return None, outputs[0], outputs[1:]  # No gradient norm, loss, outputs.
 
 
   # Changed from tensorflows code. The reason for why we need to use our own file.

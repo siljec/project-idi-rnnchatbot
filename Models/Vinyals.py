@@ -49,7 +49,7 @@ import tensorflow as tf
 import seq2seq_model
 sys.path.insert(0, '../')
 from variables import paths_from_model as paths, tokens, _buckets, vocabulary_size, max_training_steps, steps_per_checkpoint, print_frequency, size, batch_size, num_layers, use_gpu
-from variables import contextFullTurns, context
+from variables import contextFullTurns, context, beam_search, beam_size
 
 if context:
     from variables import paths_from_preprocessing_context as paths
@@ -83,7 +83,7 @@ _EOT, EOT_ID = tokens['eot']
 _UNK, UNK_ID = tokens['unk']
 
 
-def create_model(session, forward_only):
+def create_model(session, forward_only, beam_search=False):
     """Create translation model and initialize or load parameters in session."""
     # dtype = tf.float16 if FLAGS.use_fp16 else tf.float32
     model = seq2seq_model.Seq2SeqModel(
@@ -97,7 +97,9 @@ def create_model(session, forward_only):
         FLAGS.learning_rate,
         FLAGS.learning_rate_decay_factor,
         use_lstm = True,
-        forward_only=forward_only)
+        forward_only=forward_only,
+        beam_search=beam_search,
+        beam_size=beam_size)
     ckpt = tf.train.get_checkpoint_state(FLAGS.train_dir)
     if ckpt and tf.gfile.Exists(ckpt.model_checkpoint_path):
         print("Reading model parameters from %s" % ckpt.model_checkpoint_path)
@@ -266,7 +268,7 @@ def decode():
 
     with tf.Session(config=config) as sess:
         # Create model and load parameters.
-        model = create_model(sess, True)
+        model = create_model(sess, True, beam_search=beam_search)
         model.batch_size = 1  # We decode one sentence at a time.
 
         # Load vocabularies.
@@ -284,6 +286,53 @@ def decode():
         sys.stdout.flush()
         sentence = sys.stdin.readline()
         sentence = preprocess_input(sentence, fast_text_model, vocab_vectors)
+
+        if beam_search:
+            sys.stdout.write("> ")
+            sys.stdout.flush()
+            sentence = sys.stdin.readline()
+            while sentence:
+                # Get token-ids for the input sentence.
+                token_ids = sentence_to_token_ids(tf.compat.as_bytes(sentence), vocab)
+                # Which bucket does it belong to?
+                bucket_id = min([b for b in xrange(len(_buckets))
+                                 if _buckets[b][0] > len(token_ids)])
+                # Get a 1-element batch to feed the sentence to the model.
+                encoder_inputs, decoder_inputs, target_weights = model.get_batch(
+                    {bucket_id: [(token_ids, [])]}, bucket_id)
+                # Get output logits for the sentence.
+                # print bucket_id
+                path, symbol, output_logits = model.step(sess, encoder_inputs, decoder_inputs,
+                                                         target_weights, bucket_id, True, beam_search)
+
+                k = output_logits[0]
+                paths = []
+                for kk in range(beam_size):
+                    paths.append([])
+                curr = range(beam_size)
+                num_steps = len(path)
+                for i in range(num_steps - 1, -1, -1):
+                    for kk in range(beam_size):
+                        paths[kk].append(symbol[i][curr[kk]])
+                        curr[kk] = path[i][curr[kk]]
+                recos = set()
+                print("Replies --------------------------------------->")
+                for kk in range(beam_size):
+                    foutputs = [int(logit) for logit in paths[kk][::-1]]
+
+                    # If there is an EOS symbol in outputs, cut them at that point.
+                    if EOT_ID in foutputs:
+                        #         # print outputs
+                        foutputs = foutputs[:foutputs.index(EOT_ID)]
+                    rec = " ".join([tf.compat.as_str(rev_vocab[output]) for output in foutputs])
+                    if rec not in recos:
+                        recos.add(rec)
+                        print(rec)
+
+                print("> ", "")
+                sys.stdout.flush()
+                sentence = sys.stdin.readline()
+
         while sentence:
 
             output = decode_sentence(sentence, vocab, rev_vocab, model, sess)
