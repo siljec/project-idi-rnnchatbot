@@ -288,10 +288,8 @@ def decode():
         sentence = preprocess_input(sentence, fast_text_model, vocab_vectors)
 
         if beam_search:
-            sys.stdout.write("> ")
-            sys.stdout.flush()
-            sentence = sys.stdin.readline()
             while sentence:
+                print("New sentence")
                 # Get token-ids for the input sentence.
                 token_ids = sentence_to_token_ids(tf.compat.as_bytes(sentence), vocab)
                 # Which bucket does it belong to?
@@ -301,24 +299,24 @@ def decode():
                 encoder_inputs, decoder_inputs, target_weights = model.get_batch(
                     {bucket_id: [(token_ids, [])]}, bucket_id)
                 # Get output logits for the sentence.
-                # print bucket_id
+                print(bucket_id)
                 path, symbol, output_logits = model.step(sess, encoder_inputs, decoder_inputs,
                                                          target_weights, bucket_id, True, beam_search)
 
                 k = output_logits[0]
-                paths = []
+                beam_paths = []
                 for kk in range(beam_size):
-                    paths.append([])
+                    beam_paths.append([])
                 curr = range(beam_size)
                 num_steps = len(path)
                 for i in range(num_steps - 1, -1, -1):
                     for kk in range(beam_size):
-                        paths[kk].append(symbol[i][curr[kk]])
+                        beam_paths[kk].append(symbol[i][curr[kk]])
                         curr[kk] = path[i][curr[kk]]
                 recos = set()
                 print("Replies --------------------------------------->")
                 for kk in range(beam_size):
-                    foutputs = [int(logit) for logit in paths[kk][::-1]]
+                    foutputs = [int(logit) for logit in beam_paths[kk][::-1]]
 
                     # If there is an EOS symbol in outputs, cut them at that point.
                     if EOT_ID in foutputs:

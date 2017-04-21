@@ -39,6 +39,7 @@ from tensorflow.python.ops import nn_ops
 from tensorflow.python.ops import rnn
 from tensorflow.python.ops import rnn_cell
 from tensorflow.python.ops import variable_scope
+from tensorflow.python.util import nest
 import tensorflow as tf
 
 try:
@@ -591,17 +592,19 @@ def beam_attention_decoder(decoder_inputs, initial_state, attention_states, cell
             v.append(variable_scope.get_variable("AttnV_%d" % a,
                                                  [attention_vec_size]))
 
-        print "Initial_state"
+        state = initial_state
 
-        state_size = int(initial_state.get_shape().with_rank(2)[1])
-        states = []
-        for kk in range(1):
-            states.append(initial_state)
-        state = tf.reshape(tf.concat(0, states), [-1, state_size])
-
+        #-----
         def attention(query):
             """Put attention masks on hidden using hidden_features and query."""
             ds = []  # Results of attention reads will be stored here.
+            if nest.is_sequence(query):  # If the query is a tuple, flatten it.
+                query_list = nest.flatten(query)
+                for q in query_list:  # Check that ndims == 2 if specified.
+                    ndims = q.get_shape().ndims
+                    if ndims:
+                        assert ndims == 2
+                query = array_ops.concat(1, query_list)
             for a in xrange(num_heads):
                 with variable_scope.variable_scope("Attention_%d" % a):
                     y = linear(query, attention_vec_size, True)
@@ -614,7 +617,6 @@ def beam_attention_decoder(decoder_inputs, initial_state, attention_states, cell
                     d = math_ops.reduce_sum(
                         array_ops.reshape(a, [-1, attn_length, 1, 1]) * hidden,
                         [1, 2])
-                    # for c in range(ct):
                     ds.append(array_ops.reshape(d, [-1, attn_size]))
             return ds
 
@@ -627,24 +629,20 @@ def beam_attention_decoder(decoder_inputs, initial_state, attention_states, cell
             a.set_shape([None, attn_size])
 
         if initial_state_attention:
-            attns = []
-            attns.append(attention(initial_state))
-            tmp = tf.reshape(tf.concat(0, attns), [-1, attn_size])
-            attns = []
-            attns.append(tmp)
-
+            attns = attention(initial_state)
         log_beam_probs, beam_path, beam_symbols = [], [], []
         for i, inp in enumerate(decoder_inputs):
 
             if i > 0:
                 variable_scope.get_variable_scope().reuse_variables()
             # If loop_function is set, we use it instead of decoder_inputs.
-            if loop_function is not None:
+            if loop_function is not None and prev is not None:
                 with variable_scope.variable_scope("loop_function", reuse=True):
-                    if prev is not None:
-                        inp = loop_function(prev, i, log_beam_probs, beam_path, beam_symbols)
+                    inp = loop_function(prev, i, log_beam_probs, beam_path, beam_symbols)
 
             input_size = inp.get_shape().with_rank(2)[1]
+            if input_size.value is None:
+                raise ValueError("Could not infer input size from input: %s" % inp.name)
             x = linear([inp] + attns, input_size, True)
             cell_output, state = cell(x, state)
 
@@ -660,16 +658,7 @@ def beam_attention_decoder(decoder_inputs, initial_state, attention_states, cell
                 output = linear([cell_output] + attns, output_size, True)
             if loop_function is not None:
                 prev = output
-            if i == 0:
-                states = []
-                for kk in range(beam_size):
-                    states.append(state)
-                state = tf.reshape(tf.concat(0, states), [-1, state_size])
-                with variable_scope.variable_scope(variable_scope.get_variable_scope(), reuse=True):
-                    attns = attention(state)
-
-            outputs.append(tf.argmax(nn_ops.xw_plus_b(
-                output, output_projection[0], output_projection[1]), dimension=1))
+            outputs.append(output)
 
     return outputs, state, tf.reshape(tf.concat(0, beam_path), [-1, beam_size]), tf.reshape(tf.concat(0, beam_symbols),
                                                                                             [-1, beam_size])

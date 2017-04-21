@@ -20,9 +20,11 @@ from __future__ import division
 from __future__ import print_function
 
 import sys
+
 import numpy as np
-from six.moves import xrange  # pylint: disable=redefined-builtin
 import tensorflow as tf
+from six.moves import xrange  # pylint: disable=redefined-builtin
+
 import seq2seq_beam_search
 
 sys.path.insert(0, '../')
@@ -61,6 +63,7 @@ class Seq2SeqModel(object):
                num_samples=512,
                forward_only=False,
                beam_search=False,
+               beam_size=10,
                dtype=tf.float32):
     """Create the model.
 
@@ -129,7 +132,7 @@ class Seq2SeqModel(object):
 
     # The seq2seq function: we use embedding for the input and attention.
     def seq2seq_f(encoder_inputs, decoder_inputs, do_decode):
-      return tf.nn.seq2seq.embedding_attention_seq2seq(
+      return seq2seq_beam_search.embedding_attention_seq2seq(
           encoder_inputs,
           decoder_inputs,
           cell,
@@ -138,7 +141,9 @@ class Seq2SeqModel(object):
           embedding_size=word_embedding_size,
           output_projection=output_projection,
           feed_previous=do_decode,
-          dtype=dtype)
+          dtype=dtype,
+          beam_search=beam_search,
+          beam_size=beam_size)
 
     # Feeds for inputs.
     self.encoder_inputs = []
