@@ -258,6 +258,7 @@ def get_session_configs():
     config = tf.ConfigProto()
     config.gpu_options.allow_growth = True
     config.allow_soft_placement = True
+    config.log_device_placement = False
     return config
 
 
