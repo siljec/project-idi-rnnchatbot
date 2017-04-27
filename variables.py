@@ -27,6 +27,7 @@ paths_from_model = {
     'stateful_datafiles': '../Preprocessing/stateful/datafiles/',
     'merged_train_stateful_path_file1': "../Preprocessing/stateful/datafiles/merged_training_file1.txt",
     'merged_train_stateful_path_file2': "../Preprocessing/stateful/datafiles/merged_training_file2.txt",
+    'merged_dev_stateful_path': "../Preprocessing/stateful/datafiles/merged_dev_file.txt",
     'perplexity_log': 'perplexity_log.txt'
 }
 

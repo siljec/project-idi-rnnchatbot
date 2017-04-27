@@ -147,7 +147,7 @@ def shuffle_stateful_files(path):
     merge_files_to_one(train_file, path)
 
 
-def check_and_shuffle_file(key, sess, prev_line_number, prev_file_path, stateful=False):
+def check_and_shuffle_file(key, sess, prev_line_number, prev_file_path, stateful=False, dev=False):
     # Check if we should shuffle training file
     file_path, line_number = key.split(":")
     line_number_int = int(line_number)
@@ -155,12 +155,16 @@ def check_and_shuffle_file(key, sess, prev_line_number, prev_file_path, stateful
     # If the new line number is smaller than the previous,
     # this means that the reader started to read a new file
     # and we should shuffle the previous one
+
     if line_number_int < prev_line_number:
-        if stateful:
+        if stateful and not dev:
             shuffle_stateful_files(prev_file_path)
         else:
             shuffle_file(prev_file_path, prev_file_path)
-        print("Training file shuffled: " + prev_file_path)
+        if dev:
+            print("Dev file shuffled: " + prev_file_path)
+        else:
+            print("Training file shuffled: " + prev_file_path)
 
     return line_number_int, file_path
 

@@ -148,6 +148,7 @@ def train():
             previous_losses = []
             read_line = 0
             reading_file_path = paths['merged_train_stateful_path_file1']
+            reading_dev_file_path = paths['merged_dev_stateful_path']
 
             # Create log writer object
             print("Create log writer object")
@@ -200,8 +201,12 @@ def train():
                         print(get_time(train_time), "to train")
 
                         # Print statistics for the previous epoch.
-                        init_line = txt_row_dev_data.eval()
-                        dev_set, batch_dev_set, _ = get_stateful_batch(txt_row_dev_data, dev_set, init_line, initial_state, size, FLAGS.use_lstm)
+                        empty_conversations = [index for index, conversation in enumerate(dev_set) if
+                                               conversation == []]
+                        if empty_conversations != []:
+                            init_key, init_line = sess.run([key, txt_row_train_data])
+                            read_line, reading_dev_file_path = check_and_shuffle_file(init_key, sess, read_line, reading_dev_file_path, stateful=True, dev=True)
+                        dev_set, batch_dev_set, _ = get_stateful_batch(txt_row_dev_data, dev_set, empty_conversations, init_line, initial_state, size, FLAGS.use_lstm)
 
                         perplexity = exp(float(loss)) if loss < 300 else float("inf")
                         print("global step %d learning rate %.4f step-time %.2f perplexity "
