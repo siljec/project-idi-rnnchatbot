@@ -131,19 +131,32 @@ class Seq2SeqModel(object):
       cell = tf.nn.rnn_cell.MultiRNNCell([single_cell] * num_layers)
 
     # The seq2seq function: we use embedding for the input and attention.
-    def seq2seq_f(encoder_inputs, decoder_inputs, do_decode):
-      return seq2seq_beam_search.embedding_attention_seq2seq(
-          encoder_inputs,
-          decoder_inputs,
-          cell,
-          num_encoder_symbols=source_vocab_size,
-          num_decoder_symbols=target_vocab_size,
-          embedding_size=word_embedding_size,
-          output_projection=output_projection,
-          feed_previous=do_decode,
-          dtype=dtype,
-          beam_search=beam_search,
-          beam_size=beam_size)
+    if beam_search:
+        def seq2seq_f(encoder_inputs, decoder_inputs, do_decode):
+          return seq2seq_beam_search.embedding_attention_seq2seq(
+              encoder_inputs,
+              decoder_inputs,
+              cell,
+              num_encoder_symbols=source_vocab_size,
+              num_decoder_symbols=target_vocab_size,
+              embedding_size=word_embedding_size,
+              output_projection=output_projection,
+              feed_previous=do_decode,
+              dtype=dtype,
+              beam_search=beam_search,
+              beam_size=beam_size)
+    else:
+        def seq2seq_f(encoder_inputs, decoder_inputs, do_decode):
+            return tf.nn.seq2seq.embedding_attention_seq2seq(
+                encoder_inputs,
+                decoder_inputs,
+                cell,
+                num_encoder_symbols=source_vocab_size,
+                num_decoder_symbols=target_vocab_size,
+                embedding_size=word_embedding_size,
+                output_projection=output_projection,
+                feed_previous=do_decode,
+                dtype=dtype)
 
     # Feeds for inputs.
     self.encoder_inputs = []
@@ -260,18 +273,20 @@ class Seq2SeqModel(object):
                      self.losses[bucket_id]]  # Loss for this batch.
     else:
         if beam_search:
+            print("Before output feed")
             output_feed = [self.beam_path[bucket_id]]  # Loss for this batch.
             output_feed.append(self.beam_symbol[bucket_id])
         else:
             output_feed = [self.losses[bucket_id]]  # Loss for this batch.
         for l in xrange(decoder_size):  # Output logits.
             output_feed.append(self.outputs[bucket_id][l])
-
+    print(output_feed)
     outputs = session.run(output_feed, input_feed)
     if not forward_only:
       return outputs[1], outputs[2], None  # Gradient norm, loss, no outputs.
     else:
         if beam_search:
+            print("Before return")
             return outputs[0], outputs[1], outputs[2:]  # No gradient norm, loss, outputs.
         else:
             return None, outputs[0], outputs[1:]  # No gradient norm, loss, outputs.

@@ -116,7 +116,7 @@ def _extract_beam_search(embedding, beam_size, num_symbols, embedding_size,  out
         # embedding_lookup.
 
         emb_prev = embedding_ops.embedding_lookup(embedding, symbols)
-        emb_prev  = tf.reshape(emb_prev ,[beam_size ,embedding_size])
+        emb_prev = tf.reshape(emb_prev ,[beam_size ,embedding_size])
         # emb_prev = embedding_ops.embedding_lookup(embedding, symbols)
         if not update_embedding:
             emb_prev = array_ops.stop_gradient(emb_prev)
@@ -722,8 +722,8 @@ def embedding_attention_decoder(decoder_inputs, initial_state, attention_states,
         proj_biases.get_shape().assert_is_compatible_with([num_symbols])
 
     with variable_scope.variable_scope(scope or "embedding_attention_decoder"):
-        with ops.device("/cpu:0"):
-            embedding = variable_scope.get_variable("embedding",
+        # with ops.device("/cpu:0"):
+        embedding = variable_scope.get_variable("embedding",
                                                     [num_symbols, embedding_size])
         print "Check number of symbols"
         print num_symbols
@@ -807,7 +807,6 @@ def embedding_attention_seq2seq(encoder_inputs, decoder_inputs, cell,
             encoder_cell, encoder_inputs, dtype=dtype)
         print "Symbols"
         print num_encoder_symbols
-        print num_decoder_symbols
         # First calculate a concatenation of encoder outputs to put attention on.
         top_states = [array_ops.reshape(e, [-1, 1, cell.output_size])
                       for e in encoder_outputs]
