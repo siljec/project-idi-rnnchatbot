@@ -168,7 +168,6 @@ def train():
                 while FLAGS.max_train_steps >= current_step:  #not coord.should_stop():
                     if current_step % FLAGS.print_frequency == 0:
                         print("Step number" + str(current_step))
-
                     read_line, reading_file_path = check_and_shuffle_file(key, sess, read_line, paths['train_path'])
 
                     # Get a batch
