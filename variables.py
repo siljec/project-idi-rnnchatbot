@@ -31,6 +31,40 @@ paths_from_model = {
     'perplexity_log': 'perplexity_log.txt'
 }
 
+paths_from_model_context_full_turns = {
+    'ubuntu': './../../ubuntu-ranking-dataset-creator',
+    'preprocess_root_files_context': '../Preprocessing/contextFullTurns/',
+    'vocab_path': '../Preprocessing/contextFullTurns/vocabulary.txt',
+    'train_path': '../Preprocessing/contextFullTurns/training_data.txt',
+    'train_file': 'training_data.txt',
+    'dev_path': '../Preprocessing/contextFullTurns/validation_data.txt',
+    'dev_file': 'validation_data.txt',
+    'test_path': '../Preprocessing/contextFullTurns/test_data.txt',
+    'test_file': 'test_data.txt',
+    'fast_text_model': '../Preprocessing/contextFullTurns/model.bin',
+    'vocab_vectors': '../Preprocessing/contextFullTurns/vocab_vectors_path.pickle',
+    'misspellings': '../misspellings.txt',
+    'perplexity_log': 'perplexity_log.txt'
+}
+
+
+paths_from_model_context = {
+    'ubuntu': './../../ubuntu-ranking-dataset-creator',
+    'preprocess_root_files_context': '../Preprocessing/context/',
+    'vocab_path': '../Preprocessing/context/vocabulary.txt',
+    'train_path': '../Preprocessing/context/training_data.txt',
+    'train_file': 'training_data.txt',
+    'dev_path': '../Preprocessing/context/validation_data.txt',
+    'dev_file': 'validation_data.txt',
+    'test_path': '../Preprocessing/context/test_data.txt',
+    'test_file': 'test_data.txt',
+    'fast_text_model': '../Preprocessing/context/model.bin',
+    'vocab_vectors': '../Preprocessing/context/vocab_vectors_path.pickle',
+    'misspellings': '../misspellings.txt',
+    'perplexity_log': 'perplexity_log.txt'
+}
+
+
 paths_from_preprocessing = {
     'source_folder_root': "../../ubuntu-ranking-dataset-creator/src/dialogs/",
     'raw_data_x_path': "./datafiles/raw_data_x.txt",

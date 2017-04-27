@@ -52,9 +52,9 @@ from variables import paths_from_model as paths, tokens, _buckets, vocabulary_si
 from variables import contextFullTurns, context
 
 if context:
-    from variables import paths_from_preprocessing_context as paths
+    from variables import paths_from_model_context as paths
 if contextFullTurns:
-    from variables import paths_from_preprocessing_contextFullTurns as paths
+    from variables import paths_from_model_context_full_turns as paths
 
 tf.app.flags.DEFINE_float("learning_rate", 0.5, "Learning rate.")
 tf.app.flags.DEFINE_float("learning_rate_decay_factor", 0.99, "Learning rate decays by this much.")
