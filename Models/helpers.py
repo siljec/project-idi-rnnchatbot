@@ -149,8 +149,12 @@ def shuffle_stateful_files(path):
 
 def check_and_shuffle_file(key, sess, prev_line_number, prev_file_path, stateful=False, dev=False):
     # Check if we should shuffle training file
-    file_path, line_number = key.split(":")
-    line_number_int = int(line_number)
+    if stateful:
+        file_path, line_number = key.split(":")
+        line_number_int = int(line_number)
+    else:
+        line_number_int = int(sess.run(key).split(":")[1])
+        file_path = prev_file_path
 
     # If the new line number is smaller than the previous,
     # this means that the reader started to read a new file

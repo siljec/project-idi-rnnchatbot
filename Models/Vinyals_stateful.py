@@ -49,12 +49,12 @@ import tensorflow as tf
 import seq2seq_stateful_model as seq2seq_model
 sys.path.insert(0, '../')
 from variables import paths_from_model as paths, tokens, _buckets, vocabulary_size, max_training_steps, \
-    steps_per_checkpoint, print_frequency, size, batch_size, num_layers, use_gpu
+    steps_per_checkpoint, print_frequency, size, batch_size, num_layers, use_gpu, learning_rate, optimizer
 sys.path.insert(0, '../Preprocessing/')
 from preprocess_helpers import file_len
 
 
-tf.app.flags.DEFINE_float("learning_rate", 0.1, "Learning rate.")
+tf.app.flags.DEFINE_float("learning_rate", learning_rate, "Learning rate.")
 tf.app.flags.DEFINE_float("learning_rate_decay_factor", 0.99, "Learning rate decays by this much.")
 tf.app.flags.DEFINE_float("max_gradient_norm", 5.0, "Clip gradients to this norm.")
 tf.app.flags.DEFINE_integer("batch_size", batch_size, "Batch size to use during training.")
@@ -125,7 +125,9 @@ def train():
 
     if not os.path.exists(perplexity_log_path):
         with open(perplexity_log_path, 'w') as fileObject:
-            fileObject.write("Step \tPerplexity \tBucket perplexity")
+            fileObject.write(
+                "Learning_rate: %d \t Optimizer: %s \t Lstm %s \n" % (FLAGS.learning_rate, optimizer, FLAGS.use_lstm))
+            fileObject.write("Step \tPerplexity \tBucket perplexity \n")
 
     # Avoid allocating all of the GPU memory
     config = get_session_configs()
