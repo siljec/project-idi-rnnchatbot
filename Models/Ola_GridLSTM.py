@@ -128,8 +128,8 @@ def train():
     shuffle_file(train_path, train_path)
 
     print("Creating file queue")
-    filename_queue = input_pipeline(start_name=paths['train_file'])
-    filename_queue_dev = input_pipeline(start_name=paths['dev_file'])
+    filename_queue = input_pipeline(root=paths['preprocess_root_files'] ,start_name=paths['train_file'])
+    filename_queue_dev = input_pipeline(root=paths['preprocess_root_files'], start_name=paths['dev_file'])
 
     perplexity_log_path = os.path.join(FLAGS.train_dir, paths['perplexity_log'])
 

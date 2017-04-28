@@ -47,6 +47,22 @@ paths_from_model_context_full_turns = {
     'perplexity_log': 'perplexity_log.txt'
 }
 
+paths_from_model_opensubtitles = {
+    'ubuntu': './../../ubuntu-ranking-dataset-creator',
+    'preprocess_root_files_context': '../Preprocessing/opensubtitles/',
+    'vocab_path': '../Preprocessing/opensubtitles/vocabulary.txt',
+    'train_path': '../Preprocessing/opensubtitles/training_data.txt',
+    'train_file': 'training_data.txt',
+    'dev_path': '../Preprocessing/opensubtitles/validation_data.txt',
+    'dev_file': 'validation_data.txt',
+    'test_path': '../Preprocessing/opensubtitles/test_data.txt',
+    'test_file': 'test_data.txt',
+    'fast_text_model': '../Preprocessing/opensubtitles/model.bin',
+    'vocab_vectors': '../Preprocessing/opensubtitles/vocab_vectors_path.pickle',
+    'misspellings': '../misspellings.txt',
+    'perplexity_log': 'perplexity_log.txt'
+}
+
 
 paths_from_model_context = {
     'ubuntu': './../../ubuntu-ranking-dataset-creator',
