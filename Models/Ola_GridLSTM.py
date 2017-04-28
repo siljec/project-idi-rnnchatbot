@@ -45,7 +45,7 @@ from preprocess_helpers import load_pickle_file, get_time, shuffle_file
 from helpers import check_for_needed_files_and_create, preprocess_input, get_batch, input_pipeline, get_session_configs, self_test, decode_sentence, check_and_shuffle_file
 sys.path.insert(0, '../')
 from variables import paths_from_model as paths, tokens, _buckets, vocabulary_size, max_training_steps, print_frequency, steps_per_checkpoint, size, num_layers, batch_size, use_gpu
-from variables import contextFullTurns, context, learning_rate
+from variables import contextFullTurns, context, learning_rate, optimizer
 
 import tensorflow as tf
 from six.moves import xrange  # pylint: disable=redefined-builtin
@@ -59,9 +59,11 @@ data_dir = "./Ola_data"
 if context or tf.app.flags.FLAGS.context:
     data_dir = "./Context_data"
     from variables import paths_from_model_context as paths
+    print("Starting context model...")
 if contextFullTurns or tf.app.flags.FLAGS.contextFullTurns:
     data_dir = "./ContextFullTurns_data"
     from variables import paths_from_model_context_full_turns as paths
+    print("Starting contextFullTurn model...")
 
 tf.app.flags.DEFINE_float("learning_rate", learning_rate, "Learning rate.")
 tf.app.flags.DEFINE_float("learning_rate_decay_factor", 0.99, "Learning rate decays by this much.")
@@ -133,7 +135,8 @@ def train():
 
     if not os.path.exists(perplexity_log_path):
         with open(perplexity_log_path, 'w') as fileObject:
-            fileObject.write("Step \tPerplexity \tBucket perplexity")
+            fileObject.write("Learning_rate: %d \t Optimizer: %s \n" % (FLAGS.learning_rate, optimizer))
+            fileObject.write("Step \tPerplexity \tBucket perplexity \n")
 
     # Avoid allocating all of the GPU memory
     config = get_session_configs()

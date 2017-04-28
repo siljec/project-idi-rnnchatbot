@@ -49,7 +49,7 @@ import tensorflow as tf
 import seq2seq_stateful_model as seq2seq_model
 sys.path.insert(0, '../')
 from variables import paths_from_model as paths, tokens, _buckets, vocabulary_size, max_training_steps, \
-    steps_per_checkpoint, print_frequency, size, batch_size, num_layers, use_gpu, learning_rate
+    steps_per_checkpoint, print_frequency, size, batch_size, num_layers, use_gpu, learning_rate, optimizer
 sys.path.insert(0, '../Preprocessing/')
 from preprocess_helpers import file_len
 
@@ -125,7 +125,9 @@ def train():
 
     if not os.path.exists(perplexity_log_path):
         with open(perplexity_log_path, 'w') as fileObject:
-            fileObject.write("Step \tPerplexity \tBucket perplexity")
+            fileObject.write(
+                "Learning_rate: %d \t Optimizer: %s \t Lstm %s \n" % (FLAGS.learning_rate, optimizer, FLAGS.use_lstm))
+            fileObject.write("Step \tPerplexity \tBucket perplexity \n")
 
     # Avoid allocating all of the GPU memory
     config = get_session_configs()

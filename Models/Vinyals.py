@@ -49,7 +49,7 @@ import tensorflow as tf
 import seq2seq_model
 sys.path.insert(0, '../')
 from variables import paths_from_model as paths, tokens, _buckets, vocabulary_size, max_training_steps, steps_per_checkpoint, print_frequency, size, batch_size, num_layers, use_gpu
-from variables import contextFullTurns, context, learning_rate
+from variables import contextFullTurns, context, learning_rate, optimizer
 
 tf.app.flags.DEFINE_boolean("context", False, "Set to True for context.")
 tf.app.flags.DEFINE_boolean("contextFullTurns", False, "Set to True for contextFullTurns.")
@@ -58,8 +58,10 @@ data_dir = "./Vinyals_data"
 if context or tf.app.flags.FLAGS.context:
     data_dir = "./Context_data"
     from variables import paths_from_model_context as paths
+    print("Starting context model...")
 if contextFullTurns or tf.app.flags.FLAGS.contextFullTurns:
     data_dir = "./ContextFullTurns_data"
+    print("Starting contextFullTurn model...")
     from variables import paths_from_model_context_full_turns as paths
 
 tf.app.flags.DEFINE_float("learning_rate", learning_rate, "Learning rate.")
@@ -131,7 +133,8 @@ def train():
 
     if not os.path.exists(perplexity_log_path):
         with open(perplexity_log_path, 'w') as fileObject:
-            fileObject.write("Step \tPerplexity \tBucket perplexity")
+            fileObject.write("Learning_rate: %d \t Optimizer: %s \t Lstm %s \n" % (FLAGS.learning_rate, optimizer, FLAGS.use_lstm))
+            fileObject.write("Step \tPerplexity \tBucket perplexity \n")
 
     # Avoid allocating all of the GPU memory
     config = get_session_configs()
@@ -201,7 +204,6 @@ def train():
 
                         # Print statistics for the previous epoch.
                         dev_set, bucket_id = get_batch(txt_row_dev_data, dev_set, FLAGS.batch_size, ac_function=min)
-
                         perplexity = exp(float(loss)) if loss < 300 else float("inf")
                         print("global step %d learning rate %.4f step-time %.2f perplexity "
                               "%.2f" % (model.global_step.eval(), model.learning_rate.eval(), step_time, perplexity))
