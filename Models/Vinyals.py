@@ -49,14 +49,20 @@ import tensorflow as tf
 import seq2seq_model
 sys.path.insert(0, '../')
 from variables import paths_from_model as paths, tokens, _buckets, vocabulary_size, max_training_steps, steps_per_checkpoint, print_frequency, size, batch_size, num_layers, use_gpu
-from variables import contextFullTurns, context
+from variables import contextFullTurns, context, learning_rate
 
-if context:
+tf.app.flags.DEFINE_boolean("context", False, "Set to True for context.")
+tf.app.flags.DEFINE_boolean("contextFullTurns", False, "Set to True for contextFullTurns.")
+
+data_dir = "./Vinyals_data"
+if context or tf.app.flags.FLAGS.context:
+    data_dir = "./Context_data"
     from variables import paths_from_model_context as paths
-if contextFullTurns:
+if contextFullTurns or tf.app.flags.FLAGS.contextFullTurns:
+    data_dir = "./ContextFullTurns_data"
     from variables import paths_from_model_context_full_turns as paths
 
-tf.app.flags.DEFINE_float("learning_rate", 0.5, "Learning rate.")
+tf.app.flags.DEFINE_float("learning_rate", learning_rate, "Learning rate.")
 tf.app.flags.DEFINE_float("learning_rate_decay_factor", 0.99, "Learning rate decays by this much.")
 tf.app.flags.DEFINE_float("max_gradient_norm", 5.0, "Clip gradients to this norm.")
 tf.app.flags.DEFINE_integer("batch_size", batch_size, "Batch size to use during training.")
@@ -65,11 +71,12 @@ tf.app.flags.DEFINE_integer("num_layers", num_layers, "Number of layers in the m
 tf.app.flags.DEFINE_integer("vocab_size", vocabulary_size, "English vocabulary size.")
 tf.app.flags.DEFINE_integer("print_frequency", print_frequency, "How many training steps to do per print.")
 tf.app.flags.DEFINE_integer("max_train_steps", max_training_steps, "How many training steps to do.")
-tf.app.flags.DEFINE_string("data_dir", "./Vinyals_data", "Data directory")
-tf.app.flags.DEFINE_string("train_dir", "./Vinyals_data", "Training directory.")
-tf.app.flags.DEFINE_string("log_dir", "./Vinyals_data/log_dir", "Logging directory.")
+tf.app.flags.DEFINE_string("data_dir", data_dir, "Data directory")
+tf.app.flags.DEFINE_string("train_dir", data_dir, "Training directory.")
+tf.app.flags.DEFINE_string("log_dir", data_dir + "/log_dir", "Logging directory.")
 tf.app.flags.DEFINE_integer("max_train_data_size", 0, "Limit on the size of training data (0: no limit).")
 tf.app.flags.DEFINE_integer("steps_per_checkpoint", steps_per_checkpoint, "How many training steps to do per checkpoint.")
+tf.app.flags.DEFINE_boolean("use_lstm", True, "Train using fp16 instead of fp32.")
 tf.app.flags.DEFINE_boolean("decode", False, "Set to True for interactive decoding.")
 tf.app.flags.DEFINE_boolean("self_test", False, "Run a self-test if this is set to True.")
 tf.app.flags.DEFINE_boolean("use_fp16", False, "Train using fp16 instead of fp32.")
@@ -96,7 +103,7 @@ def create_model(session, forward_only):
         FLAGS.batch_size,
         FLAGS.learning_rate,
         FLAGS.learning_rate_decay_factor,
-        use_lstm = True,
+        use_lstm = FLAGS.use_lstm,
         forward_only=forward_only)
     ckpt = tf.train.get_checkpoint_state(FLAGS.train_dir)
     if ckpt and tf.gfile.Exists(ckpt.model_checkpoint_path):

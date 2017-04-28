@@ -277,8 +277,9 @@ size = 1024
 num_layers = 2
 batch_size = 24
 
-optimizer = "Adagrad" # LR = 0.5
-#optimizer = "GradientDescent" # LR = 0.1
+learning_rate = 0.1
+optimizer = "Adagrad" # LR = 0.1
+#optimizer = "GradientDescent" # LR = 0.5
 #optimizer = "Adam" # LR = 0.0001
 word_embedding_size = 1000
 

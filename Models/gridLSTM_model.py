@@ -60,7 +60,6 @@ class GridLSTM_model(object):
                batch_size,
                learning_rate,
                learning_rate_decay_factor,
-               use_lstm=False,
                num_samples=512,
                forward_only=False,
                dtype=tf.float32):
