@@ -33,7 +33,7 @@ paths_from_model = {
 
 paths_from_model_context_full_turns = {
     'ubuntu': './../../ubuntu-ranking-dataset-creator',
-    'preprocess_root_files_context': '../Preprocessing/contextFullTurns/',
+    'preprocess_root_files': '../Preprocessing/contextFullTurns/',
     'vocab_path': '../Preprocessing/contextFullTurns/vocabulary.txt',
     'train_path': '../Preprocessing/contextFullTurns/training_data.txt',
     'train_file': 'training_data.txt',
@@ -49,7 +49,7 @@ paths_from_model_context_full_turns = {
 
 paths_from_model_opensubtitles = {
     'ubuntu': './../../ubuntu-ranking-dataset-creator',
-    'preprocess_root_files_context': '../Preprocessing/opensubtitles/',
+    'preprocess_root_files': '../Preprocessing/opensubtitles/',
     'vocab_path': '../Preprocessing/opensubtitles/vocabulary.txt',
     'train_path': '../Preprocessing/opensubtitles/training_data.txt',
     'train_file': 'training_data.txt',
@@ -66,7 +66,7 @@ paths_from_model_opensubtitles = {
 
 paths_from_model_context = {
     'ubuntu': './../../ubuntu-ranking-dataset-creator',
-    'preprocess_root_files_context': '../Preprocessing/context/',
+    'preprocess_root_files': '../Preprocessing/context/',
     'vocab_path': '../Preprocessing/context/vocabulary.txt',
     'train_path': '../Preprocessing/context/training_data.txt',
     'train_file': 'training_data.txt',
