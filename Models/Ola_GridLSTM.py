@@ -45,25 +45,30 @@ from preprocess_helpers import load_pickle_file, get_time, shuffle_file
 from helpers import check_for_needed_files_and_create, preprocess_input, get_batch, input_pipeline, get_session_configs, self_test, decode_sentence, check_and_shuffle_file
 sys.path.insert(0, '../')
 from variables import paths_from_model as paths, tokens, _buckets, vocabulary_size, max_training_steps, print_frequency, steps_per_checkpoint, size, num_layers, batch_size, use_gpu
-from variables import contextFullTurns, context, learning_rate, optimizer
+from variables import contextFullTurns, context, learning_rate, optimizer, opensubtitles
 
 import tensorflow as tf
 from six.moves import xrange  # pylint: disable=redefined-builtin
 
 import gridLSTM_model
 
-tf.app.flags.DEFINE_boolean("context", False, "Set to True for context.")
-tf.app.flags.DEFINE_boolean("contextFullTurns", False, "Set to True for contextFullTurns.")
+tf.app.flags.DEFINE_boolean("context", context, "Set to True for context.")
+tf.app.flags.DEFINE_boolean("contextFullTurns", contextFullTurns, "Set to True for contextFullTurns.")
+tf.app.flags.DEFINE_boolean("opensubtitles", opensubtitles, "Set to True for openSubtitles.")
 
 data_dir = "./Ola_data"
-if context or tf.app.flags.FLAGS.context:
+if tf.app.flags.FLAGS.context:
     data_dir = "./Context_data"
     from variables import paths_from_model_context as paths
     print("Starting context model...")
-if contextFullTurns or tf.app.flags.FLAGS.contextFullTurns:
+if tf.app.flags.FLAGS.contextFullTurns:
     data_dir = "./ContextFullTurns_data"
     from variables import paths_from_model_context_full_turns as paths
     print("Starting contextFullTurn model...")
+if tf.app.flags.FLAGS.opensubtitles:
+    data_dir = "./opensubtitles_lstm_data"
+    print("Starting opensubtitles dataset model...")
+    from variables import paths_from_model_opensubtitles as paths
 
 tf.app.flags.DEFINE_float("learning_rate", learning_rate, "Learning rate.")
 tf.app.flags.DEFINE_float("learning_rate_decay_factor", 0.99, "Learning rate decays by this much.")
@@ -128,8 +133,8 @@ def train():
     shuffle_file(train_path, train_path)
 
     print("Creating file queue")
-    filename_queue = input_pipeline(start_name=paths['train_file'])
-    filename_queue_dev = input_pipeline(start_name=paths['dev_file'])
+    filename_queue = input_pipeline(root=paths['preprocess_root_files'] ,start_name=paths['train_file'])
+    filename_queue_dev = input_pipeline(root=paths['preprocess_root_files'], start_name=paths['dev_file'])
 
     perplexity_log_path = os.path.join(FLAGS.train_dir, paths['perplexity_log'])
 

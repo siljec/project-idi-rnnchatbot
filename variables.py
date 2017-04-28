@@ -33,7 +33,7 @@ paths_from_model = {
 
 paths_from_model_context_full_turns = {
     'ubuntu': './../../ubuntu-ranking-dataset-creator',
-    'preprocess_root_files_context': '../Preprocessing/contextFullTurns/',
+    'preprocess_root_files': '../Preprocessing/contextFullTurns/',
     'vocab_path': '../Preprocessing/contextFullTurns/vocabulary.txt',
     'train_path': '../Preprocessing/contextFullTurns/training_data.txt',
     'train_file': 'training_data.txt',
@@ -47,10 +47,26 @@ paths_from_model_context_full_turns = {
     'perplexity_log': 'perplexity_log.txt'
 }
 
+paths_from_model_opensubtitles = {
+    'ubuntu': './../../ubuntu-ranking-dataset-creator',
+    'preprocess_root_files': '../Preprocessing/opensubtitles/',
+    'vocab_path': '../Preprocessing/opensubtitles/vocabulary.txt',
+    'train_path': '../Preprocessing/opensubtitles/training_data.txt',
+    'train_file': 'training_data.txt',
+    'dev_path': '../Preprocessing/opensubtitles/validation_data.txt',
+    'dev_file': 'validation_data.txt',
+    'test_path': '../Preprocessing/opensubtitles/test_data.txt',
+    'test_file': 'test_data.txt',
+    'fast_text_model': '../Preprocessing/opensubtitles/model.bin',
+    'vocab_vectors': '../Preprocessing/opensubtitles/vocab_vectors_path.pickle',
+    'misspellings': '../misspellings.txt',
+    'perplexity_log': 'perplexity_log.txt'
+}
+
 
 paths_from_model_context = {
     'ubuntu': './../../ubuntu-ranking-dataset-creator',
-    'preprocess_root_files_context': '../Preprocessing/context/',
+    'preprocess_root_files': '../Preprocessing/context/',
     'vocab_path': '../Preprocessing/context/vocabulary.txt',
     'train_path': '../Preprocessing/context/training_data.txt',
     'train_file': 'training_data.txt',
@@ -272,7 +288,7 @@ vocabulary_size = 30000
 
 print_frequency = 1000
 steps_per_checkpoint = 10000
-max_training_steps = 300005
+max_training_steps = 630005
 size = 1024
 num_layers = 2
 batch_size = 24
@@ -291,7 +307,7 @@ opensubtitles = False
 if opensubtitles:
     vocabulary_size = 20000
 if contextFullTurns:
-    _buckets = [(10, 10), (16, 16), (22, 22), (60, 60)]
+    _buckets = [(18, 10), (28, 16), (38, 22), (60, 30)]
 
 # For UDC dataset
 folders = ['30', '356', '195', '142', '555', '43', '50', '36', '46', '85', '41', '118', '166', '104', '471', '37',

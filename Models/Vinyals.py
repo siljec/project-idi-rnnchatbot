@@ -49,20 +49,26 @@ import tensorflow as tf
 import seq2seq_model
 sys.path.insert(0, '../')
 from variables import paths_from_model as paths, tokens, _buckets, vocabulary_size, max_training_steps, steps_per_checkpoint, print_frequency, size, batch_size, num_layers, use_gpu
-from variables import contextFullTurns, context, learning_rate, optimizer
+from variables import contextFullTurns, context, learning_rate, optimizer, opensubtitles
 
-tf.app.flags.DEFINE_boolean("context", False, "Set to True for context.")
-tf.app.flags.DEFINE_boolean("contextFullTurns", False, "Set to True for contextFullTurns.")
+tf.app.flags.DEFINE_boolean("context", context, "Set to True for context.")
+tf.app.flags.DEFINE_boolean("contextFullTurns", contextFullTurns, "Set to True for contextFullTurns.")
+tf.app.flags.DEFINE_boolean("opensubtitles", opensubtitles, "Set to True for openSubtitles.")
 
 data_dir = "./Vinyals_data"
-if context or tf.app.flags.FLAGS.context:
+if tf.app.flags.FLAGS.context:
     data_dir = "./Context_data"
     from variables import paths_from_model_context as paths
     print("Starting context model...")
-if contextFullTurns or tf.app.flags.FLAGS.contextFullTurns:
+if tf.app.flags.FLAGS.contextFullTurns:
     data_dir = "./ContextFullTurns_data"
     print("Starting contextFullTurn model...")
     from variables import paths_from_model_context_full_turns as paths
+if tf.app.flags.FLAGS.opensubtitles:
+    data_dir = "./opensubtitles_lstm_data"
+    print("Starting opensubtitles dataset model...")
+    from variables import paths_from_model_opensubtitles as paths
+
 
 tf.app.flags.DEFINE_float("learning_rate", learning_rate, "Learning rate.")
 tf.app.flags.DEFINE_float("learning_rate_decay_factor", 0.99, "Learning rate decays by this much.")
@@ -126,8 +132,8 @@ def train():
     shuffle_file(train_path, train_path)
 
     print("Creating file queue")
-    filename_queue = input_pipeline(start_name=paths['train_file'])
-    filename_queue_dev = input_pipeline(start_name=paths['dev_file'])
+    filename_queue = input_pipeline(root=paths['preprocess_root_files'], start_name=paths['train_file'])
+    filename_queue_dev = input_pipeline(root=paths['preprocess_root_files'], start_name=paths['dev_file'])
 
     perplexity_log_path = os.path.join(FLAGS.train_dir, paths['perplexity_log'])
 

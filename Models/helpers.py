@@ -250,7 +250,7 @@ def get_batch(source, train_set, batch_size, ac_function=max):
     return train_set, largest_bucket_index
 
 
-def input_pipeline(root=paths['preprocess_root_files'], start_name=paths['train_file'], shuffle=False):
+def input_pipeline(root, start_name, shuffle=False):
     # Finds all filenames that match the root and start_name
     filenames = [root + filename for filename in os.listdir(root) if filename.startswith(start_name)]
 
