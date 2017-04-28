@@ -67,7 +67,7 @@ if tf.app.flags.FLAGS.contextFullTurns:
 if tf.app.flags.FLAGS.opensubtitles:
     data_dir = "./opensubtitles_lstm_data"
     print("Starting opensubtitles dataset model...")
-    from variables import paths_from_model_context_full_turns as paths
+    from variables import paths_from_model_opensubtitles as paths
 
 
 tf.app.flags.DEFINE_float("learning_rate", learning_rate, "Learning rate.")

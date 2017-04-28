@@ -288,7 +288,7 @@ vocabulary_size = 30000
 
 print_frequency = 1000
 steps_per_checkpoint = 10000
-max_training_steps = 300005
+max_training_steps = 630005
 size = 1024
 num_layers = 2
 batch_size = 24
@@ -307,7 +307,7 @@ opensubtitles = False
 if opensubtitles:
     vocabulary_size = 20000
 if contextFullTurns:
-    _buckets = [(10, 10), (16, 16), (22, 22), (60, 60)]
+    _buckets = [(18, 10), (28, 16), (38, 22), (60, 30)]
 
 # For UDC dataset
 folders = ['30', '356', '195', '142', '555', '43', '50', '36', '46', '85', '41', '118', '166', '104', '471', '37',
