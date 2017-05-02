@@ -159,7 +159,7 @@ def train():
 
             key, txt_row_train_data = tf.TextLineReader().read(filename_queue)
 
-            _, txt_row_dev_data = tf.TextLineReader().read(filename_queue_dev)
+            key_dev, txt_row_dev_data = tf.TextLineReader().read(filename_queue_dev)
 
             lowest_perplexity = 20.0
 
@@ -208,7 +208,7 @@ def train():
                         empty_dev_conversations = [index for index, conversation in enumerate(dev_set) if
                                                conversation == []]
                         if empty_dev_conversations != []:
-                            init_key_dev, init_line_dev = sess.run([key, txt_row_train_data])
+                            init_key_dev, init_line_dev = sess.run([key_dev, txt_row_dev_data])
                             read_line_dev, reading_dev_file_path = check_and_shuffle_file(init_key_dev, sess, read_line_dev, reading_dev_file_path, stateful=True, dev=True)
                         dev_set, batch_dev_set, dev_state = get_stateful_batch(txt_row_dev_data, dev_set, empty_dev_conversations, init_line_dev, dev_state, size, FLAGS.use_lstm)
 
@@ -241,7 +241,7 @@ def train():
                         # 1
                         encoder_inputs, decoder_inputs, target_weights = model.get_batch(batch_dev_set)
 
-                        _, eval_loss, _, _ = model.step(sess, encoder_inputs, decoder_inputs, target_weights, dev_state, True)
+                        _, eval_loss, _, dev_state = model.step(sess, encoder_inputs, decoder_inputs, target_weights, dev_state, True)
                         eval_ppx = exp(float(eval_loss)) if eval_loss < 300 else float("inf")
                         print("  eval: step %d perplexity %.2f" % (1.0, eval_ppx))
 
@@ -253,14 +253,15 @@ def train():
                         step_value.simple_value = eval_ppx
 
                         # 2
-
+                        empty_dev_conversations = [index for index, conversation in enumerate(dev_set) if
+                                                   conversation == []]
                         if empty_dev_conversations != []:
-                            init_key_dev, init_line_dev = sess.run([key, txt_row_train_data])
+                            init_key_dev, init_line_dev = sess.run([key_dev, txt_row_dev_data])
                             read_line_dev, reading_dev_file_path = check_and_shuffle_file(init_key_dev, sess, read_line_dev, reading_dev_file_path, stateful=True, dev=True)
                         dev_set, batch_dev_set, dev_state = get_stateful_batch(txt_row_dev_data, dev_set,empty_dev_conversations, init_line_dev, dev_state, size, FLAGS.use_lstm)
                         encoder_inputs, decoder_inputs, target_weights = model.get_batch(batch_dev_set)
 
-                        _, eval_loss, _, _ = model.step(sess, encoder_inputs, decoder_inputs, target_weights, dev_state,
+                        _, eval_loss, _, dev_state = model.step(sess, encoder_inputs, decoder_inputs, target_weights, dev_state,
                                                         True)
                         eval_ppx = exp(float(eval_loss)) if eval_loss < 300 else float("inf")
                         print("  eval: step %d perplexity %.2f" % (2.0, eval_ppx))
@@ -273,9 +274,10 @@ def train():
                         step_value.simple_value = eval_ppx
 
                         # 3
-
+                        empty_dev_conversations = [index for index, conversation in enumerate(dev_set) if
+                                                   conversation == []]
                         if empty_dev_conversations != []:
-                            init_key_dev, init_line_dev = sess.run([key, txt_row_train_data])
+                            init_key_dev, init_line_dev = sess.run([key_dev, txt_row_dev_data])
                             read_line_dev, reading_dev_file_path = check_and_shuffle_file(init_key_dev, sess,
                                                                                           read_line_dev,
                                                                                           reading_dev_file_path,
@@ -286,7 +288,7 @@ def train():
 
                         encoder_inputs, decoder_inputs, target_weights = model.get_batch(batch_dev_set)
 
-                        _, eval_loss, _, _ = model.step(sess, encoder_inputs, decoder_inputs, target_weights, dev_state,
+                        _, eval_loss, _, dev_state = model.step(sess, encoder_inputs, decoder_inputs, target_weights, dev_state,
                                                         True)
                         eval_ppx = exp(float(eval_loss)) if eval_loss < 300 else float("inf")
                         print("  eval: step %d perplexity %.2f" % (3.0, eval_ppx))
