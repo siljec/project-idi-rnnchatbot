@@ -149,6 +149,7 @@ def train():
             dev_set = [[] for _ in range(batch_size)]
             previous_losses = []
             read_line = 0
+            read_line_dev = 0
             reading_file_path = paths['merged_train_stateful_path_file1']
             reading_dev_file_path = paths['merged_dev_stateful_path']
 
@@ -170,6 +171,7 @@ def train():
             else:
                 initial_state = np.zeros((num_layers, batch_size, size))
             state = initial_state
+            dev_state = initial_state
 
             print("Starts training loop")
 
@@ -203,12 +205,12 @@ def train():
                         print(get_time(train_time), "to train")
 
                         # Print statistics for the previous epoch.
-                        empty_conversations = [index for index, conversation in enumerate(dev_set) if
+                        empty_dev_conversations = [index for index, conversation in enumerate(dev_set) if
                                                conversation == []]
-                        if empty_conversations != []:
-                            init_key, init_line = sess.run([key, txt_row_train_data])
-                            read_line, reading_dev_file_path = check_and_shuffle_file(init_key, sess, read_line, reading_dev_file_path, stateful=True, dev=True)
-                        dev_set, batch_dev_set, _ = get_stateful_batch(txt_row_dev_data, dev_set, empty_conversations, init_line, initial_state, size, FLAGS.use_lstm)
+                        if empty_dev_conversations != []:
+                            init_key_dev, init_line_dev = sess.run([key, txt_row_train_data])
+                            read_line_dev, reading_dev_file_path = check_and_shuffle_file(init_key_dev, sess, read_line_dev, reading_dev_file_path, stateful=True, dev=True)
+                        dev_set, batch_dev_set, dev_state = get_stateful_batch(txt_row_dev_data, dev_set, empty_dev_conversations, init_line_dev, dev_state, size, FLAGS.use_lstm)
 
                         perplexity = exp(float(loss)) if loss < 300 else float("inf")
                         print("global step %d learning rate %.4f step-time %.2f perplexity "
@@ -233,27 +235,73 @@ def train():
 
                         # Run evals on development set and print their perplexity.
                         print("Run evaluation on development set")
-                        bucket_perplexity = ""
-                        for bucket_id in xrange(len(_buckets)):
-                            if len(batch_dev_set[bucket_id]) == 0:
-                                print("  eval: empty bucket %d" % bucket_id)
-                                continue
-                            encoder_inputs, decoder_inputs, target_weights = model.get_batch(batch_dev_set)
+                        step_perplexity = ""
+                         # Run eval on three steps
 
-                            _, eval_loss, _, _ = model.step(sess, encoder_inputs, decoder_inputs, target_weights, initial_state, True)
-                            eval_ppx = exp(float(eval_loss)) if eval_loss < 300 else float("inf")
-                            print("  eval: bucket %d perplexity %.2f" % (bucket_id, eval_ppx))
+                        # 1
+                        encoder_inputs, decoder_inputs, target_weights = model.get_batch(batch_dev_set)
 
-                            bucket_perplexity += "\t" + str(eval_ppx)
+                        _, eval_loss, _, _ = model.step(sess, encoder_inputs, decoder_inputs, target_weights, dev_state, True)
+                        eval_ppx = exp(float(eval_loss)) if eval_loss < 300 else float("inf")
+                        print("  eval: step %d perplexity %.2f" % (1.0, eval_ppx))
 
-                            # Adding bucket perplexity to tensorboard
-                            bucket_value = perplexity_summary.value.add()
-                            bucket_value.tag = "perplexity_bucket %d" % bucket_id
-                            bucket_value.simple_value = eval_ppx
+                        step_perplexity += "\t" + str(eval_ppx)
+
+                        # Adding step perplexity to tensorboard
+                        step_value = perplexity_summary.value.add()
+                        step_value.tag = "perplexity_step %d" % 1.0
+                        step_value.simple_value = eval_ppx
+
+                        # 2
+
+                        if empty_dev_conversations != []:
+                            init_key_dev, init_line_dev = sess.run([key, txt_row_train_data])
+                            read_line_dev, reading_dev_file_path = check_and_shuffle_file(init_key_dev, sess, read_line_dev, reading_dev_file_path, stateful=True, dev=True)
+                        dev_set, batch_dev_set, dev_state = get_stateful_batch(txt_row_dev_data, dev_set,empty_dev_conversations, init_line_dev, dev_state, size, FLAGS.use_lstm)
+                        encoder_inputs, decoder_inputs, target_weights = model.get_batch(batch_dev_set)
+
+                        _, eval_loss, _, _ = model.step(sess, encoder_inputs, decoder_inputs, target_weights, dev_state,
+                                                        True)
+                        eval_ppx = exp(float(eval_loss)) if eval_loss < 300 else float("inf")
+                        print("  eval: step %d perplexity %.2f" % (2.0, eval_ppx))
+
+                        step_perplexity += "\t" + str(eval_ppx)
+
+                        # Adding step perplexity to tensorboard
+                        step_value = perplexity_summary.value.add()
+                        step_value.tag = "perplexity_step %d" % 2.0
+                        step_value.simple_value = eval_ppx
+
+                        # 3
+
+                        if empty_dev_conversations != []:
+                            init_key_dev, init_line_dev = sess.run([key, txt_row_train_data])
+                            read_line_dev, reading_dev_file_path = check_and_shuffle_file(init_key_dev, sess,
+                                                                                          read_line_dev,
+                                                                                          reading_dev_file_path,
+                                                                                          stateful=True, dev=True)
+                        dev_set, batch_dev_set, dev_state = get_stateful_batch(txt_row_dev_data, dev_set,
+                                                                               empty_dev_conversations, init_line_dev,
+                                                                               dev_state, size, FLAGS.use_lstm)
+
+                        encoder_inputs, decoder_inputs, target_weights = model.get_batch(batch_dev_set)
+
+                        _, eval_loss, _, _ = model.step(sess, encoder_inputs, decoder_inputs, target_weights, dev_state,
+                                                        True)
+                        eval_ppx = exp(float(eval_loss)) if eval_loss < 300 else float("inf")
+                        print("  eval: step %d perplexity %.2f" % (3.0, eval_ppx))
+
+                        step_perplexity += "\t" + str(eval_ppx)
+
+                        # Adding step perplexity to tensorboard
+                        step_value = perplexity_summary.value.add()
+                        step_value.tag = "perplexity_step %d" % 3.0
+                        step_value.simple_value = eval_ppx
+
                         summary_writer.add_summary(perplexity_summary, model.global_step.eval())
 
                         with open(os.path.join(FLAGS.train_dir, paths['perplexity_log']), 'a') as fileObject:
-                            fileObject.write(str(model.global_step) + " \t" + str(perplexity) + bucket_perplexity + "\n")
+                            fileObject.write(str(model.global_step) + " \t" + str(perplexity) + step_perplexity + "\n")
 
                         # Save model if checkpoint was the best one
                         if perplexity < lowest_perplexity:
