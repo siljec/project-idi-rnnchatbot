@@ -256,13 +256,8 @@ def train():
 
                         if empty_dev_conversations != []:
                             init_key_dev, init_line_dev = sess.run([key, txt_row_train_data])
-                            read_line_dev, reading_dev_file_path = check_and_shuffle_file(init_key_dev, sess,
-                                                                                          read_line_dev,
-                                                                                          reading_dev_file_path,
-                                                                                          stateful=True, dev=True)
-                        dev_set, batch_dev_set, dev_state = get_stateful_batch(txt_row_dev_data, dev_set,
-                                                                               empty_dev_conversations, init_line_dev,
-                                                                               dev_state, size, FLAGS.use_lstm)
+                            read_line_dev, reading_dev_file_path = check_and_shuffle_file(init_key_dev, sess, read_line_dev, reading_dev_file_path, stateful=True, dev=True)
+                        dev_set, batch_dev_set, dev_state = get_stateful_batch(txt_row_dev_data, dev_set,empty_dev_conversations, init_line_dev, dev_state, size, FLAGS.use_lstm)
                         encoder_inputs, decoder_inputs, target_weights = model.get_batch(batch_dev_set)
 
                         _, eval_loss, _, _ = model.step(sess, encoder_inputs, decoder_inputs, target_weights, dev_state,
