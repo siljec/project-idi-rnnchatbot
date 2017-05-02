@@ -253,7 +253,8 @@ def train():
                         step_value.simple_value = eval_ppx
 
                         # 2
-
+                        empty_dev_conversations = [index for index, conversation in enumerate(dev_set) if
+                                                   conversation == []]
                         if empty_dev_conversations != []:
                             init_key_dev, init_line_dev = sess.run([key_dev, txt_row_dev_data])
                             read_line_dev, reading_dev_file_path = check_and_shuffle_file(init_key_dev, sess, read_line_dev, reading_dev_file_path, stateful=True, dev=True)
@@ -273,7 +274,8 @@ def train():
                         step_value.simple_value = eval_ppx
 
                         # 3
-
+                        empty_dev_conversations = [index for index, conversation in enumerate(dev_set) if
+                                                   conversation == []]
                         if empty_dev_conversations != []:
                             init_key_dev, init_line_dev = sess.run([key_dev, txt_row_dev_data])
                             read_line_dev, reading_dev_file_path = check_and_shuffle_file(init_key_dev, sess,
