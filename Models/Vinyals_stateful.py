@@ -42,7 +42,7 @@ sys.path.insert(0, '../Preprocessing') # To access methods from another file fro
 from create_vocabulary import read_vocabulary_from_file
 from preprocess_helpers import load_pickle_file, get_time
 
-from helpers import check_for_needed_files_and_create, preprocess_input, get_stateful_batch, input_pipeline, get_session_configs, self_test, decode_stateful_sentence, check_and_shuffle_file
+from helpers import check_for_needed_files_and_create, preprocess_input, get_stateful_batch, input_pipeline, get_session_configs, self_test, decode_stateful_sentence, check_and_shuffle_file, find_correct_output
 import numpy as np
 from six.moves import xrange  # pylint: disable=redefined-builtin
 import tensorflow as tf
@@ -356,14 +356,13 @@ def decode():
         while sentence:
 
             output, states = decode_stateful_sentence(sentence, vocab, rev_vocab, model, sess, states)
+            output = find_correct_output(output)
 
-            print("Vinyals: " + " ".join(output))
+            print("Vinyals: " + output.strip())
             print("Human: ", end="")
             sys.stdout.flush()
             sentence = sys.stdin.readline()
             sentence = preprocess_input(sentence, fast_text_model, vocab_vectors)
-
-
 
 
 def main(_):

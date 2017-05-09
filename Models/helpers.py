@@ -346,3 +346,17 @@ def decode_stateful_sentence(sentence, vocab, rev_vocab, model, sess, state):
         # Print out sentence corresponding to outputs.
         output = [tf.compat.as_str(rev_vocab[output]) for output in outputs]
         return output, states
+
+
+def find_correct_output(output):
+    # Find correct output:
+    output = " ".join(output)
+    output = re.split('(?<=[.!?(_EMJ)]) +', output)
+    if len(output) >= 2:
+        if output[0].strip() == output[1].strip():
+            output = output[0]
+        else:
+            output = output[0] + " " + output[1]
+    else:
+        output = output[0]
+    return output
