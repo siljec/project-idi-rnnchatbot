@@ -108,7 +108,7 @@ def preprocess_input(sentence, fast_text_model, vocab):
     for word, similar_word in similar_words.iteritems():
         sentence.replace(word, similar_word)
 
-    return sentence
+    return sentence.strip()
 
 _WORD_SPLIT = re.compile(b"([.,!?\":;)(])")
 _DIGIT_RE = re.compile(br"\d")

@@ -301,12 +301,27 @@ def decode():
         while sentence:
 
             output = decode_sentence(sentence, vocab, rev_vocab, model, sess)
+            print(output)
 
-            print("Vinyals: " + " ".join(output))
+            #Find correct output:
+            output = " ".join(output).split(".")
+            if len(output) >= 2:
+                if output[0].strip() == output[1].strip():
+                    output = output[0] + "."
+                else:
+                    output = output[0] + ". " + output[1]
+            else:
+                output = output[0] + "."
+            print("Vinyals: " + output.strip())
             print("Human: ", end="")
             sys.stdout.flush()
             sentence = sys.stdin.readline()
-            sentence = preprocess_input(sentence, fast_text_model, vocab_vectors)
+            
+            if tf.app.flags.FLAGS.contextFullTurns:
+                sentence = preprocess_input(output.strip() + " " + sentence.strip(), fast_text_model, vocab_vectors)
+            else:
+                sentence = preprocess_input(sentence, fast_text_model, vocab_vectors)
+            print(sentence)
 
 
 def main(_):
