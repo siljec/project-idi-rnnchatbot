@@ -25,7 +25,7 @@ from six.moves import xrange  # pylint: disable=redefined-builtin
 import tensorflow as tf
 
 sys.path.insert(0, './Cells')
-from grid_rnn_cell import Grid2LSTMCell
+from grid_rnn_cell import Grid3LSTMCell
 from bidirectional_grid import Bidirectional
 
 sys.path.insert(0, '../')
@@ -123,13 +123,13 @@ class GridLSTM_model(object):
     # Creating Bidirectional Grid2LSTM cell
     additional_cell_args = {}
     additional_cell_args.update({'use_peepholes': True, 'forget_bias': 1.0})
-    print("Creating Grid2LSTMCell...")
-    single_cell = Grid2LSTMCell(size, **additional_cell_args)
+    print("Creating Grid3LSTMCell...")
+    single_cell = Grid3LSTMCell(size, **additional_cell_args)
     cell = single_cell
     if num_layers == 2:
-        print("Creating " + str(num_layers) + " layers with Grid2LSTMCell...")
+        print("Creating " + str(num_layers) + " layers with Grid3LSTMCell...")
         cell = Bidirectional([single_cell] * num_layers)
-        print("Done creating bidirectional cell using Grid2LSTMCell")
+        print("Done creating bidirectional cell using Grid3LSTMCell")
     else:
         raise ValueError("Need two layers to create a Bidirectional Cell, but has " + str(num_layers))
 
