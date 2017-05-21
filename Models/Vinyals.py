@@ -46,6 +46,8 @@ from helpers import check_for_needed_files_and_create, preprocess_input, sentenc
 import numpy as np
 from six.moves import xrange  # pylint: disable=redefined-builtin
 import tensorflow as tf
+import seq2seq_model
+import seq2seq_stateful_model
 sys.path.insert(0, '../')
 from variables import paths_from_model as paths, tokens, _buckets, vocabulary_size, max_training_steps, steps_per_checkpoint, print_frequency, size, batch_size, num_layers, use_gpu
 from variables import contextFullTurns, context, learning_rate, optimizer, opensubtitles
@@ -58,6 +60,7 @@ data_dir = "./Vinyals_data"
 if tf.app.flags.FLAGS.context:
     data_dir = "./Context_data"
     from variables import paths_from_model_context as paths
+
     print("Starting context model...")
 if tf.app.flags.FLAGS.context_full_turns:
     data_dir = "./ContextFullTurns_data"
@@ -67,6 +70,10 @@ if tf.app.flags.FLAGS.open_subtitles:
     data_dir = "./opensubtitles_lstm_data"
     print("Starting opensubtitles dataset model...")
     from variables import paths_from_model_opensubtitles as paths
+
+tf.app.flags.DEFINE_string("data_dir", data_dir, "Data directory")
+tf.app.flags.DEFINE_string("train_dir", data_dir, "Training directory.")
+tf.app.flags.DEFINE_string("log_dir", data_dir + "/log_dir", "Logging directory.")
 
 
 tf.app.flags.DEFINE_float("learning_rate", learning_rate, "Learning rate.")
@@ -78,12 +85,9 @@ tf.app.flags.DEFINE_integer("num_layers", num_layers, "Number of layers in the m
 tf.app.flags.DEFINE_integer("vocab_size", vocabulary_size, "English vocabulary size.")
 tf.app.flags.DEFINE_integer("print_frequency", print_frequency, "How many training steps to do per print.")
 tf.app.flags.DEFINE_integer("max_train_steps", max_training_steps, "How many training steps to do.")
-tf.app.flags.DEFINE_string("data_dir", data_dir, "Data directory")
-tf.app.flags.DEFINE_string("train_dir", data_dir, "Training directory.")
-tf.app.flags.DEFINE_string("log_dir", data_dir + "/log_dir", "Logging directory.")
 tf.app.flags.DEFINE_integer("max_train_data_size", 0, "Limit on the size of training data (0: no limit).")
 tf.app.flags.DEFINE_integer("steps_per_checkpoint", steps_per_checkpoint, "How many training steps to do per checkpoint.")
-tf.app.flags.DEFINE_boolean("stateful", True, "Set to True for openSubtitles.")
+tf.app.flags.DEFINE_boolean("stateful", True, "Set to True for stateful decoding.")
 tf.app.flags.DEFINE_boolean("use_lstm", True, "Use LSTM or GRU")
 tf.app.flags.DEFINE_boolean("decode", False, "Set to True for interactive decoding.")
 tf.app.flags.DEFINE_boolean("self_test", False, "Run a self-test if this is set to True.")
@@ -91,11 +95,6 @@ tf.app.flags.DEFINE_boolean("use_fp16", False, "Train using fp16 instead of fp32
 
 FLAGS = tf.app.flags.FLAGS
 
-
-if FLAGS.stateful:
-    import seq2seq_stateful_model as seq2seq_model
-else:
-    import seq2seq_model
 
 _PAD, PAD_ID = tokens['padding']
 _GO, GO_ID = tokens['go']
@@ -108,7 +107,7 @@ def create_model(session, forward_only):
     """Create translation model and initialize or load parameters in session."""
     # dtype = tf.float16 if FLAGS.use_fp16 else tf.float32
     if FLAGS.stateful:
-        model = seq2seq_model.Seq2SeqModel(
+        model = seq2seq_stateful_model.Seq2SeqModel(
             FLAGS.vocab_size,
             FLAGS.vocab_size,
             _buckets,
@@ -348,13 +347,14 @@ def decode():
             sys.stdout.flush()
             sentence = sys.stdin.readline()
             
-            if tf.app.flags.FLAGS.context_full_turns:
+            if FLAGS.context_full_turns:
                 sentence = preprocess_input(output.strip() + " " + sentence.strip(), fast_text_model, vocab_vectors)
             else:
                 sentence = preprocess_input(sentence, fast_text_model, vocab_vectors)
 
 
 def main(_):
+
     if FLAGS.self_test:
         self_test(seq2seq_model.Seq2SeqModel)
     elif FLAGS.decode:

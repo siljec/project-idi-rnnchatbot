@@ -311,7 +311,7 @@ def decode():
             sys.stdout.flush()
             sentence = sys.stdin.readline()
 
-            if tf.app.flags.FLAGS.context_full_turns:
+            if FLAGS.context_full_turns:
                 sentence = preprocess_input(output.strip() + " " + sentence.strip(), fast_text_model, vocab_vectors)
             else:
                 sentence = preprocess_input(sentence, fast_text_model, vocab_vectors)
