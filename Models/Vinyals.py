@@ -42,29 +42,28 @@ sys.path.insert(0, '../Preprocessing') # To access methods from another file fro
 from create_vocabulary import read_vocabulary_from_file
 from preprocess_helpers import shuffle_file, load_pickle_file, get_time
 
-from helpers import check_for_needed_files_and_create, preprocess_input, sentence_to_token_ids, get_batch, input_pipeline, get_session_configs, self_test, decode_sentence, check_and_shuffle_file
+from helpers import check_for_needed_files_and_create, preprocess_input, sentence_to_token_ids, get_batch, input_pipeline, get_session_configs, self_test, decode_sentence, check_and_shuffle_file, decode_stateful_sentence
 import numpy as np
 from six.moves import xrange  # pylint: disable=redefined-builtin
 import tensorflow as tf
-import seq2seq_model
 sys.path.insert(0, '../')
 from variables import paths_from_model as paths, tokens, _buckets, vocabulary_size, max_training_steps, steps_per_checkpoint, print_frequency, size, batch_size, num_layers, use_gpu
 from variables import contextFullTurns, context, learning_rate, optimizer, opensubtitles
 
 tf.app.flags.DEFINE_boolean("context", context, "Set to True for context.")
-tf.app.flags.DEFINE_boolean("contextFullTurns", contextFullTurns, "Set to True for contextFullTurns.")
-tf.app.flags.DEFINE_boolean("opensubtitles", opensubtitles, "Set to True for openSubtitles.")
+tf.app.flags.DEFINE_boolean("context_full_turns", contextFullTurns, "Set to True for context_full_turns.")
+tf.app.flags.DEFINE_boolean("open_subtitles", opensubtitles, "Set to True for openSubtitles.")
 
 data_dir = "./Vinyals_data"
 if tf.app.flags.FLAGS.context:
     data_dir = "./Context_data"
     from variables import paths_from_model_context as paths
     print("Starting context model...")
-if tf.app.flags.FLAGS.contextFullTurns:
+if tf.app.flags.FLAGS.context_full_turns:
     data_dir = "./ContextFullTurns_data"
-    print("Starting contextFullTurn model...")
+    print("Starting context_full_turn model...")
     from variables import paths_from_model_context_full_turns as paths
-if tf.app.flags.FLAGS.opensubtitles:
+if tf.app.flags.FLAGS.open_subtitles:
     data_dir = "./opensubtitles_lstm_data"
     print("Starting opensubtitles dataset model...")
     from variables import paths_from_model_opensubtitles as paths
@@ -84,12 +83,19 @@ tf.app.flags.DEFINE_string("train_dir", data_dir, "Training directory.")
 tf.app.flags.DEFINE_string("log_dir", data_dir + "/log_dir", "Logging directory.")
 tf.app.flags.DEFINE_integer("max_train_data_size", 0, "Limit on the size of training data (0: no limit).")
 tf.app.flags.DEFINE_integer("steps_per_checkpoint", steps_per_checkpoint, "How many training steps to do per checkpoint.")
+tf.app.flags.DEFINE_boolean("stateful", True, "Set to True for openSubtitles.")
 tf.app.flags.DEFINE_boolean("use_lstm", True, "Use LSTM or GRU")
 tf.app.flags.DEFINE_boolean("decode", False, "Set to True for interactive decoding.")
 tf.app.flags.DEFINE_boolean("self_test", False, "Run a self-test if this is set to True.")
 tf.app.flags.DEFINE_boolean("use_fp16", False, "Train using fp16 instead of fp32.")
 
 FLAGS = tf.app.flags.FLAGS
+
+
+if FLAGS.stateful:
+    import seq2seq_stateful_model as seq2seq_model
+else:
+    import seq2seq_model
 
 _PAD, PAD_ID = tokens['padding']
 _GO, GO_ID = tokens['go']
@@ -101,18 +107,33 @@ _UNK, UNK_ID = tokens['unk']
 def create_model(session, forward_only):
     """Create translation model and initialize or load parameters in session."""
     # dtype = tf.float16 if FLAGS.use_fp16 else tf.float32
-    model = seq2seq_model.Seq2SeqModel(
-        FLAGS.vocab_size,
-        FLAGS.vocab_size,
-        _buckets,
-        FLAGS.size,
-        FLAGS.num_layers,
-        FLAGS.max_gradient_norm,
-        FLAGS.batch_size,
-        FLAGS.learning_rate,
-        FLAGS.learning_rate_decay_factor,
-        use_lstm = FLAGS.use_lstm,
-        forward_only=forward_only)
+    if FLAGS.stateful:
+        model = seq2seq_model.Seq2SeqModel(
+            FLAGS.vocab_size,
+            FLAGS.vocab_size,
+            _buckets,
+            FLAGS.size,
+            FLAGS.num_layers,
+            FLAGS.max_gradient_norm,
+            FLAGS.batch_size,
+            FLAGS.learning_rate,
+            FLAGS.learning_rate_decay_factor,
+            use_lstm = FLAGS.use_lstm,
+            forward_only=forward_only)
+    else:
+        model = seq2seq_model.Seq2SeqModel(
+            FLAGS.vocab_size,
+            FLAGS.vocab_size,
+            _buckets,
+            FLAGS.size,
+            FLAGS.num_layers,
+            FLAGS.max_gradient_norm,
+            FLAGS.batch_size,
+            FLAGS.learning_rate,
+            FLAGS.learning_rate_decay_factor,
+            use_lstm=FLAGS.use_lstm,
+            forward_only=forward_only)
+
     ckpt = tf.train.get_checkpoint_state(FLAGS.train_dir)
     if ckpt and tf.gfile.Exists(ckpt.model_checkpoint_path):
         print("Reading model parameters from %s" % ckpt.model_checkpoint_path)
@@ -298,10 +319,20 @@ def decode():
         sys.stdout.flush()
         sentence = sys.stdin.readline()
         sentence = preprocess_input(sentence, fast_text_model, vocab_vectors)
-        while sentence:
 
-            output = decode_sentence(sentence, vocab, rev_vocab, model, sess)
-            print(output)
+        # Initial state
+        if FLAGS.stateful:
+            if FLAGS.use_lstm:
+                initial_state = np.zeros((num_layers, 2, model.batch_size, size))
+            else:
+                initial_state = np.zeros((num_layers, model.batch_size, size))
+            states = initial_state
+
+        while sentence:
+            if FLAGS.stateful:
+                output, states = decode_stateful_sentence(sentence, vocab, rev_vocab, model, sess, states)
+            else:
+                output = decode_sentence(sentence, vocab, rev_vocab, model, sess)
 
             #Find correct output:
             output = " ".join(output).split(".")
@@ -317,11 +348,10 @@ def decode():
             sys.stdout.flush()
             sentence = sys.stdin.readline()
             
-            if tf.app.flags.FLAGS.contextFullTurns:
+            if tf.app.flags.FLAGS.context_full_turns:
                 sentence = preprocess_input(output.strip() + " " + sentence.strip(), fast_text_model, vocab_vectors)
             else:
                 sentence = preprocess_input(sentence, fast_text_model, vocab_vectors)
-            print(sentence)
 
 
 def main(_):

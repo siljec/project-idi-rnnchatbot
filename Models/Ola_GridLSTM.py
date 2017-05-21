@@ -53,19 +53,19 @@ from six.moves import xrange  # pylint: disable=redefined-builtin
 import gridLSTM_model
 
 tf.app.flags.DEFINE_boolean("context", context, "Set to True for context.")
-tf.app.flags.DEFINE_boolean("contextFullTurns", contextFullTurns, "Set to True for contextFullTurns.")
-tf.app.flags.DEFINE_boolean("opensubtitles", opensubtitles, "Set to True for openSubtitles.")
+tf.app.flags.DEFINE_boolean("context_full_turns", contextFullTurns, "Set to True for contextFullTurns.")
+tf.app.flags.DEFINE_boolean("open_subtitles", opensubtitles, "Set to True for openSubtitles.")
 
 data_dir = "./Ola_data"
 if tf.app.flags.FLAGS.context:
     data_dir = "./Context_data"
     from variables import paths_from_model_context as paths
     print("Starting context model...")
-if tf.app.flags.FLAGS.contextFullTurns:
+if tf.app.flags.FLAGS.context_full_turns:
     data_dir = "./ContextFullTurns_data"
     from variables import paths_from_model_context_full_turns as paths
-    print("Starting contextFullTurn model...")
-if tf.app.flags.FLAGS.opensubtitles:
+    print("Starting context_full_turn model...")
+if tf.app.flags.FLAGS.open_subtitles:
     data_dir = "./opensubtitles_lstm_data"
     print("Starting opensubtitles dataset model...")
     from variables import paths_from_model_opensubtitles as paths
@@ -296,12 +296,25 @@ def decode():
         sentence = preprocess_input(sentence, fast_text_model, vocab_vectors)
         while sentence:
             output = decode_sentence(sentence, vocab, rev_vocab, model, sess)
-            print("Ola: " + " ".join(output))
+
+            # Find correct output:
+            output = " ".join(output).split(".")
+            if len(output) >= 2:
+                if output[0].strip() == output[1].strip():
+                    output = output[0] + "."
+                else:
+                    output = output[0] + ". " + output[1]
+            else:
+                output = output[0] + "."
+            print("Vinyals: " + output.strip())
             print("Human: ", end="")
             sys.stdout.flush()
             sentence = sys.stdin.readline()
-            sentence = preprocess_input(sentence, fast_text_model, vocab_vectors)
 
+            if tf.app.flags.FLAGS.context_full_turns:
+                sentence = preprocess_input(output.strip() + " " + sentence.strip(), fast_text_model, vocab_vectors)
+            else:
+                sentence = preprocess_input(sentence, fast_text_model, vocab_vectors)
 
 def main(_):
     if FLAGS.self_test:
