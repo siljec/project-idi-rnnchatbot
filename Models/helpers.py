@@ -360,7 +360,6 @@ def get_sliced_output(text, num_sentences):
         prev_sentence = ""
         text = ""
         for sentence in range(num_sentences):
-            print(sentence)
             if prev_sentence != lines[sentence]:
                 text += lines[sentence] + " "
 
