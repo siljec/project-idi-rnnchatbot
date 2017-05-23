@@ -53,7 +53,7 @@ from variables import paths_from_model as paths, tokens, _buckets, vocabulary_si
 from variables import contextFullTurns, context, learning_rate, optimizer, opensubtitles, one_bucket
 
 tf.app.flags.DEFINE_boolean("context", context, "Set to True for context.")
-tf.app.flags.DEFINE_boolean("context", one_bucket, "Set to True for context.")
+tf.app.flags.DEFINE_boolean("one_bucket", one_bucket, "Set to True for context.")
 tf.app.flags.DEFINE_boolean("context_full_turns", contextFullTurns, "Set to True for context_full_turns.")
 tf.app.flags.DEFINE_boolean("open_subtitles", opensubtitles, "Set to True for openSubtitles.")
 
