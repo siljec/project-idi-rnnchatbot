@@ -304,6 +304,7 @@ use_gpu = '/gpu:0'
 context = False
 contextFullTurns = False
 opensubtitles = False
+one_bucket = False
 if opensubtitles:
     vocabulary_size = 20000
     _buckets = [(6, 6), (8, 8), (11, 11), (20, 20)]

@@ -363,7 +363,7 @@ def decode():
             sys.stdout.flush()
             sentence = sys.stdin.readline()
 
-            if sentence == "*reset*":
+            if sentence.strip() == "*reset*":
                 states = initial_state
                 print("States were successfully reset.")
                 print("Human: ", end="")

@@ -50,9 +50,10 @@ import seq2seq_model
 import seq2seq_stateful_model
 sys.path.insert(0, '../')
 from variables import paths_from_model as paths, tokens, _buckets, vocabulary_size, max_training_steps, steps_per_checkpoint, print_frequency, size, batch_size, num_layers, use_gpu
-from variables import contextFullTurns, context, learning_rate, optimizer, opensubtitles
+from variables import contextFullTurns, context, learning_rate, optimizer, opensubtitles, one_bucket
 
 tf.app.flags.DEFINE_boolean("context", context, "Set to True for context.")
+tf.app.flags.DEFINE_boolean("context", one_bucket, "Set to True for context.")
 tf.app.flags.DEFINE_boolean("context_full_turns", contextFullTurns, "Set to True for context_full_turns.")
 tf.app.flags.DEFINE_boolean("open_subtitles", opensubtitles, "Set to True for openSubtitles.")
 
@@ -60,7 +61,6 @@ data_dir = "./Vinyals_data"
 if tf.app.flags.FLAGS.context:
     data_dir = "./Context_data"
     from variables import paths_from_model_context as paths
-
     print("Starting context model...")
 if tf.app.flags.FLAGS.context_full_turns:
     data_dir = "./ContextFullTurns_data"
@@ -69,6 +69,10 @@ if tf.app.flags.FLAGS.context_full_turns:
 if tf.app.flags.FLAGS.open_subtitles:
     data_dir = "./opensubtitles_lstm_data"
     print("Starting opensubtitles dataset model...")
+    from variables import paths_from_model_opensubtitles as paths
+if tf.app.flags.FLAGS.one_bucket:
+    data_dir = "./opensubtitles_one_bucket"
+    print("Starting opensubtitles dataset model with one bucket...")
     from variables import paths_from_model_opensubtitles as paths
 
 tf.app.flags.DEFINE_string("data_dir", data_dir, "Data directory")
@@ -346,7 +350,7 @@ def decode():
             print("Human: ", end="")
             sys.stdout.flush()
             sentence = sys.stdin.readline()
-            if sentence == "*reset*":
+            if sentence.strip() == "*reset*":
                 states = initial_state
                 print("States were successfully reset.")
                 print("Human: ", end="")
