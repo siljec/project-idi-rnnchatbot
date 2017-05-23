@@ -314,6 +314,7 @@ def decode():
         fast_text_model = fasttext.load_model(paths['fast_text_model'], encoding='utf-8')
 
         # Decode from standard input.
+        print("To reset states, type '*reset*'")
         sys.stdout.write("Human: ")
         sys.stdout.flush()
         sentence = sys.stdin.readline()
@@ -345,7 +346,12 @@ def decode():
             print("Human: ", end="")
             sys.stdout.flush()
             sentence = sys.stdin.readline()
-            
+            if sentence == "*reset*":
+                states = initial_state
+                print("States were successfully reset.")
+                print("Human: ", end="")
+                sys.stdout.flush()
+                sentence = sys.stdin.readline()
             if FLAGS.context_full_turns:
                 sentence = preprocess_input(output.strip() + " " + sentence.strip(), fast_text_model, vocab_vectors)
             else:
