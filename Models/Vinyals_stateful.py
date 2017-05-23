@@ -42,7 +42,7 @@ sys.path.insert(0, '../Preprocessing') # To access methods from another file fro
 from create_vocabulary import read_vocabulary_from_file
 from preprocess_helpers import load_pickle_file, get_time
 
-from helpers import check_for_needed_files_and_create, preprocess_input, get_stateful_batch, input_pipeline, get_session_configs, self_test, decode_stateful_sentence, check_and_shuffle_file
+from helpers import check_for_needed_files_and_create, preprocess_input, get_stateful_batch, input_pipeline, get_session_configs, self_test, decode_stateful_sentence, check_and_shuffle_file, get_sliced_output
 import numpy as np
 from six.moves import xrange  # pylint: disable=redefined-builtin
 import tensorflow as tf
@@ -341,6 +341,7 @@ def decode():
         fast_text_model = fasttext.load_model(paths['fast_text_model'], encoding='utf-8')
 
         # Decode from standard input.
+        print("To reset states, type '*reset*'")
         sys.stdout.write("Human: ")
         sys.stdout.flush()
         sentence = sys.stdin.readline()
@@ -356,11 +357,19 @@ def decode():
         while sentence:
 
             output, states = decode_stateful_sentence(sentence, vocab, rev_vocab, model, sess, states)
-
+            output = get_sliced_output(output, 1)
             print("Vinyals: " + " ".join(output))
             print("Human: ", end="")
             sys.stdout.flush()
             sentence = sys.stdin.readline()
+
+            if sentence.strip() == "*reset*":
+                states = initial_state
+                print("States were successfully reset.")
+                print("Human: ", end="")
+                sys.stdout.flush()
+                sentence = sys.stdin.readline()
+
             sentence = preprocess_input(sentence, fast_text_model, vocab_vectors)
 
 

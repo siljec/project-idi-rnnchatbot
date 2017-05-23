@@ -42,7 +42,7 @@ sys.path.insert(0, '../Preprocessing') # To access methods from another file fro
 from create_vocabulary import read_vocabulary_from_file
 from preprocess_helpers import load_pickle_file, get_time, shuffle_file
 
-from helpers import check_for_needed_files_and_create, preprocess_input, get_batch, input_pipeline, get_session_configs, self_test, decode_sentence, check_and_shuffle_file
+from helpers import check_for_needed_files_and_create, preprocess_input, get_batch, input_pipeline, get_session_configs, self_test, decode_sentence, check_and_shuffle_file, get_sliced_output
 sys.path.insert(0, '../')
 from variables import paths_from_model as paths, tokens, _buckets, vocabulary_size, max_training_steps, print_frequency, steps_per_checkpoint, size, num_layers, batch_size, use_gpu
 from variables import contextFullTurns, context, learning_rate, optimizer, opensubtitles
@@ -53,21 +53,24 @@ from six.moves import xrange  # pylint: disable=redefined-builtin
 import gridLSTM_model
 
 tf.app.flags.DEFINE_boolean("context", context, "Set to True for context.")
-tf.app.flags.DEFINE_boolean("contextFullTurns", contextFullTurns, "Set to True for contextFullTurns.")
-tf.app.flags.DEFINE_boolean("opensubtitles", opensubtitles, "Set to True for openSubtitles.")
+tf.app.flags.DEFINE_boolean("context_full_turns", contextFullTurns, "Set to True for contextFullTurns.")
+tf.app.flags.DEFINE_boolean("open_subtitles", opensubtitles, "Set to True for openSubtitles.")
 
 data_dir = "./Ola_data"
 if tf.app.flags.FLAGS.context:
     data_dir = "./Context_data"
     from variables import paths_from_model_context as paths
     print("Starting context model...")
-if tf.app.flags.FLAGS.contextFullTurns:
+if tf.app.flags.FLAGS.context_full_turns:
+    _buckets = [(18, 10), (28, 16), (38, 22), (60, 30)]
     data_dir = "./ContextFullTurns_data"
     from variables import paths_from_model_context_full_turns as paths
-    print("Starting contextFullTurn model...")
-if tf.app.flags.FLAGS.opensubtitles:
+    print("Starting context_full_turn model...")
+if tf.app.flags.FLAGS.open_subtitles:
     data_dir = "./opensubtitles_lstm_data"
     print("Starting opensubtitles dataset model...")
+    vocabulary_size = 20000
+    _buckets = [(6, 6), (8, 8), (11, 11), (20, 20)]
     from variables import paths_from_model_opensubtitles as paths
 
 tf.app.flags.DEFINE_float("learning_rate", learning_rate, "Learning rate.")
@@ -289,6 +292,11 @@ def decode():
         print("Load existing FastText model...")
         fast_text_model = fasttext.load_model(paths['fast_text_model'], encoding='utf-8')
 
+        if opensubtitles:
+            num_output_sentences = 1
+        else:
+            num_output_sentences = 2
+
         # Decode from standard input.
         sys.stdout.write("Human: ")
         sys.stdout.flush()
@@ -296,12 +304,17 @@ def decode():
         sentence = preprocess_input(sentence, fast_text_model, vocab_vectors)
         while sentence:
             output = decode_sentence(sentence, vocab, rev_vocab, model, sess)
-            print("Ola: " + " ".join(output))
+
+            output = get_sliced_output(output, num_output_sentences)
+            print("Vinyals: " + output.strip())
             print("Human: ", end="")
             sys.stdout.flush()
             sentence = sys.stdin.readline()
-            sentence = preprocess_input(sentence, fast_text_model, vocab_vectors)
 
+            if FLAGS.context_full_turns:
+                sentence = preprocess_input(output.strip() + " " + sentence.strip(), fast_text_model, vocab_vectors)
+            else:
+                sentence = preprocess_input(sentence, fast_text_model, vocab_vectors)
 
 def main(_):
     if FLAGS.self_test:
