@@ -62,12 +62,15 @@ if tf.app.flags.FLAGS.context:
     from variables import paths_from_model_context as paths
     print("Starting context model...")
 if tf.app.flags.FLAGS.context_full_turns:
+    _buckets = [(18, 10), (28, 16), (38, 22), (60, 30)]
     data_dir = "./ContextFullTurns_data"
     from variables import paths_from_model_context_full_turns as paths
     print("Starting context_full_turn model...")
 if tf.app.flags.FLAGS.open_subtitles:
     data_dir = "./opensubtitles_lstm_data"
     print("Starting opensubtitles dataset model...")
+    vocabulary_size = 20000
+    _buckets = [(6, 6), (8, 8), (11, 11), (20, 20)]
     from variables import paths_from_model_opensubtitles as paths
 
 tf.app.flags.DEFINE_float("learning_rate", learning_rate, "Learning rate.")
