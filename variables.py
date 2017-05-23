@@ -306,6 +306,7 @@ contextFullTurns = False
 opensubtitles = False
 if opensubtitles:
     vocabulary_size = 20000
+    _buckets = [(6, 6), (8, 8), (11, 11), (20, 20)]
 if contextFullTurns:
     _buckets = [(18, 10), (28, 16), (38, 22), (60, 30)]
 
