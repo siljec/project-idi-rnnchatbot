@@ -296,53 +296,72 @@ def self_test(test_model):
 
 def decode_sentence(sentence, vocab, rev_vocab, model, sess):
 
-        # Get token-ids for the input sentence.
-        token_ids = sentence_to_token_ids(tf.compat.as_bytes(sentence), vocab)
+    # Get token-ids for the input sentence.
+    token_ids = sentence_to_token_ids(tf.compat.as_bytes(sentence), vocab)
 
-        # Which bucket does it belong to?
-        if len(token_ids) >= _buckets[-1][0]:
-            print("Sentence too long. Slicing it to fit a bucket")
-            token_ids = token_ids[:(_buckets[-1][0] - 1)]
-        bucket_id = min([b for b in xrange(len(_buckets))
-                         if _buckets[b][0] > len(token_ids)])
+    # Which bucket does it belong to?
+    if len(token_ids) >= _buckets[-1][0]:
+        print("Sentence too long. Slicing it to fit a bucket")
+        token_ids = token_ids[:(_buckets[-1][0] - 1)]
+    bucket_id = min([b for b in xrange(len(_buckets))
+                     if _buckets[b][0] > len(token_ids)])
 
-        # Get a 1-element batch to feed the sentence to the model.
-        encoder_inputs, decoder_inputs, target_weights = model.get_batch(
-            {bucket_id: [(token_ids, [])]}, bucket_id)
+    # Get a 1-element batch to feed the sentence to the model.
+    encoder_inputs, decoder_inputs, target_weights = model.get_batch(
+        {bucket_id: [(token_ids, [])]}, bucket_id)
 
-        # Get output logits for the sentence.
-        _, _, output_logits = model.step(sess, encoder_inputs, decoder_inputs,
-                                         target_weights, bucket_id, True)
+    # Get output logits for the sentence.
+    _, _, output_logits = model.step(sess, encoder_inputs, decoder_inputs,
+                                     target_weights, bucket_id, True)
 
-        # This is a greedy decoder - outputs are just argmaxes of output_logits.
-        outputs = [int(np.argmax(logit, axis=1)) for logit in output_logits]
+    # This is a greedy decoder - outputs are just argmaxes of output_logits.
+    outputs = [int(np.argmax(logit, axis=1)) for logit in output_logits]
 
-        # If there is an EOS symbol in outputs, cut them at that point.
-        if EOT_ID in outputs:
-            outputs = outputs[:outputs.index(EOT_ID)]
+    # If there is an EOS symbol in outputs, cut them at that point.
+    if EOT_ID in outputs:
+        outputs = outputs[:outputs.index(EOT_ID)]
 
-        # Print out sentence corresponding to outputs.
-        output = [tf.compat.as_str(rev_vocab[output]) for output in outputs]
-        return output
+    # Print out sentence corresponding to outputs.
+    output = [tf.compat.as_str(rev_vocab[output]) for output in outputs]
+    return output
 
 
 def decode_stateful_sentence(sentence, vocab, rev_vocab, model, sess, state):
 
-        # Get token-ids for the input sentence.
-        token_ids = sentence_to_token_ids(tf.compat.as_bytes(sentence), vocab)
+    # Get token-ids for the input sentence.
+    token_ids = sentence_to_token_ids(tf.compat.as_bytes(sentence), vocab)
 
-        # Get a 1-element batch to feed the sentence to the model.
-        encoder_inputs, decoder_inputs, target_weights = model.get_batch([(token_ids, [])])
-        # Get output logits for the sentence.
-        _, _, output_logits, states = model.step(sess, encoder_inputs, decoder_inputs, target_weights, state, True)
+    # Get a 1-element batch to feed the sentence to the model.
+    encoder_inputs, decoder_inputs, target_weights = model.get_batch([(token_ids, [])])
+    # Get output logits for the sentence.
+    _, _, output_logits, states = model.step(sess, encoder_inputs, decoder_inputs, target_weights, state, True)
 
-        # This is a greedy decoder - outputs are just argmaxes of output_logits.
-        outputs = [int(np.argmax(logit, axis=1)) for logit in output_logits]
+    # This is a greedy decoder - outputs are just argmaxes of output_logits.
+    outputs = [int(np.argmax(logit, axis=1)) for logit in output_logits]
 
-        # If there is an EOS symbol in outputs, cut them at that point.
-        if EOT_ID in outputs:
-            outputs = outputs[:outputs.index(EOT_ID)]
+    # If there is an EOS symbol in outputs, cut them at that point.
+    if EOT_ID in outputs:
+        outputs = outputs[:outputs.index(EOT_ID)]
 
-        # Print out sentence corresponding to outputs.
-        output = [tf.compat.as_str(rev_vocab[output]) for output in outputs]
-        return output, states
+    # Print out sentence corresponding to outputs.
+    output = [tf.compat.as_str(rev_vocab[output]) for output in outputs]
+    return output, states
+
+
+def get_sliced_output(text, num_sentences):
+    indices = [pos+len(char) for pos, char in enumerate(text) if char in [".", "?", "!", "_EMJ"]]
+    lines = []
+    if indices != []:
+        prev = 0
+        for index in indices:
+            lines.append(text[prev:index].strip())
+            prev = index
+
+        prev_sentence = ""
+        text = ""
+        for sentence in range(num_sentences):
+            print(sentence)
+            if prev_sentence != lines[sentence]:
+                text += lines[sentence] + " "
+
+    return text

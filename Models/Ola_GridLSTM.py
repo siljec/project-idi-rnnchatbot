@@ -42,7 +42,7 @@ sys.path.insert(0, '../Preprocessing') # To access methods from another file fro
 from create_vocabulary import read_vocabulary_from_file
 from preprocess_helpers import load_pickle_file, get_time, shuffle_file
 
-from helpers import check_for_needed_files_and_create, preprocess_input, get_batch, input_pipeline, get_session_configs, self_test, decode_sentence, check_and_shuffle_file
+from helpers import check_for_needed_files_and_create, preprocess_input, get_batch, input_pipeline, get_session_configs, self_test, decode_sentence, check_and_shuffle_file, get_sliced_output
 sys.path.insert(0, '../')
 from variables import paths_from_model as paths, tokens, _buckets, vocabulary_size, max_training_steps, print_frequency, steps_per_checkpoint, size, num_layers, batch_size, use_gpu
 from variables import contextFullTurns, context, learning_rate, optimizer, opensubtitles
@@ -289,6 +289,11 @@ def decode():
         print("Load existing FastText model...")
         fast_text_model = fasttext.load_model(paths['fast_text_model'], encoding='utf-8')
 
+        if opensubtitles:
+            num_output_sentences = 1
+        else:
+            num_output_sentences = 2
+
         # Decode from standard input.
         sys.stdout.write("Human: ")
         sys.stdout.flush()
@@ -297,15 +302,7 @@ def decode():
         while sentence:
             output = decode_sentence(sentence, vocab, rev_vocab, model, sess)
 
-            # Find correct output:
-            output = " ".join(output).split(".")
-            if len(output) >= 2:
-                if output[0].strip() == output[1].strip():
-                    output = output[0] + "."
-                else:
-                    output = output[0] + ". " + output[1]
-            else:
-                output = output[0] + "."
+            output = get_sliced_output(output, num_output_sentences)
             print("Vinyals: " + output.strip())
             print("Human: ", end="")
             sys.stdout.flush()
