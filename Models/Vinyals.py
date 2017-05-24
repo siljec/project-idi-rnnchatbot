@@ -341,7 +341,7 @@ def decode():
                 num_output_sentences = 1
             else:
                 output = decode_sentence(sentence, vocab, rev_vocab, model, sess)
-                if opensubtitles:
+                if FLAGS.open_subtitles:
                     num_output_sentences = 1
                 else:
                     num_output_sentences = 2
