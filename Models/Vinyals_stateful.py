@@ -357,8 +357,9 @@ def decode():
         while sentence:
 
             output, states = decode_stateful_sentence(sentence, vocab, rev_vocab, model, sess, states)
+            output = " ".join(output)
             output = get_sliced_output(output, 1)
-            print("Vinyals: " + " ".join(output))
+            print("Vinyals_Stateful: " + " ".join(output))
             print("Human: ", end="")
             sys.stdout.flush()
             sentence = sys.stdin.readline()

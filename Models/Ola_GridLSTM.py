@@ -304,9 +304,9 @@ def decode():
         sentence = preprocess_input(sentence, fast_text_model, vocab_vectors)
         while sentence:
             output = decode_sentence(sentence, vocab, rev_vocab, model, sess)
-
+            output = " ".join(output)
             output = get_sliced_output(output, num_output_sentences)
-            print("Vinyals: " + output.strip())
+            print("Grid LSTM: " + output.strip())
             print("Human: ", end="")
             sys.stdout.flush()
             sentence = sys.stdin.readline()
