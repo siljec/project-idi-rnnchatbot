@@ -292,7 +292,7 @@ def decode():
         print("Load existing FastText model...")
         fast_text_model = fasttext.load_model(paths['fast_text_model'], encoding='utf-8')
 
-        if opensubtitles:
+        if FLAGS.open_subtitles:
             num_output_sentences = 1
         else:
             num_output_sentences = 2
