@@ -67,7 +67,7 @@ if tf.app.flags.FLAGS.context_full_turns:
     from variables import paths_from_model_context_full_turns as paths
     print("Starting context_full_turn model...")
 if tf.app.flags.FLAGS.open_subtitles:
-    data_dir = "./opensubtitles_lstm_data"
+    data_dir = "./opensubtitles_grid_data"
     print("Starting opensubtitles dataset model...")
     vocabulary_size = 20000
     _buckets = [(6, 6), (8, 8), (11, 11), (20, 20)]
