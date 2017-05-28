@@ -349,13 +349,23 @@ def decode_stateful_sentence(sentence, vocab, rev_vocab, model, sess, state):
 
 
 def get_sliced_output(text, num_sentences):
-    indices = [pos+len(char) for pos, char in enumerate(text) if char in [".", "?", "!", "_EMJ"]]
+    text.replace("_EMJ", ":)")
+
+    # Find indices where the text should split
+    indices = [pos+len(char) for pos, char in enumerate(text) if char in [".", "?", "!", ":)"]]
     lines = []
+
     if indices != []:
         prev = 0
+
+        # Split on all indices
         for index in indices:
             lines.append(text[prev:index].strip())
             prev = index
+
+        # Put upper case on all sentence starts
+        lines = [line.capitalize() for line in lines]
+
 
         prev_sentence = ""
         text = ""
@@ -363,4 +373,6 @@ def get_sliced_output(text, num_sentences):
             if prev_sentence != lines[sentence]:
                 text += lines[sentence] + " "
 
+    # Upper case I
+    text = text.replace(" i ", " I ")
     return text
