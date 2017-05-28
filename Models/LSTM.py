@@ -74,7 +74,13 @@ if tf.app.flags.FLAGS.open_subtitles:
     vocabulary_size = 20000
     _buckets = [(6, 6), (8, 8), (11, 11), (20, 20)]
     from variables import paths_from_model_opensubtitles as paths
-if tf.app.flags.FLAGS.one_bucket or tf.app.flags.FLAGS.stateful:
+if tf.app.flags.FLAGS.one_bucket:
+    data_dir = "./opensubtitles_one_bucket"
+    _buckets = [(20,20)]
+    print("Starting opensubtitles dataset model with one bucket...")
+    from variables import paths_from_model_opensubtitles as paths
+
+if tf.app.flags.FLAGS.stateful:
     data_dir = "./opensubtitles_one_bucket"
     print("Starting opensubtitles dataset model with one bucket...")
     from variables import paths_from_model_opensubtitles as paths

@@ -56,7 +56,7 @@ tf.app.flags.DEFINE_boolean("context", context, "Set to True for context.")
 tf.app.flags.DEFINE_boolean("context_full_turns", contextFullTurns, "Set to True for contextFullTurns.")
 tf.app.flags.DEFINE_boolean("open_subtitles", opensubtitles, "Set to True for openSubtitles.")
 
-data_dir = "./Ola_data"
+data_dir = "./GrisLSTM_data"
 if tf.app.flags.FLAGS.context:
     data_dir = "./Context_data"
     from variables import paths_from_model_context as paths
