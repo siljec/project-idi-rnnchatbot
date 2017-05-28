@@ -56,6 +56,7 @@ tf.app.flags.DEFINE_boolean("context", context, "Set to True for context.")
 tf.app.flags.DEFINE_boolean("one_bucket", one_bucket, "Set to True for context.")
 tf.app.flags.DEFINE_boolean("context_full_turns", contextFullTurns, "Set to True for context_full_turns.")
 tf.app.flags.DEFINE_boolean("open_subtitles", opensubtitles, "Set to True for openSubtitles.")
+tf.app.flags.DEFINE_boolean("stateful", False, "Set to True for stateful decoding.")
 
 data_dir = "./LSTM_data"
 if tf.app.flags.FLAGS.context:
@@ -73,7 +74,7 @@ if tf.app.flags.FLAGS.open_subtitles:
     vocabulary_size = 20000
     _buckets = [(6, 6), (8, 8), (11, 11), (20, 20)]
     from variables import paths_from_model_opensubtitles as paths
-if tf.app.flags.FLAGS.one_bucket:
+if tf.app.flags.FLAGS.one_bucket or tf.app.flags.FLAGS.stateful:
     data_dir = "./opensubtitles_one_bucket"
     print("Starting opensubtitles dataset model with one bucket...")
     from variables import paths_from_model_opensubtitles as paths
@@ -94,7 +95,6 @@ tf.app.flags.DEFINE_integer("print_frequency", print_frequency, "How many traini
 tf.app.flags.DEFINE_integer("max_train_steps", max_training_steps, "How many training steps to do.")
 tf.app.flags.DEFINE_integer("max_train_data_size", 0, "Limit on the size of training data (0: no limit).")
 tf.app.flags.DEFINE_integer("steps_per_checkpoint", steps_per_checkpoint, "How many training steps to do per checkpoint.")
-tf.app.flags.DEFINE_boolean("stateful", False, "Set to True for stateful decoding.")
 tf.app.flags.DEFINE_boolean("use_lstm", True, "Use LSTM or GRU")
 tf.app.flags.DEFINE_boolean("decode", False, "Set to True for interactive decoding.")
 tf.app.flags.DEFINE_boolean("self_test", False, "Run a self-test if this is set to True.")
