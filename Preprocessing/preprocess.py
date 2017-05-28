@@ -6,6 +6,7 @@ from preprocessing3 import preprocessing3
 from preprocessing1_context import preprocess1_context
 from preprocessing1_contextFullTurns import preprocess1_contextFullTurns
 from preprocessing1_opensubtitles import preprocess1_opensubtitles
+import tensorflow as tf
 
 
 from preprocess_helpers import path_exists, shuffle_file, create_final_merged_files, from_index_to_words
@@ -18,6 +19,10 @@ from variables import contextFullTurns, context, opensubtitles, folders
 force_create_new_files = False
 force_train_fast_model_all_over = False
 """ ------------------- """
+
+tf.app.flags.DEFINE_boolean("context", context, "Set to True for context.")
+tf.app.flags.DEFINE_boolean("context_full_turns", contextFullTurns, "Set to True for contextFullTurns.")
+tf.app.flags.DEFINE_boolean("open_subtitles", opensubtitles, "Set to True for openSubtitles.")
 
 # Find correct path
 folder = "datafiles"
