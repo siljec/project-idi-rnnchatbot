@@ -9,7 +9,7 @@ import numpy as np
 import glob
 from random import choice, shuffle
 sys.path.insert(0, '../') # To access methods from another file from another folder
-from variables import tokens, paths_from_model as paths, _buckets
+from variables import tokens, paths_from_model, _buckets
 
 _, UNK_ID = tokens['unk']
 _, EOT_ID = tokens['eot']
