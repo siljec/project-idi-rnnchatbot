@@ -372,7 +372,7 @@ def get_sliced_output(text, num_sentences):
             if prev_sentence != lines[sentence]:
                 text += lines[sentence] + " "
     else:
-        text = text.capitilize()
+        text = text.capitalize()
     # Upper case I
     text = text.replace(" i ", " I ")
     return text
