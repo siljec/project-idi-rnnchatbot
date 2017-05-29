@@ -52,17 +52,12 @@ sys.path.insert(0, '../')
 from variables import paths_from_model as paths, tokens, _buckets, vocabulary_size, max_training_steps, steps_per_checkpoint, print_frequency, size, batch_size, num_layers, use_gpu
 from variables import contextFullTurns, context, learning_rate, optimizer, opensubtitles, one_bucket
 
-tf.app.flags.DEFINE_boolean("context", context, "Set to True for context.")
 tf.app.flags.DEFINE_boolean("one_bucket", one_bucket, "Set to True for context.")
-tf.app.flags.DEFINE_boolean("context_full_turns", contextFullTurns, "Set to True for context_full_turns.")
 tf.app.flags.DEFINE_boolean("open_subtitles", opensubtitles, "Set to True for openSubtitles.")
 tf.app.flags.DEFINE_boolean("stateful", False, "Set to True for stateful decoding.")
+tf.app.flags.DEFINE_boolean("context_full_turns", contextFullTurns, "Set to True for context_full_turns.")
 
 data_dir = "./LSTM_data"
-if tf.app.flags.FLAGS.context:
-    data_dir = "./Context_data"
-    from variables import paths_from_model_context as paths
-    print("Starting context model...")
 if tf.app.flags.FLAGS.context_full_turns:
     _buckets = [(18, 10), (28, 16), (38, 22), (60, 30)]
     data_dir = "./ContextFullTurns_data"

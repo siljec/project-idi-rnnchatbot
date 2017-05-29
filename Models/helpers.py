@@ -2,15 +2,14 @@ import os
 import sys
 import re
 sys.path.insert(0, '../Preprocessing') # To access methods from another file from another folder
-from preprocess import start_preprocessing
-from variables import paths_from_model, tokens
 from preprocessing3 import distance
 from preprocess_helpers import shuffle_file, merge_files_to_one
-from variables import tokens, paths_from_model as paths, _buckets
 import tensorflow as tf
 import numpy as np
 import glob
 from random import choice, shuffle
+sys.path.insert(0, '../') # To access methods from another file from another folder
+from variables import tokens, paths_from_model as paths, _buckets
 
 _, UNK_ID = tokens['unk']
 _, EOT_ID = tokens['eot']
