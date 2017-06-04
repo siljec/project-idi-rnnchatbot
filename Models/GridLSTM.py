@@ -40,24 +40,23 @@ import fasttext
 
 sys.path.insert(0, '../Preprocessing') # To access methods from another file from another folder
 from create_vocabulary import read_vocabulary_from_file
-from preprocess_helpers import shuffle_file, load_pickle_file, get_time
+from preprocess_helpers import load_pickle_file, get_time, shuffle_file
 
-from helpers import check_for_needed_files_and_create, preprocess_input, sentence_to_token_ids, get_batch, input_pipeline, get_session_configs, self_test, decode_sentence, check_and_shuffle_file, decode_stateful_sentence, get_sliced_output
-import numpy as np
-from six.moves import xrange  # pylint: disable=redefined-builtin
-import tensorflow as tf
-import seq2seq_model
-import seq2seq_stateful_model
+from helpers import check_for_needed_files_and_create, preprocess_input, get_batch, input_pipeline, get_session_configs, self_test, decode_sentence, check_and_shuffle_file, get_sliced_output
 sys.path.insert(0, '../')
-from variables import paths_from_model as paths, tokens, _buckets, vocabulary_size, max_training_steps, steps_per_checkpoint, print_frequency, size, batch_size, num_layers, use_gpu
-from variables import contextFullTurns, context, learning_rate, optimizer, opensubtitles, one_bucket
+from variables import paths_from_model as paths, tokens, _buckets, vocabulary_size, max_training_steps, print_frequency, steps_per_checkpoint, size, num_layers, batch_size, use_gpu
+from variables import contextFullTurns, context, learning_rate, optimizer, opensubtitles
+
+import tensorflow as tf
+from six.moves import xrange  # pylint: disable=redefined-builtin
+
+import gridLSTM_model
 
 tf.app.flags.DEFINE_boolean("context", context, "Set to True for context.")
-tf.app.flags.DEFINE_boolean("one_bucket", one_bucket, "Set to True for context.")
-tf.app.flags.DEFINE_boolean("context_full_turns", contextFullTurns, "Set to True for context_full_turns.")
+tf.app.flags.DEFINE_boolean("context_full_turns", contextFullTurns, "Set to True for contextFullTurns.")
 tf.app.flags.DEFINE_boolean("open_subtitles", opensubtitles, "Set to True for openSubtitles.")
 
-data_dir = "./Vinyals_data"
+data_dir = "./GrisLSTM_data"
 if tf.app.flags.FLAGS.context:
     data_dir = "./Context_data"
     from variables import paths_from_model_context as paths
@@ -65,23 +64,14 @@ if tf.app.flags.FLAGS.context:
 if tf.app.flags.FLAGS.context_full_turns:
     _buckets = [(18, 10), (28, 16), (38, 22), (60, 30)]
     data_dir = "./ContextFullTurns_data"
-    print("Starting context_full_turn model...")
     from variables import paths_from_model_context_full_turns as paths
+    print("Starting context_full_turn model...")
 if tf.app.flags.FLAGS.open_subtitles:
-    data_dir = "./opensubtitles_lstm_data"
+    data_dir = "./opensubtitles_grid_data"
     print("Starting opensubtitles dataset model...")
     vocabulary_size = 20000
     _buckets = [(6, 6), (8, 8), (11, 11), (20, 20)]
     from variables import paths_from_model_opensubtitles as paths
-if tf.app.flags.FLAGS.one_bucket:
-    data_dir = "./opensubtitles_one_bucket"
-    print("Starting opensubtitles dataset model with one bucket...")
-    from variables import paths_from_model_opensubtitles as paths
-
-tf.app.flags.DEFINE_string("data_dir", data_dir, "Data directory")
-tf.app.flags.DEFINE_string("train_dir", data_dir, "Training directory.")
-tf.app.flags.DEFINE_string("log_dir", data_dir + "/log_dir", "Logging directory.")
-
 
 tf.app.flags.DEFINE_float("learning_rate", learning_rate, "Learning rate.")
 tf.app.flags.DEFINE_float("learning_rate_decay_factor", 0.99, "Learning rate decays by this much.")
@@ -92,16 +82,19 @@ tf.app.flags.DEFINE_integer("num_layers", num_layers, "Number of layers in the m
 tf.app.flags.DEFINE_integer("vocab_size", vocabulary_size, "English vocabulary size.")
 tf.app.flags.DEFINE_integer("print_frequency", print_frequency, "How many training steps to do per print.")
 tf.app.flags.DEFINE_integer("max_train_steps", max_training_steps, "How many training steps to do.")
+tf.app.flags.DEFINE_string("data_dir", data_dir, "Data directory")
+tf.app.flags.DEFINE_string("train_dir", data_dir, "Training directory.")
+tf.app.flags.DEFINE_string("log_dir", data_dir + "/log_dir", "Logging directory.")
 tf.app.flags.DEFINE_integer("max_train_data_size", 0, "Limit on the size of training data (0: no limit).")
 tf.app.flags.DEFINE_integer("steps_per_checkpoint", steps_per_checkpoint, "How many training steps to do per checkpoint.")
-tf.app.flags.DEFINE_boolean("stateful", False, "Set to True for stateful decoding.")
-tf.app.flags.DEFINE_boolean("use_lstm", True, "Use LSTM or GRU")
 tf.app.flags.DEFINE_boolean("decode", False, "Set to True for interactive decoding.")
 tf.app.flags.DEFINE_boolean("self_test", False, "Run a self-test if this is set to True.")
 tf.app.flags.DEFINE_boolean("use_fp16", False, "Train using fp16 instead of fp32.")
 
 FLAGS = tf.app.flags.FLAGS
 
+# We use a number of buckets and pad to the closest one for efficiency.
+# See seq2seq_model.Seq2SeqModel for details of how they work.
 
 _PAD, PAD_ID = tokens['padding']
 _GO, GO_ID = tokens['go']
@@ -109,37 +102,21 @@ _EOS, EOS_ID = tokens['eos']
 _EOT, EOT_ID = tokens['eot']
 _UNK, UNK_ID = tokens['unk']
 
-
 def create_model(session, forward_only):
     """Create translation model and initialize or load parameters in session."""
-    # dtype = tf.float16 if FLAGS.use_fp16 else tf.float32
-    if FLAGS.stateful:
-        model = seq2seq_stateful_model.Seq2SeqModel(
-            FLAGS.vocab_size,
-            FLAGS.vocab_size,
-            _buckets,
-            FLAGS.size,
-            FLAGS.num_layers,
-            FLAGS.max_gradient_norm,
-            FLAGS.batch_size,
-            FLAGS.learning_rate,
-            FLAGS.learning_rate_decay_factor,
-            use_lstm = FLAGS.use_lstm,
-            forward_only=forward_only)
-    else:
-        model = seq2seq_model.Seq2SeqModel(
-            FLAGS.vocab_size,
-            FLAGS.vocab_size,
-            _buckets,
-            FLAGS.size,
-            FLAGS.num_layers,
-            FLAGS.max_gradient_norm,
-            FLAGS.batch_size,
-            FLAGS.learning_rate,
-            FLAGS.learning_rate_decay_factor,
-            use_lstm=FLAGS.use_lstm,
-            forward_only=forward_only)
-
+    dtype = tf.float16 if FLAGS.use_fp16 else tf.float32
+    model = gridLSTM_model.GridLSTM_model(
+        FLAGS.vocab_size,
+        FLAGS.vocab_size,
+        _buckets,
+        FLAGS.size,
+        FLAGS.num_layers,
+        FLAGS.max_gradient_norm,
+        FLAGS.batch_size,
+        FLAGS.learning_rate,
+        FLAGS.learning_rate_decay_factor,
+        forward_only=forward_only,
+        dtype=dtype)
     ckpt = tf.train.get_checkpoint_state(FLAGS.train_dir)
     if ckpt and tf.gfile.Exists(ckpt.model_checkpoint_path):
         print("Reading model parameters from %s" % ckpt.model_checkpoint_path)
@@ -159,14 +136,14 @@ def train():
     shuffle_file(train_path, train_path)
 
     print("Creating file queue")
-    filename_queue = input_pipeline(root=paths['preprocess_root_files'], start_name=paths['train_file'])
+    filename_queue = input_pipeline(root=paths['preprocess_root_files'] ,start_name=paths['train_file'])
     filename_queue_dev = input_pipeline(root=paths['preprocess_root_files'], start_name=paths['dev_file'])
 
     perplexity_log_path = os.path.join(FLAGS.train_dir, paths['perplexity_log'])
 
     if not os.path.exists(perplexity_log_path):
         with open(perplexity_log_path, 'w') as fileObject:
-            fileObject.write("Learning_rate: %d \t Optimizer: %s \t Lstm %s \n" % (FLAGS.learning_rate, optimizer, FLAGS.use_lstm))
+            fileObject.write("Learning_rate: %d \t Optimizer: %s \n" % (FLAGS.learning_rate, optimizer))
             fileObject.write("Step \tPerplexity \tBucket perplexity \n")
 
     # Avoid allocating all of the GPU memory
@@ -205,12 +182,12 @@ def train():
 
             train_time = time.time()
 
-            print("Starts training loop")
-
+            print("Starting training loop")
             try:
-                while FLAGS.max_train_steps >= current_step:  #not coord.should_stop():
+                while current_step < FLAGS.max_train_steps:  # not coord.should_stop():
                     if current_step % FLAGS.print_frequency == 0:
-                        print("Step number" + str(current_step))
+                        print("Step number: " + str(current_step))
+
                     read_line, reading_file_path = check_and_shuffle_file(key, sess, read_line, paths['train_path'])
 
                     # Get a batch
@@ -231,12 +208,11 @@ def train():
 
                     # Once in a while, we save checkpoint, print statistics, and run evals.
                     if current_step % FLAGS.steps_per_checkpoint == 0:
-
                         check_time = time.time()
-                        print(get_time(train_time), "to train")
-
+                        print(get_time(train_time, "to train"))
                         # Print statistics for the previous epoch.
                         dev_set, bucket_id = get_batch(txt_row_dev_data, dev_set, FLAGS.batch_size, ac_function=min)
+
                         perplexity = exp(float(loss)) if loss < 300 else float("inf")
                         print("global step %d learning rate %.4f step-time %.2f perplexity "
                               "%.2f" % (model.global_step.eval(), model.learning_rate.eval(), step_time, perplexity))
@@ -248,7 +224,7 @@ def train():
 
                         # Save checkpoint and zero timer and loss.
                         print("Save checkpoint")
-                        checkpoint_path = os.path.join(FLAGS.train_dir, "Vinyals.ckpt")
+                        checkpoint_path = os.path.join(FLAGS.train_dir, "Ola.ckpt")
                         model.saver.save(sess, checkpoint_path, global_step=model.global_step)
                         step_time, loss = 0.0, 0.0
 
@@ -284,15 +260,14 @@ def train():
 
                         with open(os.path.join(FLAGS.train_dir, paths['perplexity_log']), 'a') as fileObject:
                             fileObject.write(str(model.global_step) + " \t" + str(perplexity) + bucket_perplexity + "\n")
-
                         # Save model if checkpoint was the best one
-                        if perplexity < lowest_perplexity:
+                        if perplexity < lowest_perplexity:  # and current_step > 400000:
                             lowest_perplexity = perplexity
                             checkpoint_path = os.path.join(FLAGS.train_dir, "Ola_best_.ckpt")
                             model.saver.save(sess, checkpoint_path, global_step=model.global_step)
 
                         sys.stdout.flush()
-                        get_time(check_time, "to do checkpoint")
+                        print(get_time(check_time), "to do checkpoint")
                         train_time = time.time()
             except tf.errors.OutOfRangeError:
                 print('Done training, epoch reached')
@@ -302,10 +277,7 @@ def train():
 
 
 def decode():
-    # Avoid allocating all of the GPU memory
-    config = get_session_configs()
-
-    with tf.Session(config=config) as sess:
+    with tf.Session(config=get_session_configs()) as sess:
         # Create model and load parameters.
         model = create_model(sess, True)
         model.batch_size = 1  # We decode one sentence at a time.
@@ -320,59 +292,37 @@ def decode():
         print("Load existing FastText model...")
         fast_text_model = fasttext.load_model(paths['fast_text_model'], encoding='utf-8')
 
+        if FLAGS.open_subtitles:
+            num_output_sentences = 1
+        else:
+            num_output_sentences = 2
+
         # Decode from standard input.
-        print("To reset states, type '*reset*'")
         sys.stdout.write("Human: ")
         sys.stdout.flush()
         sentence = sys.stdin.readline()
         sentence = preprocess_input(sentence, fast_text_model, vocab_vectors)
-
-        # Initial state
-        if FLAGS.stateful:
-            if FLAGS.use_lstm:
-                initial_state = np.zeros((num_layers, 2, model.batch_size, size))
-            else:
-                initial_state = np.zeros((num_layers, model.batch_size, size))
-            states = initial_state
-
         while sentence:
-            if FLAGS.stateful:
-                output, states = decode_stateful_sentence(sentence, vocab, rev_vocab, model, sess, states)
-                num_output_sentences = 1
-            else:
-                output = decode_sentence(sentence, vocab, rev_vocab, model, sess)
-                if FLAGS.open_subtitles:
-                    num_output_sentences = 1
-                else:
-                    num_output_sentences = 2
-
-            #Find correct output:
+            output = decode_sentence(sentence, vocab, rev_vocab, model, sess)
             output = " ".join(output)
             output = get_sliced_output(output, num_output_sentences)
-            print("Vinyals: " + output.strip())
+            print("Grid LSTM: " + output.strip())
             print("Human: ", end="")
             sys.stdout.flush()
             sentence = sys.stdin.readline()
-            if sentence.strip() == "*reset*":
-                states = initial_state
-                print("States were successfully reset.")
-                print("Human: ", end="")
-                sys.stdout.flush()
-                sentence = sys.stdin.readline()
+
             if FLAGS.context_full_turns:
                 sentence = preprocess_input(output.strip() + " " + sentence.strip(), fast_text_model, vocab_vectors)
             else:
                 sentence = preprocess_input(sentence, fast_text_model, vocab_vectors)
 
-
 def main(_):
-
     if FLAGS.self_test:
-        self_test(seq2seq_model.Seq2SeqModel)
+        self_test(gridLSTM_model.GridLSTM_model)
     elif FLAGS.decode:
         decode()
     else:
         train()
 
 if __name__ == "__main__":
-    tf.app.run()
+  tf.app.run()

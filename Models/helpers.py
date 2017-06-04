@@ -2,15 +2,14 @@ import os
 import sys
 import re
 sys.path.insert(0, '../Preprocessing') # To access methods from another file from another folder
-from preprocess import start_preprocessing
-from variables import paths_from_model, tokens
 from preprocessing3 import distance
 from preprocess_helpers import shuffle_file, merge_files_to_one
-from variables import tokens, paths_from_model as paths, _buckets
 import tensorflow as tf
 import numpy as np
 import glob
 from random import choice, shuffle
+sys.path.insert(0, '../') # To access methods from another file from another folder
+from variables import tokens, paths_from_model, _buckets
 
 _, UNK_ID = tokens['unk']
 _, EOT_ID = tokens['eot']
@@ -349,18 +348,31 @@ def decode_stateful_sentence(sentence, vocab, rev_vocab, model, sess, state):
 
 
 def get_sliced_output(text, num_sentences):
-    indices = [pos+len(char) for pos, char in enumerate(text) if char in [".", "?", "!", "_EMJ"]]
+    text.replace("_EMJ", ":)")
+
+    # Find indices where the text should split
+    indices = [pos+len(char) for pos, char in enumerate(text) if char in [".", "?", "!", ":)"]]
     lines = []
+
     if indices != []:
         prev = 0
+
+        # Split on all indices
         for index in indices:
             lines.append(text[prev:index].strip())
             prev = index
+
+        # Put upper case on all sentence starts
+        lines = [line.capitalize() for line in lines]
+
 
         prev_sentence = ""
         text = ""
         for sentence in range(num_sentences):
             if prev_sentence != lines[sentence]:
                 text += lines[sentence] + " "
-
+    else:
+        text = text.capitalize()
+    # Upper case I
+    text = text.replace(" i ", " I ")
     return text

@@ -14,10 +14,11 @@ Parent folder
     |       |-- Preprocessing
     |
     |-- ubuntu-ranking-dataset-creator (Where we get our data from)
+    |-- opensubtitles-parser
 ```
 
 ### Download the Ubuntu Dialogue Corpus
-If you want to train the model with the whole dataset, clone the repository you find [here](https://github.com/rkadlec/ubuntu-ranking-dataset-creator) from the Ubuntu Dialogue Corpus.
+If you want to train the model with the UDC corpus, clone the repository you find [here](https://github.com/rkadlec/ubuntu-ranking-dataset-creator).
 ```sh
 git clone https://github.com/rkadlec/ubuntu-ranking-dataset-creator.git
 ```
@@ -30,26 +31,57 @@ Navigate to the src folder, and run:
 NB! This is VERY time consuming. This command will start to download a tgz file, and further unpack the content into a dialogs folder. The dialogs requires ~8 GB of disk space.
 
 
+### Download the Open Subtitles dataset
+If you want to train the model with the Open Subtitles corpus, clone the repository you find [here](https://github.com/inikdom/opensubtitles-parser).
+
+This is a smaller dataset and hence, is less time consuming than the UDC
+
 ### Create files
-Make sure you the folder structure as described above.
+Make sure you have the folder structure as described above.
 In the Preprocessing folder, run:
 ```sh
 python preprocess.py
 ```
-This will maybe take around 20-30 minutes if you do not change the parameters, i.e. it will read all the files. 
-OBS! You may get the error that the file is not found. You may have to turn of the file shield in you Anti Virus.
+This will at most take around 30 minutes if you do not change the parameters, i.e. it will read all the files. 
+OBS! You may get the error that the file is not found. You may have to turn off the file shield in you Anti Virus.
 
-### Start training a model
-In the Models folder, run:
+Adding the open_subtitle flag, will preprocess the OS dataset:
+
 ```sh
-python Ola_GridLSTM.py
+python preprocess.py --open_subtitles
 ```
 
-### Chat with Ola
-In the Models folder, run:
-```sh
-python Ola_GridLSTM.py --decode
+Other flags are available to change the behavior of the preprocessing script:
+- --context_full_turns, this will add the entire last output in the front of the training input to include context to the training.
 
+### Start training a model
+In the Models folder, run the desired model:
+
+Grid LSTM cells
+```sh
+python GridLSTM.py
+```
+
+LSTM cells
+```sh
+python LSTM.py
+```
+
+GRU cells
+```sh
+python LSTM.py --use_lstm=false
+```
+
+Stateful model:
+```sh
+python LSTM_stateful.py
+```
+
+### Chat with the trained models
+
+It is easy to chat with the trained model, just add a decode flag. Example:
+```sh
+python GridLSTM.py --decode
 ```
 
 
@@ -60,13 +92,7 @@ TBA
 
 ##### GridLSTM
 Our model is based on the paper by Kalckbrenner et al. [1] using Tensorflows Grid cells. 
-TBA
 
-### TODOs
- - If someone runs a model, and the files are not there, the model should preprocess the files. If the ubuntu raw files are not there, it should download the .tsv files.
- - Generate a small vocabulary and the necessary train, validate and test sets, with a size that github can handle
- - Compare Baseline and GridLSTM
- - Save the best checkpoints based on perplexity
 
 
 ### References
