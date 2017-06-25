@@ -1,6 +1,6 @@
 # Project-idi-rnnchatbot
 
-This repository consist of six different RNN architectures to create chatbots. All of the models is build upon the sequence-to-sequence model from Tensorflow [1]. LSTM, GRU and Grid LSTM [2] is the explored cells. For conversation context purposes, we developed the Stateful and Context-Prepro models. Last, we also created chatbots without the use of Tensorflows efficiency buckets.
+This repository consists of six different RNN architectures to create chatbots. All of the models are build upon the sequence-to-sequence model from Tensorflow [1]. LSTM, GRU and Grid LSTM [2] is the explored cells. For conversation context purposes, we developed the Stateful and Context-Prepro models. Last, we also created chatbots without the use of Tensorflows efficiency buckets.
 
 To use this project, clone the repository and follow the instructions. 
 Our folder structure is:
@@ -28,7 +28,7 @@ Navigate to the src folder, and run:
 ```sh
 ./generate.sh
 ```
-NB! This is VERY time consuming. This command will start to download a tgz file, and further unpack the content into a dialogs folder. The dialogs requires ~8 GB of disk space.
+NB! This is VERY time-consuming. This command will start to download a tgz file, and further, unpack the content into a dialogs folder. The dialogs require ~8 GB of disk space.
 
 
 ### Download the Open Subtitles dataset
@@ -43,9 +43,9 @@ In the Preprocessing folder, run:
 python preprocess.py
 ```
 This will at most take around 30 minutes if you do not change the parameters, i.e. it will read all the files. 
-OBS! You may get the error that the file is not found. You may have to turn off the file shield in you Anti Virus.
+OBS! You may get the error that the file is not found. You may have to turn off the file shield in you Anti-Virus.
 
-Adding the open_subtitle flag, will preprocess the OS dataset:
+Adding the open_subtitle flag will preprocess the OS dataset:
 
 ```sh
 python preprocess.py --open_subtitles
@@ -100,7 +100,7 @@ python GridLSTM.py --decode
 
 ### Results
 
-Our results is based on human evaluations. The UCD results are based on 30 participants responses, while the OS results are gathered from 50 evaluators opinions.
+Our results are based on human evaluations. The UCD results are based on 30 participants responses, while the OS results are gathered from 50 evaluators opinions.
  
 #### UDC results
 | Model          | Grammar | Content | Total score |
