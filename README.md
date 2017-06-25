@@ -1,8 +1,8 @@
 # Project-idi-rnnchatbot
 
-We want to improve the intelligence of a chatbot by using Grid-LSTM cells instead of ordinary LSTM cells. The paper by Kalchbrenner[1] describes how Grid-LSTM cells imporves the performance of a translation model. The translation model has an encoder-decoder architecture which we can use for a chatbot as well. 
+This repository consist of six different RNN architectures to create chatbots. All of the models is build upon the sequence-to-sequence model from Tensorflow [1]. LSTM, GRU and Grid LSTM [2] is the explored cells. For conversation context purposes, we developed the Stateful and Context-Prepro models. Last, we also created chatbots without the use of Tensorflows efficiency buckets.
 
-Clone the repository and follow the instructions. 
+To use this project, clone the repository and follow the instructions. 
 Our folder structure is:
 ```sh
 Parent folder
@@ -18,7 +18,7 @@ Parent folder
 ```
 
 ### Download the Ubuntu Dialogue Corpus
-If you want to train the model with the UDC corpus, clone the repository you find [here](https://github.com/rkadlec/ubuntu-ranking-dataset-creator).
+If you want to train the model with the UDC corpus [3], clone the repository you find [here](https://github.com/rkadlec/ubuntu-ranking-dataset-creator).
 ```sh
 git clone https://github.com/rkadlec/ubuntu-ranking-dataset-creator.git
 ```
@@ -55,7 +55,7 @@ Other flags are available to change the behavior of the preprocessing script:
 - --context_full_turns, this will add the entire last output in the front of the training input to include context to the training.
 
 ### Start training a model
-In the Models folder, run the desired model:
+By default, the models will train on the UDC. To train on the OS dataset, simply add the flag (--opensubtitles) to the command. In the Models folder, run the desired model:
 
 Grid LSTM cells
 ```sh
@@ -72,10 +72,23 @@ GRU cells
 python LSTM.py --use_lstm=false
 ```
 
+One-Bucket model:
+```sh
+python LSTM.py --one_bucket
+```
+
 Stateful model:
 ```sh
 python LSTM_stateful.py
 ```
+
+Context-Prepro model:
+```sh
+python preprocessing --contextFullTurns
+python python LSTM.py --contextFullTurns
+```
+
+
 
 ### Chat with the trained models
 
@@ -86,17 +99,43 @@ python GridLSTM.py --decode
 
 
 ### Results
-##### Baseline
-Our baseline is based on the encoder-decoder model described in Sutskever [3] and Vinyals [4]. 
-TBA
 
-##### GridLSTM
-Our model is based on the paper by Kalckbrenner et al. [1] using Tensorflows Grid cells. 
+Our results is based on human evaluations. The UCD results are based on 30 participants responses, while the OS results are gathered from 50 evaluators opinions.
+ 
+#### UDC results
+| Model          | Grammar | Content | Total score |
+|----------------|---------|---------|-------------|
+|Dataset         |   3.86  |   3.69  |    3.77     |
+|Grid LSTM       |   3.59  |   3.00  |    3.29     |
+|LSTM            |   3.61  |   3.01  |    3.31     |
+|GRU             |   3.45  |   2.91  |    3.18     | 
 
+
+| Model          | Grammar | Content | Total score |
+|----------------|---------|---------|-------------|
+|Dataset         |   4.23  |   3.98  |    4.1      |
+|Stateful        |   3.80  |   2.71  |    3.25     |
+|LSTM            |   3.78  |   2.38  |    3.08     |
+|Context-Prepro  |   3.75  |   2.08  |    2.92     | 
+
+
+#### OS results
+
+| Model          | Grammar | Content | Total score |
+|----------------|---------|---------|-------------|
+|LSTM            |   3.91  |   2.67  |    3.29     |
+|Grid LSTM       |   4.14  |   3.26  |    3.70     |
+|Stateful-Decoder|   3.97  |   2.67  |    3.32     |
+|One-Bucket      |   3.80  |   2.78  |    3.29     | 
+
+### Conclusion
+
+The Grid LSTM slightly outperforms the LSTM model, while the Stateful model shows that it can handle the content of a conversation better than the other models.
 
 
 ### References
-[1] [Kalchbrenner et al 2016](https://arxiv.org/pdf/1507.01526.pdf)
-[2] [Ubuntu Dialogue Corpus](https://github.com/rkadlec/ubuntu-ranking-dataset-creator)
-[3] [Sutskever](https://arxiv.org/abs/1409.3215)
-[4] [Vinyals](http://arxiv.org/abs/1506.05869)
+[1] [Tensorflow Sequence-to-sequence](https://www.tensorflow.org/tutorials/seq2seq)
+[2] [Kalchbrenner et al 2016](https://arxiv.org/pdf/1507.01526.pdf)
+[3] [Ubuntu Dialogue Corpus](https://github.com/rkadlec/ubuntu-ranking-dataset-creator)
+[4] [Sutskever](https://arxiv.org/abs/1409.3215)
+[5] [Vinyals](http://arxiv.org/abs/1506.05869)
